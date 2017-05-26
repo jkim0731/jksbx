@@ -1,4 +1,4 @@
-mouse = {'648', '650''653'};
+mouse = {'653'};
 dir_base = 'd:\2p\';
 for i = 1 : length(mouse)
     cd([dir_base,mouse{i},'\'])
@@ -8,28 +8,30 @@ for i = 1 : length(mouse)
         fn = flist(j).name(1:end-4);
         disp(['processing ', dir_base, mouse{i},' ' fn, '.sbx'])
         
-        sbxaligndir({fn});
-        maxidx = jkget_maxidx(fn);
-        flevel = zeros(1,maxidx);
-        for k = 1 : maxidx
-            flevel(k) = mean(mean(squeeze(sbxread(fn,(k-1),1))));
-        end
+        if ~exist([fn,'.align'],'file')
+            sbxaligndir({fn});
+            maxidx = jkget_maxidx(fn);
+            flevel = zeros(1,maxidx);
+            for k = 1 : maxidx
+                flevel(k) = mean(mean(squeeze(sbxread(fn,(k-1),1))));
+            end
 
-        blankidx = find(flevel < min(flevel) + std(flevel));
+            blankidx = find(flevel < min(flevel) + std(flevel));
 
-        load([fn,'.align'],'-mat')
-        T = T - repmat(T(1,:),size(T,1),1);
-        for k = 1 : length(blankidx)
-            T(blankidx(k),:) = [0 0];
+            load([fn,'.align'],'-mat')
+            T = T - repmat(T(1,:),size(T,1),1);
+            for k = 1 : length(blankidx)
+                T(blankidx(k),:) = [0 0];
+            end
+            tempim = squeeze(sbxread(fn,0,1));
+            m = zeros(size(tempim));
+            for k = 1 : maxidx
+                m = m + double(circshift(squeeze(sbxread(fn,(k-1),1)),T(k,:)))/maxidx;
+            end        
+            timepassed = toc;
+            disp(['done in ',num2str(timepassed),' seconds'])
+            save([fn,'.align'],'T','m','-mat')
         end
-        tempim = squeeze(sbxread(fn,0,1));
-        m = zeros(size(tempim));
-        for k = 1 : maxidx
-            m = m + double(circshift(squeeze(sbxread(fn,(k-1),1)),T(k,:)))/maxidx;
-        end        
-        timepassed = toc;
-        disp(['done in ',num2str(timepassed),' seconds'])
-        save([fn,'.align'],'T','m','-mat')
     end
 end
 
