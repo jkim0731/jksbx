@@ -74,7 +74,11 @@ function jksbxsplittrial(fn)
             trials(i).trialnum = trialnum;
             trials(i).frames = [first_frames(i):last_frames(i)];
         end
-        save([fn,'.trials'],'trials');
+        if ~isempty(trials.trialnum) && ~isempty(trials.frames)
+            save([fn,'.trials'],'trials');
+        else
+            disp('no available trials')
+        end
     end
 end
 %% reading the bitcode
