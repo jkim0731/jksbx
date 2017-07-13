@@ -22,7 +22,7 @@ function varargout = sbxsegmenttool(varargin)
 
 % Edit the above text to modify the response to help sbxsegmenttool
 
-% Last Modified by GUIDE v2.5 09-Dec-2016 18:52:08
+% Last Modified by GUIDE v2.5 22-May-2017 16:49:09
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -42,7 +42,7 @@ else
     gui_mainfcn(gui_State, varargin{:});
 end
 % End initialization code - DO NOT EDIT
-end
+
 
 % --- Executes just before sbxsegmenttool is made visible.
 function sbxsegmenttool_OpeningFcn(hObject, eventdata, handles, varargin)
@@ -60,7 +60,25 @@ guidata(hObject, handles);
 
 % UIWAIT makes sbxsegmenttool wait for user response (see UIRESUME)
 % uiwait(handles.figure1);
-end
+
+
+axes(handles.axz);
+global zimg hline vline
+zimg = imagesc(zeros(512,796,3,'uint8'));
+hold on
+hline = plot([ 0 0],[0 0],'m--');
+vline = plot([0 0 ],[0 0],'m--');
+colormap gray
+axis off
+hold off
+
+
+axes(handles.ax);
+global bgimg
+bgimg = imagesc(zeros(512,796,3,'uint8'));
+colormap gray
+axis off
+
 
 % --- Outputs from this function are returned to the command line.
 function varargout = sbxsegmenttool_OutputFcn(hObject, eventdata, handles) 
@@ -71,7 +89,6 @@ function varargout = sbxsegmenttool_OutputFcn(hObject, eventdata, handles)
 
 % Get default command line output from handles structure
 varargout{1} = handles.output;
-end
 
 % --- Executes on button press in load.
 function load_Callback(hObject, eventdata, handles)
@@ -79,25 +96,26 @@ function load_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-global bgimg data segmenttool_h nframes cell_list cellpoly mask rfn pathname
-global plane_num im_plane info patch_h cm
+global oldcmap bgimg roimask data segmenttool_h nframes ncell cellpoly mask rfn pathname
+
+roimask = [];
+
 handles.status.String = 'Resetting/Clearing GPU';
 drawnow;
 gpuDevice(1);
+
+handles.cellsel.String = {'Cell #'};
+handles.cellsel.Enable = 'off';
 
 global sig;
 delete(handles.axes3.Children);
 sig = [];
 
-[fn,pathname] = uigetfile({'*.sbx; *.align'});
-if ~strcmpi(pwd,pathname(1:end-1))
-    cd(pathname)
-end
-
+[fn,pathname] = uigetfile({'*_rigid*sbx; *_nonrigid*sbx'});
+fn = [pathname fn];
 rfn = strtok(fn,'.');
-% idx = max(strfind(rfn,'_'));
-% rfnx = rfn(1 : (idx-1));
-rfnx = rfn;
+idx = max(strfind(rfn,'_'));
+rfnx = rfn(1 : (idx-1));
 
 try
     load('-mat',[rfnx '.align']); 
@@ -106,43 +124,20 @@ catch
 end
 axis off
 
-% global info
-z = sbxread(rfnx,0,1); 
-if info.volscan
-    plane_num = length(info.otwave_um);
-    handles.popupmenu3.String = 1:plane_num;
-else
-    plane_num = 1;
-    handles.popupmenu3.String = 1;
-end
-drawnow;
-
 handles.status.String = 'Loading alignment data';
-
-if iscell(m)
-    im_plane = get(handles.popupmenu3,'Value');     
-    m = m{im_plane};
-    T = T{im_plane};
-else
-    im_plane = 1;
-end
 
 if(exist('mnr','var'))
     m = gather(mnr);
-else
-    m = double(m); % 2016/11/01 JK
 end
 
 m = (m-min(m(:)))/(max(m(:))-min(m(:)));
 x = adapthisteq(m);
 x = single(x);
 x = (x-min(x(:)))/(max(x(:))-min(x(:)));
-
-bgimg = image(zeros(size(x,1),size(x,2),3,'uint8'));
-
 bgimg.CData(:,:,1) = uint8(255*x);
 bgimg.CData(:,:,2) = bgimg.CData(:,:,1);
 bgimg.CData(:,:,3) = bgimg.CData(:,:,1);
+ 
 
 if(~isempty(cellpoly))
     cellfun(@delete,cellpoly);
@@ -152,18 +147,36 @@ drawnow;
 
 handles.status.String = 'Loading spatio-temporal data';
 
+[rfn,~] = strtok(fn,'.');
+
+z = sbxread(rfn,0,1);
+global info;
+
 nframes = str2double(handles.frames.String);
-skip = floor(size(T,1)/nframes);
-data = single(gpuArray(sbxreadskip(rfn,nframes,skip, im_plane))); % sbxreadskip should be changed to have imaging plane as the last input argument
+skip = floor(info.max_idx/nframes);
+
+data = single(gpuArray(sbxreadskip(rfn,nframes,skip)));
+
+% data = single(gpuArray(sbxread(rfn,round(info.max_idx/2-nframes/2),nframes)));
+% data = squeeze(data(1,:,:,:));
+
 data = zscore(data,[],3);
+
+% remove trends
+% 
+% [N,M,T] = size(data);
+% data = reshape(data,N*M,[]);
+% data = detrend(data,1:50:T);
+% data = reshape(data,N,M,T);
+
 
 % compute and display correlation map...
 
 handles.status.String = 'Computing correlation map';
 drawnow;
 
-corrmap = zeros([size(data,1), size(data,2)],'single','gpuArray');
-    
+corrmap = zeros([size(data,1) size(data,2)],'single','gpuArray');
+
 for(m=-1:1)
     for(n=-1:1)
         if(m~=0 || n~=0)
@@ -173,75 +186,88 @@ for(m=-1:1)
 end
 corrmap = corrmap/8/size(data,3);
 
-cm = gather(corrmap);
-cm = (cm-min(cm(:)))/(max(cm(:))-min(cm(:)));
-
-bgimg.CData(:,:,1) = uint8(255*cm);
+x = gather(corrmap);
+x = (x-min(x(:)))/(max(x(:))-min(x(:)));
+bgimg.CData(:,:,1) = uint8(255*x);
 bgimg.CData(:,:,2) = uint8(0);
 bgimg.CData(:,:,3) = uint8(0);
 
-drawnow;
+global zimg vline hline;
+a = zimg.Parent;
+%delete(a.Children(1:end-1));
+idx = [];
+for k = 1:length(a.Children)
+    if(isa(a.Children(k),'matlab.graphics.primitive.Patch'))
+        idx = [idx k];
+    end
+end
+delete(a.Children(idx));
 
-    
+zimg.CData(:,:,1) = uint8(255*x);
+zimg.CData(:,:,2) = uint8(255*x);
+zimg.CData(:,:,3) = uint8(255*x);
+set(zimg.Parent,'xlim',[size(x,2)/2-32 size(x,2)/2+32],'ylim',[size(x,1)/2 - 32 size(x,1)/2+32]);
+set(hline,'xdata',[size(x,2)/2-32 size(x,2)/2+32],'ydata',size(x,1)/2 *[ 1 1]);
+set(vline,'ydata',[size(x,1)/2-32 size(x,1)/2+32],'xdata',size(x,2)/2 *[ 1 1]);
+
+% init
+
+ncell = 0;
+cellpoly = {};
+oldcmap = {};
+mask = zeros(size(data,1),size(data,2));
+
+% previous segmentation?
+if(exist([rfn '.segment'],'file'))
+    load([rfn '.segment'],'-mat');
+    drawnow;
+    axes(bgimg.Parent);
+    cellpoly = cell(1,length(vert));
+    ncell = length(cellpoly);
+    for i = 1:length(vert)
+        cellpoly{i} = patch(vert{i}(:,1),vert{i}(:,2),'white','facecolor',[1 .7 .7], ...
+            'facealpha',0.7,'edgecolor',[1 1 1],'parent',bgimg.Parent,'FaceLighting','none',...
+            'userdata',i,'tag','apatch');
+    end
+    status.String = sprintf('Segmented %d cells from prior session',ncell);
+end
+
+
+drawnow;
 set(segmenttool_h,'WindowButtonMotionFcn',@sbxwbmcb)
 set(segmenttool_h,'WindowScrollWheelFcn',@sbxwswcb)
 set(segmenttool_h,'WindowButtonDownFcn',@sbxwbdcb)
 
-cell_list = [];
-cellpoly = {};
-if exist([rfnx,'.segment'],'file')        
-    load([rfnx,'.segment'],'-mat')
-    if info.volscan
-        temp_mask = mask{im_plane};
-        ncell = max(temp_mask(:));        
-    else
-        temp_mask = mask;
-        ncell = max(mask(:));
-    end
-    
-    if ncell > 0
-        hold(bgimg.Parent,'on');
-        for i = 1 : ncell
-            temp_ind = ind2sub(size(temp_mask), find(temp_mask == i));            
-            if ~isempty(temp_ind)
-                cell_list = [cell_list, i];
-                temp_mat = zeros(size(temp_mask));
-                temp_mat(temp_ind) = 1;
-                bw = bwlabel(temp_mat);
-                B = bwboundaries(bw);
-                xy = B{1};
-                patch_h{i} = patch(xy(:,2),xy(:,1),'white','facecolor',[1 .7 .7],'facealpha',0.7,'edgecolor',[1 1 1],'parent',bgimg.Parent,'FaceLighting','none');
-                cellpoly{i} = patch_h{i};
-                drawnow;
-            end
-        end
-    end
-    hold(bgimg.Parent,'off');        
-else
-    if info.volscan
-        mask = cell(1,plane_num);
-        for i = 1 : plane_num
-            mask{i} = zeros([size(data,1), size(data,2)]);
-        end
-    else
-        mask = zeros([size(data,1), size(data,2)]);
-    end
-end
-handles.listbox1.String = cell_list;
 handles.status.String = 'Showing correlation map. Start segmenting';
-end   
-
+   
 % --- Executes on button press in save.
 function save_Callback(hObject, eventdata, handles)
 % hObject    handle to save (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-global rfn mask cellpoly pathname cell_list
+global rfn mask cellpoly pathname ncell
 
-save([rfn '.segment'],'mask');
-handles.status.String = sprintf('Saved %d cells in %s.segment',length(cell_list),rfn);
+handles.status.String = sprintf('Saved %d cells in %s.segment',ncell,rfn);
+
+if(handles.neuropil.Value)    
+    np_mask = cell(ncell);
+    q0 = imdilate(mask>0,strel('disk',round(0.15*str2double(handles.radius.String)),8));
+    for(i=1:ncell)
+        q =  imdilate(mask==i,strel('disk',str2double(handles.radius.String),8));
+        q(q0>0) = 0;
+        np_mask{i}=q;
+    end
 end
+
+vert = cellfun(@(x) x.Vertices,cellpoly,'UniformOutput',false);
+
+if(handles.neuropil.Value)
+    save([rfn '.segment'],'mask','vert','np_mask');
+else
+    save([rfn '.segment'],'mask','vert');
+end
+
 
 function frames_Callback(hObject, eventdata, handles)
 % hObject    handle to frames (see GCBO)
@@ -253,7 +279,7 @@ function frames_Callback(hObject, eventdata, handles)
 
 global nframes
 nframes = str2double(hObject.String);
-end
+
 
 % --- Executes during object creation, after setting all properties.
 function frames_CreateFcn(hObject, eventdata, handles)
@@ -266,7 +292,7 @@ function frames_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
-end
+
 
 % --- Executes during object creation, after setting all properties.
 function ax_CreateFcn(hObject, eventdata, handles)
@@ -275,13 +301,14 @@ function ax_CreateFcn(hObject, eventdata, handles)
 % handles    empty - handles not created until after all CreateFcns called
 
 % Hint: place code in OpeningFcn to populate ax
+% 
+% global bgimg
+% 
+% bgimg = imagesc(zeros(512,796,3,'uint8'));
+% colormap gray
+% axis off
+% set(hObject,'Tag','ax');
 
-global bgimg
-
-bgimg = imagesc(zeros(512,805,3,'uint8'));
-colormap gray
-axis off
-end
 
 function nhood_Callback(hObject, eventdata, handles)
 % hObject    handle to nhood (see GCBO)
@@ -293,7 +320,7 @@ function nhood_Callback(hObject, eventdata, handles)
 
 global nhood
 nhood = str2double(hObject.String);
-end
+
 
 % --- Executes during object creation, after setting all properties.
 function nhood_CreateFcn(hObject, eventdata, handles)
@@ -307,7 +334,7 @@ function nhood_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
-end
+
 
 % --- Executes during object creation, after setting all properties.
 function figure1_CreateFcn(hObject, eventdata, handles)
@@ -322,7 +349,7 @@ ps = 0;
 
 frames = 300;
 th_corr = 0.2;
-end
+   
 
 
 % --- Executes during object creation, after setting all properties.
@@ -332,7 +359,7 @@ function bgimg_CreateFcn(hObject, eventdata, handles)
 % handles    empty - handles not created until after all CreateFcns called
 
 % Hint: place code in OpeningFcn to populate ax
-end
+
 
 % --- Executes during object creation, after setting all properties.
 function status_CreateFcn(hObject, eventdata, handles)
@@ -343,7 +370,7 @@ function status_CreateFcn(hObject, eventdata, handles)
 global status
 
 status = hObject;
-end
+
 
 % --- Executes on selection change in method.
 function method_Callback(hObject, eventdata, handles)
@@ -357,7 +384,7 @@ function method_Callback(hObject, eventdata, handles)
 global method
 
 method = hObject;
-end
+
 
 % --- Executes during object creation, after setting all properties.
 function method_CreateFcn(hObject, eventdata, handles)
@@ -370,7 +397,7 @@ function method_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
-end
+
 
 
 function nhsize_Callback(hObject, eventdata, handles)
@@ -383,7 +410,7 @@ function nhsize_Callback(hObject, eventdata, handles)
 
 global nhood 
 nhood = str2double(hObject.String);
-end
+
 
 % --- Executes during object creation, after setting all properties.
 function nhsize_CreateFcn(hObject, eventdata, handles)
@@ -399,14 +426,13 @@ end
 
 global  nhood_h
 nhood_h = hObject;
-end
 
 % --- Executes on mouse press over figure background.
 function figure1_ButtonDownFcn(hObject, eventdata, handles)
 % hObject    handle to figure1 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-end
+
 
 % --- Executes on selection change in popupmenu2.
 function popupmenu2_Callback(hObject, eventdata, handles)
@@ -431,7 +457,7 @@ switch get(hObject,'Value')
         pan(segmenttool_h,'on');
         zoom(segmenttool_h,'off');
 end
-end
+
 
 
 
@@ -451,7 +477,7 @@ end
 global mode_h
 
 mode_h = hObject;
-end
+
 
 
 % --- Executes on button press in extract.
@@ -460,21 +486,18 @@ function extract_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-global rfn sig info im_plane
-if info.volscan
-    sig = sbxpullsignals(rfn, im_plane);
-else
-    sig = sbxpullsignals(rfn);
-end
+global rfn sig np spks
+[sig,np,spks] = sbxpullsignals(rfn);
 handles.status.String = sprintf('Signals extracted and saved');
-if info.volscan
-    plot(handles.axes3,zscore(sig{im_plane}));
-else
-    plot(handles.axes3,zscore(sig));
+for(i=1:size(sig,2))
+    handles.cellsel.String{i} = sprintf('Cell %d',i);
 end
-handles.axes3.Visible = 'off';
-handles.axes3.YLim = [-2 10];
-end
+handles.cellsel.Enable = 'on';
+
+% plot(handles.axes3,zscore(sig));
+% handles.axes3.Visible = 'off';
+% handles.axes3.YLim = [-0.5 10];
+% handles.axes3.XLim = [1 size(sig,1)];
 
 % --- Executes during object creation, after setting all properties.
 function axes3_CreateFcn(hObject, eventdata, handles)
@@ -485,7 +508,7 @@ function axes3_CreateFcn(hObject, eventdata, handles)
 % Hint: place code in OpeningFcn to populate axes3
 
 axis off;
-end
+
 
 % --- Executes on button press in checkbox2.
 function checkbox2_Callback(hObject, eventdata, handles)
@@ -494,148 +517,161 @@ function checkbox2_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % Hint: get(hObject,'Value') returns toggle state of checkbox2
-end
 
-% --- Executes on selection change in popupmenu3.
-function popupmenu3_Callback(hObject, eventdata, handles)
-% hObject    handle to popupmenu3 (see GCBO)
+
+% --- Executes during object creation, after setting all properties.
+function axz_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to axz (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: place code in OpeningFcn to populate axz
+
+% global zimg
+% 
+% zimg = imagesc(zeros(512,796,3,'uint8'));
+% 
+% colormap gray
+% axis off
+% set(hObject,'Tag','axz');
+
+% 
+
+
+
+function edit4_Callback(hObject, eventdata, handles)
+% hObject    handle to edit4 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: contents = cellstr(get(hObject,'String')) returns popupmenu3 contents as cell array
-%        contents{get(hObject,'Value')} returns selected item from popupmenu3
+% Hints: get(hObject,'String') returns contents of edit4 as text
+%        str2double(get(hObject,'String')) returns contents of edit4 as a double
 
-global bgimg data segmenttool_h nframes cell_list cellpoly mask rfn pathname
-global plane_num im_plane info patch_h cm
-handles.status.String = 'Resetting/Clearing GPU';
-drawnow;
-gpuDevice(1);
+global lambda 
+lambda = str2double(hObject.String);
 
-global sig;
-delete(handles.axes3.Children);
-sig = [];
-rfnx = rfn;
-
-load('-mat',[rfnx '.align']); 
-axis off
-
-% global info
-handles.status.String = 'Loading alignment data';
-
-if iscell(m)
-    im_plane = get(handles.popupmenu3,'Value');     
-    m = m{im_plane};
-    T = T{im_plane};
-else
-    im_plane = 1;
-end
-
-if(exist('mnr','var'))
-    m = gather(mnr);
-else
-    m = double(m); % 2016/11/01 JK
-end
-
-m = (m-min(m(:)))/(max(m(:))-min(m(:)));
-x = adapthisteq(m);
-x = single(x);
-x = (x-min(x(:)))/(max(x(:))-min(x(:)));
-
-bgimg = image(zeros(size(x,1),size(x,2),3,'uint8'));
-
-bgimg.CData(:,:,1) = uint8(255*x);
-bgimg.CData(:,:,2) = bgimg.CData(:,:,1);
-bgimg.CData(:,:,3) = bgimg.CData(:,:,1);
-
-if(~isempty(cellpoly))
-    cellfun(@delete,cellpoly);
-end
-
-drawnow;
-
-handles.status.String = 'Loading spatio-temporal data';
-
-nframes = str2double(handles.frames.String);
-skip = floor(size(T,1)/nframes);
-data = single(gpuArray(sbxreadskip(rfn,nframes,skip, im_plane))); % sbxreadskip should be changed to have imaging plane as the last input argument
-data = zscore(data,[],3);
-
-% compute and display correlation map...
-
-handles.status.String = 'Computing correlation map';
-drawnow;
-
-corrmap = zeros([size(data,1), size(data,2)],'single','gpuArray');
-    
-for(m=-1:1)
-    for(n=-1:1)
-        if(m~=0 || n~=0)
-            corrmap = corrmap+squeeze(sum(data.*circshift(data,[m n 0]),3));
-        end
-    end
-end
-corrmap = corrmap/8/size(data,3);
-
-cm = gather(corrmap);
-cm = (cm-min(cm(:)))/(max(cm(:))-min(cm(:)));
-
-bgimg.CData(:,:,1) = uint8(255*cm);
-bgimg.CData(:,:,2) = uint8(0);
-bgimg.CData(:,:,3) = uint8(0);
-
-drawnow;
-
-set(segmenttool_h,'WindowButtonMotionFcn',@sbxwbmcb)
-set(segmenttool_h,'WindowScrollWheelFcn',@sbxwswcb)
-set(segmenttool_h,'WindowButtonDownFcn',@sbxwbdcb)
-
-cell_list = [];
-cellpoly = {};
-if exist([rfnx,'.segment'],'file')        
-    load([rfnx,'.segment'],'-mat')
-    if info.volscan
-        temp_mask = mask{im_plane};
-        ncell = max(temp_mask(:));        
-    else
-        temp_mask = mask;
-        ncell = max(mask(:));
-    end
-    
-    if ncell > 0
-        hold(bgimg.Parent,'on');
-        for i = 1 : ncell
-            temp_ind = ind2sub(size(temp_mask), find(temp_mask == i));            
-            if ~isempty(temp_ind)
-                cell_list = [cell_list, i];
-                temp_mat = zeros(size(temp_mask));
-                temp_mat(temp_ind) = 1;
-                bw = bwlabel(temp_mat);
-                B = bwboundaries(bw);
-                xy = B{1};
-                patch_h{i} = patch(xy(:,2),xy(:,1),'white','facecolor',[1 .7 .7],'facealpha',0.7,'edgecolor',[1 1 1],'parent',bgimg.Parent,'FaceLighting','none');
-                cellpoly{i} = patch_h{i};
-                drawnow;
-            end
-        end
-    end
-    hold(bgimg.Parent,'off');        
-else
-    if info.volscan
-        mask = cell(1,plane_num);
-        for i = 1 : plane_num
-            mask{i} = zeros([size(data,1), size(data,2)]);
-        end
-    else
-        mask = zeros([size(data,1), size(data,2)]);
-    end
-end
-handles.listbox1.String = cell_list;
-handles.status.String = 'Showing correlation map. Start segmenting';
-end
 
 % --- Executes during object creation, after setting all properties.
-function popupmenu3_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to popupmenu3 (see GCBO)
+function edit4_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to edit4 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+global  lambda_h
+lambda_h = hObject;
+
+
+% --- Executes on button press in undo.
+function undo_Callback(hObject, eventdata, handles)
+% hObject    handle to undo (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+global mask cellpoly ncell oldcmap bgimg
+
+mask(mask == ncell) = 0;
+
+ch = handles.ax.Children;
+for(i=1:length(ch))
+    if(ch(i).UserData==ncell)
+        delete(ch(i));
+        break;
+    end
+end
+
+ch = handles.axz.Children;
+for(i=1:length(ch))
+    if(ch(i).UserData==ncell)
+        delete(ch(i));
+        break;
+    end
+end
+
+% restore old map
+
+r = oldcmap{ncell};
+bgimg.CData(:,:,1) = r;    
+
+ncell = ncell-1;
+
+
+% --- Executes on button press in neuropil.
+function neuropil_Callback(hObject, eventdata, handles)
+% hObject    handle to neuropil (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of neuropil
+
+
+
+function radius_Callback(hObject, eventdata, handles)
+% hObject    handle to radius (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of radius as text
+%        str2double(get(hObject,'String')) returns contents of radius as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function radius_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to radius (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on selection change in cellsel.
+function cellsel_Callback(hObject, eventdata, handles)
+% hObject    handle to cellsel (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: contents = cellstr(get(hObject,'String')) returns cellsel contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from cellsel
+
+global sig np spks cellpoly
+
+idx = hObject.Value;
+plot(handles.axes3,zscore(sig(:,idx)+4),'b','linewidth',1);
+if(~isempty(np))
+    hold(handles.axes3,'on');
+    plot(handles.axes3,zscore(np(:,idx))-4,'color',[.5 .5 .5]);
+    plot(handles.axes3,zscore(spks(:,idx))-8,'color',[1 .2 .2],'linewidth',1);
+    hold(handles.axes3,'off');
+end
+handles.axes3.Visible = 'off';
+handles.axes3.YLim = [-10 10];
+handles.axes3.XLim = [1 size(sig,1)];
+for(i=1:size(sig,2))
+    if(cellpoly{i}.UserData == idx)
+        cellpoly{i}.FaceColor = [0 1 0];
+        cellpoly{i}.FaceAlpha = 1;
+    else
+        cellpoly{i}.FaceColor = [1 .7 .7];
+        cellpoly{i}.FaceAlpha = .7;
+    end
+end
+
+
+
+
+
+% --- Executes during object creation, after setting all properties.
+function cellsel_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to cellsel (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
@@ -644,27 +680,34 @@ function popupmenu3_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
-end
 
-% --- Executes on selection change in listbox1.
-function listbox1_Callback(hObject, eventdata, handles)
-% hObject    handle to listbox1 (see GCBO)
+
+% --- Executes on button press in roi.
+function roi_Callback(hObject, eventdata, handles)
+% hObject    handle to roi (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: contents = cellstr(get(hObject,'String')) returns listbox1 contents as cell array
-%        contents{get(hObject,'Value')} returns selected item from listbox1
-end
+global roi roimask segmenttool_h bgimg
 
-% --- Executes during object creation, after setting all properties.
-function listbox1_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to listbox1 (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
+set(segmenttool_h,'WindowButtonMotionFcn',[])
+set(segmenttool_h,'WindowScrollWheelFcn',[])
+set(segmenttool_h,'WindowButtonDownFcn',[])
 
-% Hint: listbox controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-end
+
+roi = imrect(handles.ax,[100 100 256 256]);
+roi.setFixedAspectRatioMode(false);
+wait(roi);
+roimask = roi.createMask;
+delete(roi);
+
+r = single(bgimg.CData(:,:,1));
+r = r.*roimask;
+r = (r-min(r(:)))/(max(r(:))-min(r(:)));
+bgimg.CData(:,:,1) = uint8(r*255);
+
+drawnow;
+
+set(segmenttool_h,'WindowButtonMotionFcn',@sbxwbmcb)
+set(segmenttool_h,'WindowScrollWheelFcn',@sbxwswcb)
+set(segmenttool_h,'WindowButtonDownFcn',@sbxwbdcb)

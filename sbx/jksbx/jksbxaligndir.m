@@ -57,7 +57,7 @@ for(i=1:length(d))
     else
         if(exist([fn '.align'])==0)
             sbxread(fn,1,1);            % read one frame to read the header of the image sequence
-            global info                % this contains the information about the structure of the image
+            global info;                % this contains the information about the structure of the image
             tic
             if info.volscan
                 num_plane = length(info.otwave_um);
