@@ -25,8 +25,10 @@ function jksbxsplittrial(fn)
     else    
     %% index sorting    
         load([fn,'.mat']);
+        clear info
+        global info
         a = squeeze(jksbxread(fn,0,1));
-        global info    
+            
         
         if isfield(info,'event_id')
         if ~isempty(info.event_id)
