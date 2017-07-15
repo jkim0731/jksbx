@@ -5,7 +5,7 @@ num_iter = 8;
 mouse_num = '018';
 
 % ref_fn_list = {'648_000_006';'650_000_001';'651_000_004';'652_000_004';'653_000_004'};
-ref_fn_list = {'017_033_000';'018_032_000';'020_032_000'};
+ref_fn_list = {'017_033_000';'018_032_000';'020_040_000'};
 for i = 1 : length(ref_fn_list)
     if strfind(ref_fn_list{i},mouse_num) == 1
         ref_fn = ref_fn_list{i};
