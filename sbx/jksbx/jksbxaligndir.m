@@ -1,4 +1,6 @@
 function jksbxaligndir(varargin)
+clear info
+global info
 
 if(nargin>=1) % cell with filenames to be aligned
     for(i=1:length(varargin{1}))
@@ -19,8 +21,8 @@ for(i=1:length(d))
             trial_frames = [trial_frames, trials(tn).frames(1)+5:trials(tn).frames(2)-5]; % ignore first 5 and last 5 frames of each trial
         end
         if(exist([fn '.align'])==0)
-            sbxread(fn,1,1);            % read one frame to read the header of the image sequence
-            global info;                % this contains the information about the structure of the image
+            sbxread(fn,0,1);            % read one frame to read the header of the image sequence
+                 % this contains the information about the structure of the image
             tic
             if info.volscan
                 num_plane = length(info.otwave_um);
@@ -57,10 +59,15 @@ for(i=1:length(d))
     else
         if(exist([fn '.align'])==0)
             sbxread(fn,1,1);            % read one frame to read the header of the image sequence
-            global info;                % this contains the information about the structure of the image
+               % this contains the information about the structure of the image
             tic
             if info.volscan
-                num_plane = length(info.otwave_um);
+                if isempty(info.otwave_um) % temporary remedy 2017/0714 JK
+                    num_plane = 30;
+                else
+                    num_plane = length(info.otwave_um);
+                end
+%                 info.max_idx = 
 
                 for j = 1 : num_plane
                     temp_start = num_plane + j -1; % to discard first frames of each plane. First frame is 0th. 

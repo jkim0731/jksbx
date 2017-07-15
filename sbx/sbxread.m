@@ -22,14 +22,16 @@ global info_loaded info
 
 % check if already loaded...
 
-if(isempty(info_loaded) || ~strcmp(fname,info_loaded))
-    
-    if(~isempty(info_loaded))   % try closing previous...
-        try
-            fclose(info.fid);
-        catch
-        end
-    end
+% if(isempty(info_loaded) || ~strcmp(fname,info_loaded)) % because of
+% frequent error in info variable 2017/07/14 JK
+%     
+%     if(~isempty(info_loaded))   % try closing previous...
+%         try
+%             fclose(info.fid);
+%         catch
+%             error('could not close info.fid')
+%         end
+%     end
 
     load(fname);
     
@@ -76,21 +78,30 @@ if(isempty(info_loaded) || ~strcmp(fname,info_loaded))
     else
         info.max_idx =  d.bytes/info.bytesPerBuffer*factor - 1;
     end
-end
+% end
 
 if(isfield(info,'fid') && info.fid ~= -1)
     
     % nsamples = info.postTriggerSamples * info.recordsPerBuffer;
         
-    try
+    try        
         fseek(info.fid,k*info.nsamples,'bof');
         x = fread(info.fid,info.nsamples/2 * N,'uint16=>uint16');
         x = reshape(x,[info.nchan info.sz(2) info.recordsPerBuffer  N]);
     catch
-        error('Cannot read frame.  Index range likely outside of bounds.');
+        try         
+            info.fid = fopen([fname '.sbx']); % for some reason can't be specified, fseek does not work, and it could be recovered by opening
+            fseek(info.fid,k*info.nsamples,'bof');
+            x = fread(info.fid,info.nsamples/2 * N,'uint16=>uint16');
+            x = reshape(x,[info.nchan info.sz(2) info.recordsPerBuffer  N]);
+        catch
+            error('Cannot read frame.  Index range likely outside of bounds.');
+        end
     end
 
     x = intmax('uint16')-permute(x,[1 3 2 4]);
+    
+    fclose(info.fid); % test remedy 2017/07/14 JK
     
 else
     x = [];
