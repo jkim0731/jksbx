@@ -3,7 +3,7 @@
 %% basic information
 base_dir = 'D:\2p\JK';
 % mice = {'648','650','653'};
-sessions = 1:19;
+% sessions = 1:19;
 % mice = {'650'};
 mice = {'017','018','020'};
 %% split into trials
