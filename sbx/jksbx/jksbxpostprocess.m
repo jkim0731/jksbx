@@ -5,7 +5,7 @@ base_dir = 'D:\2p\JK';
 % mice = {'648','650','653'};
 % sessions = 1:19;
 % mice = {'650'};
-mice = {'017','018','020'};
+mice = {'002','007','008','009','011','018','020'};
 %% split into trials
 for mi = 1 : length(mice)
     cd([base_dir filesep mice{mi}])
