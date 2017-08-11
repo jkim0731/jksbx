@@ -1,13 +1,6 @@
-function jkimagescm(fn,varargin)
-try
-    cd(['D:\2p\JK\', strtok(fn,'_')])
-catch
-    try 
-        cd(['D:\TPM\', strtok(fn,'_')])
-    catch
-        error('Wrong directory')
-    end
-end
+function jkimagescm_sbxcom(fn,varargin)
+
+cd(['D:\2p\JK\', strtok(fn,'_')])
 ind = 1;
 if nargin > 1
     ind = varargin{1};
