@@ -2,7 +2,7 @@
 
 %% basic information
 base_dir = 'D:\TPM';
-mice = {'648','650','653'};
+mice = {'648','650','651','652','653'};
 % sessions = 1:19;
 % mice = {'650'};
 % mice = {'017','018','020'};

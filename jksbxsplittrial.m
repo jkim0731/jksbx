@@ -68,10 +68,10 @@ function jksbxsplittrial(fn)
             start_event = find(info.event_id == 3); % pole up is linked to both ttl0 & ttl1 up, making the event as 3. Refer to make_and_upload_state_matrix.m in the behavior protocol.
             end_event = find(info.event_id == 2); % pole down is linked to ttl1 down only. 
             
-            if start_event(1) > end_event(1) % exception error for when the event started with pole_down
+            while start_event(1) > end_event(1) % exception error for when the event started with pole_down
                 end_event = end_event(2:end);
             end 
-            if start_event(end) > end_event(end) % exception error for when the event ended with pole_up
+            while start_event(end) > end_event(end) % exception error for when the event ended with pole_up
                 start_event = start_event(1:end-1);
             end
             
