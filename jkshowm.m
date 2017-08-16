@@ -1,12 +1,26 @@
 function jkshowm(fn,varargin)
 
+[a, b] = strtok(fn,'.');
+if isempty(b)
+    fn = [fn, '.align'];
+elseif ~strcmp(b, '.align')
+    fn = [a,'.align'];
+end
+
 try
     cd(['D:\2p\JK\', strtok(fn,'_')])
+    load(fn,'-mat')
 catch
     try 
         cd(['D:\TPM\', strtok(fn,'_')])
+        load(fn,'-mat')
     catch
-        error('Wrong directory')
+        try 
+            cd(['Y:\JK_temp\2p\', strtok(fn,'_')])
+            load(fn,'-mat')
+        catch
+            error('Wrong directory')
+        end
     end
 end
 ind = 1;
@@ -18,14 +32,11 @@ if nargin > 2 && strcmp(varargin{2},'montage')
 else
     montage_flag = 0;
 end
-[a, b] = strtok(fn,'.');
-if isempty(b)
-    fn = [fn, '.align'];
-elseif ~strcmp(b, '.align')
-    fn = [a,'.align'];
-end
-load(fn,'-mat')
-figure,
+
+figure, hold on, 
+% [mouse, remain] = strtok(fn,'_');
+% pod = strtok(remain,'_');
+% title(['JK', mouse, ', POD ', pod],'FontSize',15)
 if iscell(m)
     if length(ind) == 1
         imshow(m{ind})
@@ -35,15 +46,15 @@ if iscell(m)
             for i = 1 : length(ind)
                 I(:,:,1,i) = m{ind(i)};
             end
-            montage(I)
+            montage(mat2gray(I))
         else
             nrow = floor(sqrt(length(ind)));
             ncol = ceil(length(ind)/nrow);
             for i = 1 : length(ind)
-                subplot(nrow, ncol, i), imshow(m{ind(i)})
+                subplot(nrow, ncol, i), imshow(m{ind(i)}), axis image, axis off
             end
         end
     end
 else
-    imshow(m)
+    imshow(m), axis image, axis off
 end
