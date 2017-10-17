@@ -11,6 +11,6 @@ for(i=1:length(d))
         fn = strtok(d(i).name,'.');
         jksbxsplittrial(fn)
     catch
-        disp(['Could not split %s',fn])
+        disp(['Could not split ',fn])
     end
 end

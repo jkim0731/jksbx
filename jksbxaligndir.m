@@ -25,21 +25,94 @@ for(i=1:length(d))
             tic
             if info.volscan
                 num_plane = length(info.otwave_um);
-                for j = 1 : num_plane
-                    temp_start = num_plane + j -1; % to discard first frames of each plane. First frame is 0th. 
-                    frame_dif = mod(info.max_idx+1,num_plane) - mod(j,num_plane);
-                    if frame_dif < 0
-                        temp_end = info.max_idx - (num_plane + frame_dif);
-                    else
-                        temp_end = info.max_idx - frame_dif;
+
+                blockimaging = 0;            
+                num_layer = 0;
+                num_block = [];
+                block_message_i = [];
+                for message_i = 1 : length(info.messages)
+                    if ~isempty(strfind(info.messages{message_i},'objective'))
+                        blockimaging = 1;
+                        num_block = [num_block, str2double(info.messages{message_i}(end))]; % number of layer on each imaging block. (1, 2, 3, ..., num_layer, 1, 2, 3, ..., num_layer, 1, 2, 3, ...)
+                        num_layer = max([num_layer, str2double(info.messages{message_i}(end))]); % total num of layer
+                        block_message_i = [block_message_i, message_i]; % index of info.messages written with imaging layer. (like a split marker)
                     end
-                    [frame_to_align, fta_ind] = intersect(temp_start:num_plane:temp_end,trial_frames);
-                    [m{j}, T_temp] = jksbxalignx(fn,frame_to_align);
-                    T{j} = zeros(length(temp_start:num_plane:temp_end),2);
-                    for Tind = 1 : length(fta_ind)
-                        T{j}(fta_ind(Tind),:) = T_temp(Tind,:);
+                end
+                if blockimaging % for now, assume that number of planes is same across different blocks                
+                    if isempty(strfind(info.messages{1},'objective'))
+                        temp_num_layer = mod(num_block(1)-1,num_layer);
+                        if temp_num_layer == 0
+                            temp_num_layer = num_layer;
+                        end
+                        num_block = [temp_num_layer, num_block]; % if the info.messages did not start with a layer indication, add the first layer at the beginning
+                        block_message_i = [0, block_message_i]; % the beginning index is 0 now.
                     end
-                    T{j} = [0 0;T{j}]; % To compensate for ignoring the first frame
+                    if isempty(strfind(info.messages{end},'objective'))
+                        temp_num_layer = mod(num_block(end)+1,num_layer);
+                        if temp_num_layer == 0
+                            temp_num_layer = num_layer;
+                        end
+                        num_block = [num_block, temp_num_layer]; % if the info.messages did not end with a layer indication, add the next layer at the end
+                        block_message_i = [block_message_i, length(info.messages) + 1]; % adding index at the end (1 larger index than the actual info.messages length)
+                    end
+
+                    layer_trials = cell(1,num_layer); % allocate trials to each layer
+                    for ii = 1 : num_layer
+                        layer_trials{ii} = [];
+                    end
+                    for ii = 1 : length(block_message_i)-1
+                        layer_trials{num_block(ii)} = [layer_trials{num_block(ii)}, str2double(info.messages{block_message_i(ii)+1}) : str2double(info.messages{block_message_i(ii+1)-1})];
+                    end
+
+                    trial_frames = cell(1,num_layer); % allocate frames to each layer
+                    for ii = 1 : length(trial_frames)
+                        trial_frames{ii} = []; 
+                        for jj = 1 : length(layer_trials{ii})
+                            for kk = 1 : length(trials)
+                                if trials(kk).trialnum == layer_trials{ii}(jj)
+                                    trial_frames{ii} = [trial_frames{ii}, ...
+                                        trials(kk).frames(1)+num_plane : trials(kk).frames(2)-num_plane];% ignore first and last frame of each plane, each trial 
+                                    break
+                                end
+                            end
+                        end
+                    end                
+
+                    m = cell(1,num_layer*num_plane);
+                    T = cell(1,num_layer*num_plane);
+                    %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                    % Very important variable
+                    %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                    frame_to_align = cell(1,num_layer*num_plane); % this is going to be used for the rest of the analysis.
+                    %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                    %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                    for ind_layer = 1 : num_layer                        
+                        frame_to_align{ind_layer*num_plane} = intersect(num_plane-1:num_plane:info.max_idx, trial_frames{ind_layer});
+                        [m{ind_layer*num_plane}, T{ind_layer*num_plane}] = jksbxalignx(fn,frame_to_align{ind_layer*num_plane});
+                        for j = 1 : num_plane-1
+                            temp_ind = (ind_layer-1)*num_plane + j;
+                            frame_to_align{temp_ind} = frame_to_align{ind_layer*num_plane} - (num_plane - j);
+                            [m{temp_ind}, T{temp_ind}] = jksbxalignx(fn,frame_to_align{temp_ind});
+                        end
+                    end
+                else % not block imaging 
+                    num_plane = length(info.otwave_um);
+                    for j = 1 : num_plane
+                        temp_start = num_plane + j -1; % to discard first frames of each plane. First frame is 0th. 
+                        frame_dif = mod(info.max_idx+1,num_plane) - mod(j,num_plane);
+                        if frame_dif < 0
+                            temp_end = info.max_idx - (num_plane + frame_dif);
+                        else
+                            temp_end = info.max_idx - frame_dif;
+                        end
+                        [frame_to_align, fta_ind] = intersect(temp_start:num_plane:temp_end,trial_frames);
+                        [m{j}, T_temp] = jksbxalignx(fn,frame_to_align);
+                        T{j} = zeros(length(temp_start:num_plane:temp_end),2);
+                        for Tind = 1 : length(fta_ind)
+                            T{j}(fta_ind(Tind),:) = T_temp(Tind,:);
+                        end
+                        T{j} = [0 0;T{j}]; % To compensate for ignoring the first frame
+                    end
                 end
             else
                 [frame_to_align, fta_ind] = intersect(0:info.max_idx,trial_frames);
@@ -49,7 +122,7 @@ for(i=1:length(d))
                     T(fta_ind(Tind),:) = T_temp(Tind,:);
                 end
             end
-            save([fn '.align'],'m','T','frame_to_align','fta_ind');
+            save([fn '.align_og'],'m','T','frame_to_align');
             clear m T
             display(sprintf('Done %s: Aligned %d images in %d min',fn,info.max_idx,round(toc/60)));
         else

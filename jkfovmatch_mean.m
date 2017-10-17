@@ -1,18 +1,34 @@
 
 % pwd
 
-num_iter = 8;
-mouse_num = '018';
+num_iter = 100;
+mouse_num = '025';
+layer = 2;
 
 % ref_fn_list = {'648_000_006';'650_000_001';'651_000_004';'652_000_004';'653_000_004'};
-ref_fn_list = {'017_033_000';'018_032_000';'020_040_000'};
-for i = 1 : length(ref_fn_list)
-    if strfind(ref_fn_list{i},mouse_num) == 1
-        ref_fn = ref_fn_list{i};
-        break
+ref_fn_list1 = {'030_5555_001';'027_5555_001';'025_5555_001'};
+ref_fn_list2 = {'030_5554_001';'027_5554_001';'025_5554_001'};
+if layer == 1
+    for i = 1 : length(ref_fn_list1)
+        if strfind(ref_fn_list1{i},mouse_num) == 1
+            
+            ref_fn = ref_fn_list1{i};
+            break
+            
+        end
     end
-end
+elseif layer == 2    
+    for i = 1 : length(ref_fn_list2)
+        if strfind(ref_fn_list2{i},mouse_num) == 1
 
+            ref_fn = ref_fn_list2{i};
+            break
+
+        end
+    end
+else
+    error('No filename list')
+end
 cd(['d:\2p\JK\',ref_fn(1:3)])
 load([ref_fn,'.align'], '-mat')
 if iscell(m)
@@ -21,8 +37,10 @@ else
     ref = mat2gray(m);
 end
 
+figure, imagesc(ref), axis image
+
 mmfile = memmapfile('scanbox.mmap','Writable',true, ...
-    'Format', { 'int32' [1 16] 'header' } , 'Repeat', 1);
+    'Format', { 'int16' [1 16] 'header' } , 'Repeat', 1);
 fh = figure;
 WinOnTop(fh);
 
@@ -35,7 +53,7 @@ while(true)
        
     mchA = [];
     for i = 1 : num_iter
-        mmfile.Format = {'int32' [1 16] 'header' ; ...
+        mmfile.Format = {'int16' [1 16] 'header' ; ...
             'uint16' double([mmfile.Data.header(2) mmfile.Data.header(3)]) 'chA'};
 %         aaa = mmfile.Data;
         if i == 1 

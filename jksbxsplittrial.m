@@ -46,8 +46,8 @@ function jksbxsplittrial(fn)
                 end
             end
             
-            % event_id 3 (pole_up) should follow directly after event_id 2
-            % (pole_down), but there are some error and event_id 3 is split
+            % event_id 3 (trial started - state 40) should follow directly after event_id 2
+            % (end of a trial - state 35), but there are some error and event_id 3 is split
             % into two events of 1 and 2. Compensate.
             for i = 1 : size(info.event_id,1)-2
                 if info.event_id(i) == 2

@@ -13,7 +13,7 @@ function varargout = jksbxsegmenttool(varargin)
 %      existing singleton*.  Starting from the left, property value pairs are
 %      applied to the GUI before jksbxsegmenttool_OpeningFcn gets called.  An
 %      unrecognized property name or invalid value makes property application
-%      stop.  All inputs are passed to jksbxsegmenttool_OpeningFcn via varargin.
+%      stop.  All inputs are passed to jksbxsegmenttool_OpeningFcn via guidevarargin.
 %
 %      *See GUI Options on GUIDE's Tools menu.  Choose "GUI allows only one
 %      instance to run (singleton)".

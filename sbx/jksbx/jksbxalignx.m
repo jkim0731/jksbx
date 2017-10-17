@@ -18,10 +18,10 @@ elseif (length(idx)==2)
     B = sbxread(fname,idx(2),1);
     A = squeeze(A(1,:,:));
     B = squeeze(B(1,:,:));
-    Ap = A(:,150:end);
-    Bp = B(:,150:end);
+    Ap = A(151:end-50,151:end-50);
+    Bp = B(151:end-50,151:end-50);
     
-    [u v] = fftalign(Ap,Bp);
+    [u v] = jkfftalign(Ap,Bp);
     
     Ar = circshift(A,[u,v]);
     m = (Ar+B)/2;
@@ -31,11 +31,17 @@ else
     
     idx0 = idx(1:floor(end/2));
     idx1 = idx(floor(end/2)+1 : end);
-    
-    [A,T0] = jksbxalignx(fname,idx0);
-    [B,T1] = jksbxalignx(fname,idx1);
+    try
+        [A,T0] = jksbxalignx(fname,idx0);
+        [B,T1] = jksbxalignx(fname,idx1);
+    catch
+        disp(['fname = ', fname])
+        disp(['idx0 = ', num2str(idx0)])
+        [A,T0] = jksbxalignx(fname,idx0);
+        [B,T1] = jksbxalignx(fname,idx1);
+    end
    
-    [u v] = fftalign(A,B);
+    [u v] = jkfftalign(A,B);
      
     Ar = circshift(A,[u, v]);
     m = (Ar+B)/2;
