@@ -14,7 +14,7 @@ end
 
 for(i=1:length(d))
     fn = strtok(d(i).name,'.');
-    if exist([fn,'.align'],'file')
+    if exist([fn,'.align*'],'file')
         sprintf('File %s is already aligned',fn);
     elseif exist([fn,'.trials'],'file') % ignore frames outside of each trial, because those are blank. If not treated, these lead to weird interference pattern during bidirectional scanning.
         load([fn,'.trials'],'-mat')

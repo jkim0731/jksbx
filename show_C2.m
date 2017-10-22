@@ -12,11 +12,12 @@ if ~exist([fn,'.sbx'],'file')
         error('Could not find the file')
     end
 end
-if ~exist([fn,'.align'],'file')
-    jksbxaligndir_optotune_top_piezo({fn})
-end
-
-load([fn,'.align'],'-mat')
+% No need to align because it's under anesthesia 2017/10/19 JK
+% if ~exist([fn,'.align'],'file')
+%     jksbxaligndir_optotune_top_piezo({fn})
+% end
+% 
+% load([fn,'.align'],'-mat')
 a = sbxread(fn,0,1);
 num_plane = length(info.otwave);
 if nargin < 2
@@ -76,10 +77,12 @@ for i_plane = 1 : length(plane)
     baseline_im = zeros(info.sz);
     stim_im = zeros(info.sz);
     for i = 1 : length(baseline_frames)
-        baseline_im = baseline_im + circshift(double(squeeze(sbxread(fn,baseline_frames(i),1))/length(baseline_frames)), T(floor(baseline_frames(i)/num_plane),:));
+        % No need to use alignment information because it's under anesthesia 2017/10/19 JK
+%         baseline_im = baseline_im + circshift(double(squeeze(sbxread(fn,baseline_frames(i),1))/length(baseline_frames)), T(floor(baseline_frames(i)/num_plane),:));
+        baseline_im = baseline_im + double(squeeze(sbxread(fn,baseline_frames(i),1))/length(baseline_frames));
     end
     for i = 1 : length(stim_frames)
-        stim_im = stim_im + circshift(double(squeeze(sbxread(fn,stim_frames(i),1))/length(stim_frames)), T(floor(stim_frames(i)/num_plane),:));
+        stim_im = stim_im + double(squeeze(sbxread(fn,stim_frames(i),1))/length(stim_frames));
     end
 
     diff_im = (stim_im - baseline_im)./ baseline_im * 100;

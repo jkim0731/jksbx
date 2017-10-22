@@ -1,8 +1,8 @@
-function jksbxaligndir(varargin)
+function jksbxaligndir_smoothing(sigma,varargin)
 clear info
 global info
 
-if(nargin>=1) % cell with filenames to be aligned
+if(nargin>=2) % cell with filenames to be aligned
     for(i=1:length(varargin{1}))
         d(i).name = varargin{1}{i};
     end
@@ -92,24 +92,24 @@ for(i=1:length(d))
                         for j = 1 : num_plane-1
                             temp_ind = (ind_layer-1)*num_plane + j;
                             frame_to_align{temp_ind} = frame_to_align{ind_layer*num_plane} - (num_plane - j);
-                            [m{temp_ind}, T{temp_ind}] = jksbxalignx(fn,frame_to_align{temp_ind});
+                            [m{temp_ind}, T{temp_ind}] = jksbxalignx_smoothing(fn,frame_to_align{temp_ind},sigma);
                             T{temp_ind} = [0 0; T{temp_ind}];
-                            movements = sqrt(diff(T{temp_ind}(:,1)).^2 + diff(T{temp_ind}(:,2)).^2);
-                            movements_std = std(movements);                        
-                            if ~isempty(find(movements > 2*movements_std,1))
-                                fix_ind = find(movements > 2 * movements_std) + 1; % because of diff
-                                for jj = 1 : length(fix_ind)
-                                    if fix_ind(jj) < length(movements)
-                                        T{temp_ind}(fix_ind(jj),:) = round((T{temp_ind}(fix_ind(jj)-1,:) + T{temp_ind}(fix_ind(jj)+1,:)) / 2);
-                                    else
-                                        T{temp_ind}(fix_ind(jj),:) = T{temp_ind}(fix_ind(jj)-1,:);
-                                    end
-                                end
-                                m{temp_ind} = zeros(size(m{temp_ind}));
-                                for jj = 1 : length(T{temp_ind})                                
-                                    m{temp_ind} = m{temp_ind} + circshift(double(squeeze(sbxread(fn,jj-1,1)))/length(T{temp_ind}),T{temp_ind}(jj,:));
-                                end
-                            end
+%                             movements = sqrt(diff(T{temp_ind}(:,1)).^2 + diff(T{temp_ind}(:,2)).^2);
+%                             movements_std = std(movements);                        
+%                             if ~isempty(find(movements > 2*movements_std,1))
+%                                 fix_ind = find(movements > 2 * movements_std) + 1; % because of diff
+%                                 for jj = 1 : length(fix_ind)
+%                                     if fix_ind(jj) < length(movements)
+%                                         T{temp_ind}(fix_ind(jj),:) = round((T{temp_ind}(fix_ind(jj)-1,:) + T{temp_ind}(fix_ind(jj)+1,:)) / 2);
+%                                     else
+%                                         T{temp_ind}(fix_ind(jj),:) = T{temp_ind}(fix_ind(jj)-1,:);
+%                                     end
+%                                 end
+%                                 m{temp_ind} = zeros(size(m{temp_ind}));
+%                                 for jj = 1 : length(T{temp_ind})                                
+%                                     m{temp_ind} = m{temp_ind} + circshift(double(squeeze(sbxread(fn,jj-1,1)))/length(T{temp_ind}),T{temp_ind}(jj,:));
+%                                 end
+%                             end
                         end                        
                     end
                 else % not block imaging 

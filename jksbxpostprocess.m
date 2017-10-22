@@ -15,9 +15,11 @@ end
 %% alignment
 for mi = 1 : length(mice)
     cd([base_dir filesep mice{mi}])
-    jksbxaligndir    
-    jksbxaligndir_optotune_top
+    jksbxaligndir        
+    jksbxaligndir_smoothing(3,{[mice{mi}, '_010_000'], [mice{mi}, '_009_000'], [mice{mi}, '_008_000']})
 end
+
+
 
 %% align the whole imaging sessions
 % for mi = 1 : length(mice)
