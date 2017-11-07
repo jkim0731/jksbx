@@ -1,4 +1,4 @@
-function show_C2(fn,varargin)
+function show_C2_pole(fn,varargin)
 
 global info
 fn = strtok(fn,'.');
