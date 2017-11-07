@@ -155,7 +155,7 @@ for(i=1:length(d))
                     T(fta_ind(Tind),:) = T_temp(Tind,:);
                 end
             end
-            save([fn '.align'],'m','T','frame_to_align');
+            save([fn, '.align_sm', num2str(sigma)],'m','T','frame_to_align', 'sigma');
             clear m T
             display(sprintf('Done %s: Aligned %d images in %d min',fn,info.max_idx,round(toc/60)));
         else

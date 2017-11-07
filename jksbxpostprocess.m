@@ -1,7 +1,7 @@
 %% list of post processing
 
 %% basic information
-base_dir = 'D:\2p\JK';
+base_dir = 'D:\TPM\JK';
 % mice = {'648','650','653'};
 sessions = 1:19;
 % mice = {'650'};
@@ -44,7 +44,5 @@ end
 % end
 
 
-%% segment
-% jksbxsegmenttool
 
 
