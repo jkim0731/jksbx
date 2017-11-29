@@ -16,7 +16,8 @@ for(i=1:length(d))
     fn = strtok(d(i).name,'.');
     if exist([fn,'.trials'],'file') % ignore frames outside of each trial, because those are blank. If not treated, these lead to weird interference pattern during bidirectional scanning.
         load([fn,'.trials'],'-mat')
-        if ~isempty(trials) && (exist([fn '.align'], 'file')==0)
+%         if ~isempty(trials) && (exist([fn '.align'], 'file')==0)
+        if ~isempty(trials)
             trial_frames = [];
             for tn = 1 : length(trials)
                 trial_frames = [trial_frames, trials(tn).frames(1)+5:trials(tn).frames(2)-5]; % ignore first 5 and last 5 frames of each trial
@@ -88,7 +89,7 @@ for(i=1:length(d))
                     %%%%%%%%%%%%%%%%%%%%%%%%%%%%
                     for ind_layer = 1 : num_layer                        
                         frame_to_align{ind_layer*num_plane} = intersect(num_plane-1:num_plane:info.max_idx, trial_frames{ind_layer});
-                        [m{ind_layer*num_plane}, T{ind_layer*num_plane}] = jksbxalignx(fn,frame_to_align{ind_layer*num_plane});
+                        [m{ind_layer*num_plane}, T{ind_layer*num_plane}] = jksbxalignx_smoothing(fn,frame_to_align{ind_layer*num_plane},sigma);
                         for j = 1 : num_plane-1
                             temp_ind = (ind_layer-1)*num_plane + j;
                             frame_to_align{temp_ind} = frame_to_align{ind_layer*num_plane} - (num_plane - j);

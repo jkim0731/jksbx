@@ -16,7 +16,8 @@ for(i=1:length(d))
     fn = strtok(d(i).name,'.');
     if exist([fn,'.trials'],'file') % ignore frames outside of each trial, because those are blank. If not treated, these lead to weird interference pattern during bidirectional scanning.
         load([fn,'.trials'],'-mat')
-        if ~isempty(trials) && (exist([fn '.align'], 'file')==0)
+%         if ~isempty(trials) && (exist([fn '.align'], 'file')==0)
+        if ~isempty(trials)
             trial_frames = [];
             for tn = 1 : length(trials)
                 trial_frames = [trial_frames, trials(tn).frames(1)+5:trials(tn).frames(2)-5]; % ignore first 5 and last 5 frames of each trial
@@ -94,22 +95,22 @@ for(i=1:length(d))
                             frame_to_align{temp_ind} = frame_to_align{ind_layer*num_plane} - (num_plane - j);
                             [m{temp_ind}, T{temp_ind}] = jksbxalignx(fn,frame_to_align{temp_ind});
                             T{temp_ind} = [0 0; T{temp_ind}];
-                            movements = sqrt(diff(T{temp_ind}(:,1)).^2 + diff(T{temp_ind}(:,2)).^2);
-                            movements_std = std(movements);                        
-                            if ~isempty(find(movements > 2*movements_std,1))
-                                fix_ind = find(movements > 2 * movements_std) + 1; % because of diff
-                                for jj = 1 : length(fix_ind)
-                                    if fix_ind(jj) < length(movements)
-                                        T{temp_ind}(fix_ind(jj),:) = round((T{temp_ind}(fix_ind(jj)-1,:) + T{temp_ind}(fix_ind(jj)+1,:)) / 2);
-                                    else
-                                        T{temp_ind}(fix_ind(jj),:) = T{temp_ind}(fix_ind(jj)-1,:);
-                                    end
-                                end
-                                m{temp_ind} = zeros(size(m{temp_ind}));
-                                for jj = 1 : length(T{temp_ind})                                
-                                    m{temp_ind} = m{temp_ind} + circshift(double(squeeze(sbxread(fn,jj-1,1)))/length(T{temp_ind}),T{temp_ind}(jj,:));
-                                end
-                            end
+%                             movements = sqrt(diff(T{temp_ind}(:,1)).^2 + diff(T{temp_ind}(:,2)).^2);
+%                             movements_std = std(movements);                        
+%                             if ~isempty(find(movements > 2*movements_std,1))
+%                                 fix_ind = find(movements > 2 * movements_std) + 1; % because of diff
+%                                 for jj = 1 : length(fix_ind)
+%                                     if fix_ind(jj) < length(movements)
+%                                         T{temp_ind}(fix_ind(jj),:) = round((T{temp_ind}(fix_ind(jj)-1,:) + T{temp_ind}(fix_ind(jj)+1,:)) / 2);
+%                                     else
+%                                         T{temp_ind}(fix_ind(jj),:) = T{temp_ind}(fix_ind(jj)-1,:);
+%                                     end
+%                                 end
+%                                 m{temp_ind} = zeros(size(m{temp_ind}));
+%                                 for jj = 1 : length(T{temp_ind})                                
+%                                     m{temp_ind} = m{temp_ind} + circshift(double(squeeze(sbxread(fn,jj-1,1)))/length(T{temp_ind}),T{temp_ind}(jj,:));
+%                                 end
+%                             end
                         end                        
                     end
                 else % not block imaging 

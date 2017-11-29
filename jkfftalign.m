@@ -1,7 +1,7 @@
 
 function [u,v] = jkfftalign(A,B)
 
-N = min(size(A))-80;    % leave out margin
+N = min(size(A))-10;    % leave out margin
 
 yidx = round(size(A,1)/2-N/2) + 1 : round(size(A,1)/2+ N/2);
 xidx = round(size(A,2)/2-N/2) + 1 : round(size(A,2)/2+ N/2);

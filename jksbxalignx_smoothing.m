@@ -18,10 +18,10 @@ elseif (length(idx)==2)
     B = sbxread(fname,idx(2),1);
     A = squeeze(A(1,:,:));
     B = squeeze(B(1,:,:));
-    Ap = imgaussfilt(A(:,150:end),sigma);
-    Bp = imgaussfilt(B(:,150:end),sigma);
+    Ap = imgaussfilt(A(200:end,150:end),sigma);
+    Bp = imgaussfilt(B(200:end,150:end),sigma);
     
-    [u v] = fftalign(Ap,Bp);
+    [u v] = jkfftalign(Ap,Bp);
     
     Ar = circshift(A,[u,v]);
     m = (Ar+B)/2;
@@ -37,7 +37,7 @@ else
     
     Ap = imgaussfilt(A(:,150:end),sigma);
     Bp = imgaussfilt(B(:,150:end),sigma);    
-    [u v] = fftalign(Ap,Bp);
+    [u v] = jkfftalign(Ap,Bp);
      
     Ar = circshift(A,[u, v]);
     m = (Ar+B)/2;
