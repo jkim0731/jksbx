@@ -19,7 +19,11 @@ end
 % 
 % load([fn,'.align'],'-mat')
 a = sbxread(fn,0,1);
-num_plane = length(info.otwave);
+if info.volscan == 0
+    num_plane = 1;
+else
+    num_plane = length(info.otwave);
+end
 if nargin < 2
     plane = 1:num_plane;
     baseline_time = 5;
@@ -56,7 +60,8 @@ baseline_frame_num_each = floor(baseline_time * freq);
 
 stim_start_frames = info.frame(info.event_id == 3);
 baseline_start_frames = stim_start_frames - baseline_frame_num_each;
-stim_end_frames = info.frame(info.event_id == 2);
+% stim_end_frames = info.frame(info.event_id == 2);
+stim_end_frames = stim_start_frames + 60; % for passive pole.... temporary
 if stim_end_frames(1) < stim_start_frames(1)
     stim_end_frames = stim_end_frames(2:end);
 end
@@ -79,10 +84,12 @@ for i_plane = 1 : length(plane)
     for i = 1 : length(baseline_frames)
         % No need to use alignment information because it's under anesthesia 2017/10/19 JK
 %         baseline_im = baseline_im + circshift(double(squeeze(sbxread(fn,baseline_frames(i),1))/length(baseline_frames)), T(floor(baseline_frames(i)/num_plane),:));
-        baseline_im = baseline_im + double(squeeze(sbxread(fn,baseline_frames(i),1))/length(baseline_frames));
+        temp_im = sbxread(fn,baseline_frames(i),1);
+        baseline_im = baseline_im + double(squeeze(temp_im(1,:,:,:))/length(baseline_frames));
     end
     for i = 1 : length(stim_frames)
-        stim_im = stim_im + double(squeeze(sbxread(fn,stim_frames(i),1))/length(stim_frames));
+        temp_im = sbxread(fn,stim_frames(i),1);
+        stim_im = stim_im + double(squeeze(temp_im(1,:,:,:))/length(stim_frames));
     end
 
     diff_im = (stim_im - baseline_im)./ baseline_im * 100;
