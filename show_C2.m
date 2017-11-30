@@ -94,5 +94,5 @@ for i_plane = 1 : length(plane)
 
     diff_im = (stim_im - baseline_im)./ baseline_im * 100;
 
-    subplot(subplotnum1,subplotnum2,i_plane), imagesc(diff_im(:,100:end-20)), axis image, axis off
+    subplot(subplotnum1,subplotnum2,i_plane), imagesc(diff_im(101:end,101:end-20)), axis image, axis off
 end
