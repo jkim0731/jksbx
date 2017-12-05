@@ -27,6 +27,7 @@ for i = 1:length(d)
     temp = sbxread(fn,0,1); 
     if exist([fn,'.align'],'file')
         sprintf('File %s is already aligned',fn);
+        continue
     elseif exist([fn,'.trials'],'file') % ignore frames outside of each trial, because those are blank. If not treated, these lead to weird interference pattern during bidirectional scanning.
         load([fn,'.trials'],'-mat')
         trial_frames = [];
