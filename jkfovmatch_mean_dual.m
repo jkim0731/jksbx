@@ -1,5 +1,6 @@
 
 % pwd
+close all
 
 num_iter = 50;
 mouse_num = '036';
