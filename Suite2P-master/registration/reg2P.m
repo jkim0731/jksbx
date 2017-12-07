@@ -36,11 +36,11 @@ fs = ops.fsroot;
 %% find the mean frame after aligning a random subset
 
 % check if there are tiffs in directory
-try
+% try
     IMG = loadFramesBuff(fs{1}(1).name, 1, 1, 1);
-catch
-    error('could not find any tif or tiff, check your path');
-end
+% catch
+%     error('could not find any tif or tiff, check your path');
+% end
 [Ly, Lx, ~, ~] = size(IMG);
 ops.Ly = Ly;
 ops.Lx = Lx;

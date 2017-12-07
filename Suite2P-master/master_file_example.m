@@ -19,12 +19,12 @@
 
 % check out the README file for detailed instructions
 % **** and for more options available ****
-addpath('D:\CODE\MariusBox\runSuite2P') % add the path to your make_db file
+addpath('C:\Users\shires\Documents\GitHub\jksbx\Suite2P-master') % add the path to your make_db file
 
 % overwrite any of these default options in your make_db file for individual experiments
 make_db_example; % RUN YOUR OWN MAKE_DB SCRIPT TO RUN HERE
 
-ops0.toolbox_path = 'C:\CODE\GitHub\Suite2P';
+ops0.toolbox_path = 'C:\Users\shires\Documents\GitHub\jksbx\Suite2P-master';
 if exist(ops0.toolbox_path, 'dir')
 	addpath(genpath(ops0.toolbox_path)) % add local path to the toolbox
 else
@@ -33,16 +33,16 @@ end
 
 % mex -largeArrayDims SpikeDetection/deconvL0.c (or .cpp) % MAKE SURE YOU COMPILE THIS FIRST FOR DECONVOLUTION
 
-ops0.useGPU                 = 0; % if you can use an Nvidia GPU in matlab this accelerates registration approx 3 times. You only need the Nvidia drivers installed (not CUDA).
+ops0.useGPU                 = 1; % if you can use an Nvidia GPU in matlab this accelerates registration approx 3 times. You only need the Nvidia drivers installed (not CUDA).
 ops0.fig                    = 1; % turn off figure generation with 0
 % ops0.diameter               = 12; % most important parameter. Set here, or individually per experiment in make_db file
 
 % ---- root paths for files and temporary storage (ideally an SSD drive. my SSD is C:/)
-ops0.RootStorage            = '//zserver4/Data/2P'; % Suite2P assumes a folder structure, check out README file
-ops0.temp_tiff              = 'C:/DATA/temp.tif'; % copies each remote tiff locally first, into this file
-ops0.RegFileRoot            = 'C:/DATA/';  % location for binary file
+ops0.RootStorage            = 'D:\TPM\JK\'; % Suite2P assumes a folder structure, check out README file
+ops0.temp_tiff              = 'D:\TPM\JK\temp.tif'; % copies each remote tiff locally first, into this file
+ops0.RegFileRoot            = 'D:\TPM\JK\';  % location for binary file
 ops0.DeleteBin              = 1; % set to 1 for batch processing on a limited hard drive
-ops0.ResultsSavePath        = 'D:/DATA/F'; % a folder structure is created inside
+ops0.ResultsSavePath        = 'D:\TPM\JK\suite2p_results_tif'; % a folder structure is created inside
 ops0.RegFileTiffLocation    = []; %'D:/DATA/'; % leave empty to NOT save registered tiffs (slow)
 % if you want to save red channel tiffs, also set ops0.REDbinary = 1
 

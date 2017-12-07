@@ -11,7 +11,7 @@ else
     nFramesPerBatch = 1000; % if not on GPU, should have plenty of RAM available
 end
 %%
-nFramesPerBatch = 8;
+% nFramesPerBatch = 8;
 
 nBatches = ceil(nFrames/nFramesPerBatch);
 startFrame = 1:nFramesPerBatch:nFrames;

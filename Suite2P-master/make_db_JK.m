@@ -5,10 +5,13 @@
 i = 0;
 
 i = i+1;
-db(i).mouse_name    = '036';
-db(i).date          = '2015-04-29';
-db(i).expts         = [4 5 6];
-db(i).diameter      = 12;
+db(i).fn            = '025_005_000'; % JK sbx 
+db(i).mouse_name    = '025';
+db(i).RootDir       = ['D:\TPM\JK\', db(i).mouse_name]; 
+db(i).optotune      = [1:8];
+% db(i).date          = '2015-04-29';
+% db(i).expts         = [4 5 6];
+% db(i).diameter      = 12;
 %
 % i = i+1;
 % db(i).mouse_name    = 'M150329_MP009';

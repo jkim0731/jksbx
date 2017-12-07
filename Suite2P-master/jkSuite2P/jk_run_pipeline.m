@@ -1,4 +1,4 @@
-function  run_pipeline(db, ops0)
+function  jk_run_pipeline(db, ops0)
 
 % ops0.TileFactor (or db(iexp).TileFactor) can be set to multiply the number of default tiles for the neuropil
 
@@ -7,17 +7,17 @@ ops0.LoadRegMean                    = getOr(ops0, {'LoadRegMean'}, 0);
 ops0.getROIs                        = getOr(ops0, {'getROIs'}, 1);   % whether to run the optimization
 ops0.getSVDcomps                    = getOr(ops0, {'getSVDcomps'}, 0);   % whether to save SVD components to disk for later processing
 
-ops0                                = build_ops3(db, ops0);
+ops0                                = jk_build_ops3(db, ops0);
 if ~isfield(ops0, 'diameter') || isempty(ops0.diameter)
     warning('you have not specified mean diameter of your ROIs')
     warning('for best performance, please set db(iexp).diameter for each experiment')
 end
-ops0.diameter                        = getOr(ops0, 'diameter', 8*ops0.zoom);
+ops0.diameter                        = getOr(ops0, 'diameter', 10*str2double(ops0.info.config.magnification_list(ops0.info.config.magnification)));
 ops0.clustrules.diameter             = ops0.diameter;
 ops0.clustrules                      = get_clustrules(ops0.clustrules);
 
 % this loads ops1 and checks if processed binary files exist
-opath = sprintf('%s/regops_%s_%s.mat', ops0.ResultsSavePath, ops0.mouse_name, ops0.date);
+opath = sprintf('%s/regops_%s.mat', ops0.ResultsSavePath, ops0.fn);
 processed = 1;
 if exist(opath, 'file')
     load(opath);
@@ -35,12 +35,12 @@ end
 %%%% and reg2P will just create binary file
 % ops1 are the settings and values from registration
 if processed==0
-    ops1 = reg2P(ops0);  % do registration
+    ops1 = jk_reg2P(ops0);  % do registration
 else
     disp('already registered binary found');
 end
 
-% %%
+%%
 % for i = [1:numel(ops1)]
 %     ops         = ops1{i};    
 % 
@@ -92,6 +92,6 @@ end
 %          delete(ops.RegFile);        % delete temporary bin file
 %     end
 % end
-% 
-% % clean up
-% fclose all;
+
+% clean up
+fclose all;

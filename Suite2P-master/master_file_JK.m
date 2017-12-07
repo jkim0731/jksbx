@@ -19,10 +19,10 @@
 
 % check out the README file for detailed instructions
 % **** and for more options available ****
-addpath('D:\TPM\JK') % add the path to your make_db file
+addpath('D:\TPM\JK\results_suite2p') % add the path to your make_db file
 
 % overwrite any of these default options in your make_db file for individual experiments
-make_db_example; % RUN YOUR OWN MAKE_DB SCRIPT TO RUN HERE
+make_db_JK; % RUN YOUR OWN MAKE_DB SCRIPT TO RUN HERE
 
 ops0.toolbox_path = 'C:\Users\shires\Documents\GitHub\jksbx\Suite2P-master';
 if exist(ops0.toolbox_path, 'dir')
@@ -39,10 +39,10 @@ ops0.fig                    = 1; % turn off figure generation with 0
 
 % ---- root paths for files and temporary storage (ideally an SSD drive. my SSD is C:/)
 ops0.RootStorage            = 'D:\TPM\JK'; % Suite2P assumes a folder structure, check out README file
-ops0.temp_tiff              = 'C:/DATA/temp.tif'; % copies each remote tiff locally first, into this file
-ops0.RegFileRoot            = 'C:/DATA/';  % location for binary file
+% ops0.temp_tiff              = 'C:/DATA/temp.tif'; % copies each remote tiff locally first, into this file
+% ops0.RegFileRoot            = 'C:/DATA/';  % location for binary file
 ops0.DeleteBin              = 1; % set to 1 for batch processing on a limited hard drive
-ops0.ResultsSavePath        = 'D:/DATA/F'; % a folder structure is created inside
+ops0.ResultsSavePath        = 'D:\TPM\JK\results_suite2p'; % a folder structure is created inside
 ops0.RegFileTiffLocation    = []; %'D:/DATA/'; % leave empty to NOT save registered tiffs (slow)
 % if you want to save red channel tiffs, also set ops0.REDbinary = 1
 
@@ -76,7 +76,7 @@ if isinf(ops0.outerNeuropil)
 end
 
 % ----- spike deconvolution and neuropil subtraction options ----- %
-ops0.imageRate              = 7;   % imaging rate (cumulative over planes!). Approximate, for initialization of deconvolution kernel.
+ops0.imageRate              = 30.84/4;   % imaging rate (cumulative over planes!). Approximate, for initialization of deconvolution kernel.
 ops0.sensorTau              = 2; % decay half-life (or timescale). Approximate, for initialization of deconvolution kernel.
 ops0.maxNeurop              = 1; % for the neuropil contamination to be less than this (sometimes good, i.e. for interneurons)
 
@@ -98,26 +98,26 @@ db0 = db;
 
 for iexp = 1 %[1:length(db0)]
     db = db0(iexp);
-    run_pipeline(db, ops0);
+    jk_run_pipeline(db, ops0);
     
-    % deconvolved data into st, and neuropil subtraction coef in stat
-    add_deconvolution(ops0, db);
-    
-    % add red channel information (if it exists)
-    if isfield(db,'expred') && ~isempty(db.expred)
-        % creates mean red channel image aligned to green channel
-        % use this if you didn't get red channel during registration
-        % OR you have a separate experiment with red and green just for this
-        red_expts = ismember(db.expts, getOr(db, 'expred', []));
-        if ~ops0.redMeanImg || sum(red_expts)==0
-            run_REDaddon_sourcery(db, ops0);
-        end
-        
-        % identify red cells in mean red channel image
-        % fills dat.stat.redcell, dat.stat.notred, dat.stat.redprob
-        identify_redcells_sourcery(db, ops0); 
-        
-    end
+%     % deconvolved data into st, and neuropil subtraction coef in stat
+%     add_deconvolution(ops0, db);
+%     
+%     % add red channel information (if it exists)
+%     if isfield(db,'expred') && ~isempty(db.expred)
+%         % creates mean red channel image aligned to green channel
+%         % use this if you didn't get red channel during registration
+%         % OR you have a separate experiment with red and green just for this
+%         red_expts = ismember(db.expts, getOr(db, 'expred', []));
+%         if ~ops0.redMeanImg || sum(red_expts)==0
+%             run_REDaddon_sourcery(db, ops0);
+%         end
+%         
+%         % identify red cells in mean red channel image
+%         % fills dat.stat.redcell, dat.stat.notred, dat.stat.redprob
+%         identify_redcells_sourcery(db, ops0); 
+%         
+%     end
     
 end
 %% STRUCTURE OF RESULTS FILE

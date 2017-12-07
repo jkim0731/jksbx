@@ -1,5 +1,5 @@
 % compute bidirectional phase offsets from poor line scanning timing
-function BiDiPhase = jkBiDiPhaseOffsets(data)
+function BiDiPhase = jk_BiDiPhaseOffsets(data)
 
 [Ly, Lx, ~, NT] = size(data);
 

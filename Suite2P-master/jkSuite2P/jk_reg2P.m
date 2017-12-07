@@ -1,19 +1,51 @@
-function ops1 = jkreg2P(fn, ind_fta)
+function ops1 = jk_reg2P(ops)
 %% find the mean frame after aligning a random subset
-global info
-a = sbxread(fn,0,1);
+curr_dir = pwd;
+cd(ops.RootDir)
+a = sbxread(ops.fn,0,1);
 Ly = size(a,2); Lx = size(a,3);
+
+ops = buildRegOps(ops);
+
+% --- number of planes in recording and number of channels --- %
+nplanes            = ops.nplanes;
+numPlanes          = length(ops.planesToProcess); % # of planes to process
+% which channel is the functional channel
+ichannel           = getOr(ops, {'gchannel'}, 1);
+% which channel is the non-functional channel
+rchannel           = getOr(ops, {'rchannel'}, 2);
+
+% --- red channel options ---%
+red_align          = getOr(ops, {'AlignToRedChannel'}, 0); % register planes to red channel
+red_binary         = getOr(ops, {'REDbinary'}, 0); % write red channel to a binary file
+% extract mean red channel from blocks of recording with two channels
+red_mean           = getOr(ops, {'redMeanImg'}, 0);
+if red_binary
+    red_mean = 1;
+end
+if red_mean
+    disp('computing mean RED image if ~isempty(db.expred)');
+end
+
+BiDiPhase          = ops.BiDiPhase;
+frame_to_align     = ops.info.aligned.frame_to_align; %%%%%%%%
+
+
+% fs = ops.fsroot; % file storage? JK 2017/12/06
 
 if ops.doRegistration
     % get frames for initial registration
-    IMG = zeros(Ly,Lx,1,50,'uint16');
-    iframes = randperm(length(ind_fta),50);
-    for i = 1 : 50
-        temp_im = sbxread(fn,ind_fta(iframes(i)),1);
+    IMG = zeros(Ly,Lx,1,ops.NimgFirstRegistration,'uint16');
+    iframes = randperm(length(frame_to_align),ops.NimgFirstRegistration);
+    for i = 1 : ops.NimgFirstRegistration
+        temp_im = sbxread(fn,frame_to_align(iframes(i)),1);
         IMG(:,:,1,i) = squeeze(temp_im(1,:,:));
     end
     
-    BiDiPhase = jkBiDiPhaseOffsets(IMG);    
+    if ops.dobidi
+        ops.BiDiPhase = jk_BiDiPhaseOffsets(IMG);
+    end
+    BiDiPhase = ops.BiDiPhase;
     fprintf('bi-directional scanning offset = %d pixels\n', BiDiPhase);
     if abs(BiDiPhase) > 0
         IMG = ShiftBiDi(BiDiPhase, IMG, Ly, Lx);
@@ -37,12 +69,13 @@ if ops.doRegistration
     
     if ops.alignTargetImages % align target images of all planes to each other
         % (reasonable only if interplane distance during imaging was small)
-        newTargets = getImgOverPlanes(ops1, ops.planesToInterpolate);
-        for i = 1:length(ops.planesToInterpolate)
-            for l = 1:size(xFOVs,2)
-                ops1{ops.planesToInterpolate(i),l}.mimg = newTargets(:,:,i,l);
-            end
-        end
+%         newTargets = getImgOverPlanes(ops1, ops.planesToInterpolate);
+%         for i = 1:length(ops.planesToInterpolate)
+%             for l = 1:size(xFOVs,2)
+%                 ops1{ops.planesToInterpolate(i),l}.mimg = newTargets(:,:,i,l);
+%             end
+%         end
+% JK This is aligning between different depths (different optotune planes)
     end
     
     % display target image
@@ -62,20 +95,20 @@ end
 
 %% initialize mean imgs and shifts
 for i = 1:numPlanes
-    for j = 1:size(xFOVs,2)
+%     for j = 1:size(xFOVs,2) %% Not going to use nonrigid for now
         if red_mean || red_align
-            ops1{i,j}.mimgRED       = zeros(ops1{i,j}.Ly, ops1{i,j}.Lx);
+            ops1{i}.mimgRED       = zeros(ops1{i}.Ly, ops1{i}.Lx);
         end
-        ops1{i,j}.DS          = [];
-        ops1{i,j}.CorrFrame   = [];
-        ops1{i,j}.mimg1       = zeros(ops1{i,j}.Ly, ops1{i,j}.Lx);
+        ops1{i}.DS          = [];
+        ops1{i}.CorrFrame   = [];
+        ops1{i}.mimg1       = zeros(ops1{i}.Ly, ops1{i}.Lx);
         if ops.nonrigid
             ops1{i}.mimgB = cell(prod(ops.numBlocks),1);
             for ib = 1:ops.numBlocks(1)*ops.numBlocks(2)
                 ops1{i}.mimgB{ib} = ops1{i}.mimg(ops1{i}.yBL{ib}, ops1{i}.xBL{ib});
             end
         end
-    end
+%     end
 end
 
 %% open files for registration
@@ -311,7 +344,7 @@ if ~exist(savepath, 'dir')
 end
 save(sprintf('%s/regops_%s_%s.mat', ops.ResultsSavePath, ...
     ops.mouse_name, ops.date),  'ops1')
-
+cd(curr_dir)
 
 %save(sprintf('%s/F_%s_%s_plane%d.mat', ops.ResultsSavePath, ...
 %   ops.mouse_name, ops.date, iplane), 'ops')
