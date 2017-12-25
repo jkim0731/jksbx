@@ -1,6 +1,6 @@
 % run cell detection on spatial masks U
 function [ops, stat, model] = sourcery(ops)
-
+%%
 tic
 [ops, U0, model, U2]    = get_svdForROI(ops);
         
@@ -204,7 +204,7 @@ while 1
         break;
     end
 end
-
+%%
 % this runs only the mask re-estimation step, on non-smoothed PCs
 % (because smoothing is done during clustering to help)
 sourceryAddon;

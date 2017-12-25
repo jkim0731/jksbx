@@ -76,7 +76,7 @@ if isinf(ops0.outerNeuropil)
 end
 
 % ----- spike deconvolution and neuropil subtraction options ----- %
-ops0.imageRate              = 30;   % imaging rate (cumulative over planes!). Approximate, for initialization of deconvolution kernel.
+ops0.imageRate              = 7;   % imaging rate (cumulative over planes!). Approximate, for initialization of deconvolution kernel.
 ops0.sensorTau              = 2; % decay half-life (or timescale). Approximate, for initialization of deconvolution kernel.
 ops0.maxNeurop              = 1; % for the neuropil contamination to be less than this (sometimes good, i.e. for interneurons)
 
@@ -96,7 +96,7 @@ ops0.redmax                 = 1; % the higher the max the more NON-red cells
 db0 = db;
 %% RUN THE PIPELINE HERE
 
-for iexp = 1 %[1:length(db0)]
+for iexp = 1:length(db0)
     db = db0(iexp);
     run_pipeline(db, ops0);
     

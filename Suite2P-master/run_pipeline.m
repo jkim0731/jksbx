@@ -40,58 +40,58 @@ else
     disp('already registered binary found');
 end
 
-% %%
-% for i = [1:numel(ops1)]
-%     ops         = ops1{i};    
-% 
-%     % check if settings are different between ops and ops0
-%     % ops0 settings are chosen over ops settings
-%     ops         = opsChanges(ops, ops0);    
-%     
-%     ops.iplane  = i;
-%     
-% %     ops.ThScaling = 0.5;
-%     
-%     if numel(ops.yrange)<10 || numel(ops.xrange)<10
-%         warning('valid range after registration very small, continuing to next plane')
-%         continue;
-%     end
-%     
-%     if getOr(ops, {'getSVDcomps'}, 0)
-%         % extract and write to disk SVD comps (raw data)
-%         ops    = get_svdcomps(ops);
-%     end
-%             
-%     if ops.getROIs
-%         % get sources in stat, and clustering images in res
-%         [ops, stat, model]           = sourcery(ops);
-% 
-%         figure(10); clf;
-% 
-%         % extract dF
-%         switch getOr(ops, 'signalExtraction', 'surround')
-%             case 'raw'
-%                 [ops, stat, Fcell, FcellNeu] = extractSignalsNoOverlaps(ops, model, stat);
-%             case 'regression'
-%                 [ops, stat, Fcell, FcellNeu] = extractSignals(ops, model, stat);
-%             case 'surround'
-%                 [ops, stat, Fcell, FcellNeu] = extractSignalsSurroundNeuropil2(ops, stat);
-%         end
-%         
-%         % apply user-specific clustrules to infer stat.iscell
-%         stat                         = classifyROI(stat, ops.clustrules);
-%         
-%         
-%         save(sprintf('%s/F_%s_%s_plane%d.mat', ops.ResultsSavePath, ...
-%             ops.mouse_name, ops.date, ops.iplane),  'ops',  'stat',...
-%             'Fcell', 'FcellNeu', '-v7.3')
-%     end
-% 
-%     fclose('all');
-%     if ops.DeleteBin       
-%          delete(ops.RegFile);        % delete temporary bin file
-%     end
-% end
-% 
-% % clean up
-% fclose all;
+%%
+for i = [1:numel(ops1)]
+    ops         = ops1{i};    
+
+    % check if settings are different between ops and ops0
+    % ops0 settings are chosen over ops settings
+    ops         = opsChanges(ops, ops0);    
+    
+    ops.iplane  = i;
+    
+%     ops.ThScaling = 0.5;
+    
+    if numel(ops.yrange)<10 || numel(ops.xrange)<10
+        warning('valid range after registration very small, continuing to next plane')
+        continue;
+    end
+    
+    if getOr(ops, {'getSVDcomps'}, 0)
+        % extract and write to disk SVD comps (raw data)
+        ops    = get_svdcomps(ops);
+    end
+            
+    if ops.getROIs
+        % get sources in stat, and clustering images in res
+        [ops, stat, model]           = sourcery(ops);
+
+        figure(10); clf;
+
+        % extract dF
+        switch getOr(ops, 'signalExtraction', 'surround')
+            case 'raw'
+                [ops, stat, Fcell, FcellNeu] = extractSignalsNoOverlaps(ops, model, stat);
+            case 'regression'
+                [ops, stat, Fcell, FcellNeu] = extractSignals(ops, model, stat);
+            case 'surround'
+                [ops, stat, Fcell, FcellNeu] = extractSignalsSurroundNeuropil2(ops, stat);
+        end
+        
+        % apply user-specific clustrules to infer stat.iscell
+        stat                         = classifyROI(stat, ops.clustrules);
+        
+        
+        save(sprintf('%s/F_%s_%s_plane%d.mat', ops.ResultsSavePath, ...
+            ops.mouse_name, ops.date, ops.iplane),  'ops',  'stat',...
+            'Fcell', 'FcellNeu', '-v7.3')
+    end
+
+    fclose('all');
+    if ops.DeleteBin       
+         delete(ops.RegFile);        % delete temporary bin file
+    end
+end
+
+% clean up
+fclose all;

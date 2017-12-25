@@ -15,12 +15,12 @@ for i =  1:length(ops.planesToProcess)
     iplane  = ops0.planesToProcess(i);
     
     fpath = sprintf('%s/F_%s_%s_plane%d_proc.mat', ops.ResultsSavePath, ...
-        ops.mouse_name, ops.date, iplane);
+        ops.mouse_name, ops.date, iplane); 
     if exist(fpath, 'file')
         load(fpath);
     else
         fpath = sprintf('%s/F_%s_%s_plane%d.mat', ops.ResultsSavePath, ...
-            ops.mouse_name, ops.date, iplane);
+            ops.mouse_name, ops.date, iplane); 
         dat = load(fpath);
     end
     
