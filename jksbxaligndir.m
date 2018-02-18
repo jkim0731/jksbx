@@ -176,7 +176,7 @@ for i = 1:length(d)
         end
     end
     save([fn '.align'],'m1','m2','T1','T2','frame_to_align');        
-    display(sprintf('Done %s: Aligned %d images in %d min',fn,max_idx,round(toc/60)));        
+    fprintf('Done %s: Aligned %d images in %d min\n',fn,max_idx,round(toc/60));        
 end
 end
 

@@ -3,23 +3,39 @@
 % db(iexp).diameter, or ops0.diameter. 
 
 i = 0;
-mice = {'025','027','030'};
-sessions = 0:25;
+mice = {'036'};
+sessions = [1:21,901];
 planes = 1 : 8;
-for mi = 1 : 3
+for mi = 1 : length(mice)
     for si = 1 : length(sessions)
         for pi = 1 : length(planes)
-            if mi == 1 && si == 1
-                continue
-            end
             i = i + 1;
             db(i).mouse_name    = mice{mi};
             db(i).date          = sprintf('%s_%03d_000',mice{mi},sessions(si));
             db(i).expts         = planes(pi);
             db(i).diameter      = 20;
+            db(i).readTiffHeader = 0; % readTiffHeader not applicable w/o ScanImage
         end
     end
 end
+
+mice = {'039'};
+sessions = [1:28,901];
+planes = 1 : 8;
+for mi = 1 : length(mice)
+    for si = 1 : length(sessions)
+        for pi = 1 : length(planes)
+            i = i + 1;
+            db(i).mouse_name    = mice{mi};
+            db(i).date          = sprintf('%s_%03d_000',mice{mi},sessions(si));
+            db(i).expts         = planes(pi);
+            db(i).diameter      = 20;        
+            db(i).readTiffHeader = 0; % readTiffHeader not applicable w/o ScanImage
+        end
+    end
+end
+
+
 
 
 % %

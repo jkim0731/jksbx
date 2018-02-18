@@ -41,7 +41,11 @@ for i = 1 : length(m)
     parfor j = 1 : length(fta{i})
         a = sbxread(fn,fta{i}(j),1);
         a = squeeze(a(ch,101:end,101:end));
-        temp_fn = sprintf('%s_%d_%05d.tif',fn,i,j);
+        if ch == 1
+            temp_fn = sprintf('%s_%d_%05d_green.tif',fn,i,j);
+        elseif ch == 2
+            temp_fn = sprintf('%s_%d_%05d_red.tif',fn,i,j);
+        end
         imwrite(a,[pwd,filesep,fn,filesep,num2str(i),filesep,temp_fn],'tif');
     end            
 end    

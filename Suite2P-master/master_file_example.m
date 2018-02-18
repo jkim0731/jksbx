@@ -76,7 +76,7 @@ if isinf(ops0.outerNeuropil)
 end
 
 % ----- spike deconvolution and neuropil subtraction options ----- %
-ops0.imageRate              = 7;   % imaging rate (cumulative over planes!). Approximate, for initialization of deconvolution kernel.
+ops0.imageRate              = 7; % imaging rate (cumulative over planes!). Approximate, for initialization of deconvolution kernel.
 ops0.sensorTau              = 2; % decay half-life (or timescale). Approximate, for initialization of deconvolution kernel.
 ops0.maxNeurop              = 1; % for the neuropil contamination to be less than this (sometimes good, i.e. for interneurons)
 
@@ -85,7 +85,7 @@ ops0.AlignToRedChannel      = 0; % compute registration offsets using red channe
 ops0.REDbinary              = 0; % make a binary file of registered red frames
 % if db.expred, then compute mean red image for green experiments with red
 % channel available while doing registration
-ops0.redMeanImg             = 0; 
+ops0.redMeanImg             = 1; 
 % for red cell detection (identify_redcells_sourcery.m)
 % redratio = red pixels inside / red pixels outside
 % redcell = redratio > mean(redratio) + redthres*std(redratio)
