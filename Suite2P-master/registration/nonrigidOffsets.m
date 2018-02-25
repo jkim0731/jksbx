@@ -22,13 +22,13 @@ for i = 1:numel(ops.planesToProcess)
     for ib = 1:nblocks
         % collect ds
         ops1{i}.mimg = ops1{i}.mimgB{ib};
-	if ops.kriging
-	  [ds(:,:,ib), Corr(:,ib)]  = ...
-	      regoffKriging(data(ops1{i}.yBL{ib},ops1{i}.xBL{ib},indframes),ops1{i}, 0);
-	else
-	  [ds(:,:,ib), Corr(:,ib)]  = ...
-	      regoffLinear(data(ops1{i}.yBL{ib},ops1{i}.xBL{ib},indframes),ops1{i},0);
-	end
+        if ops.kriging
+          [ds(:,:,ib), Corr(:,ib)]  = ...
+              regoffKriging(data(ops1{i}.yBL{ib},ops1{i}.xBL{ib},indframes),ops1{i}, 0);
+        else
+          [ds(:,:,ib), Corr(:,ib)]  = ...
+              regoffLinear(data(ops1{i}.yBL{ib},ops1{i}.xBL{ib},indframes),ops1{i},0);
+        end
     end
     if j==1
         ds(1,:,:) = 0;

@@ -25,6 +25,7 @@ function x = jksbxread(fname,k,N,varargin)
 
 % global info_loaded info
 global info
+
 load(fname);
     
 if(exist([fname ,'.align'])) % aligned?

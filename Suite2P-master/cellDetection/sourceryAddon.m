@@ -59,6 +59,5 @@ for iter = 1:3
         
         drawnow
     end
-    2;
 end
 %%

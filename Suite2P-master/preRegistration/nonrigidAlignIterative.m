@@ -24,13 +24,13 @@ for i = 1:ops.NiterPrealign
         ops.mimg = mimg(ops.yBL{ib},ops.xBL{ib});
         % compute offsets from each frame to mean image and subtract mean
         % offset (centered at offset = 0)
-	if ops.kriging
-	  [dsnew(:,:,ib), Corr(:,ib)]  = ...
-	      regoffKriging(data(ops.yBL{ib},ops.xBL{ib},:), ops, 1);
-	else
-	  [dsnew(:,:,ib), Corr(:,ib)]  = ...
-	      regoffLinear(data(ops.yBL{ib},ops.xBL{ib},:), ops, 1);
-	end
+        if ops.kriging
+          [dsnew(:,:,ib), Corr(:,ib)]  = ...
+              regoffKriging(data(ops.yBL{ib},ops.xBL{ib},:), ops, 1);
+        else
+          [dsnew(:,:,ib), Corr(:,ib)]  = ...
+              regoffLinear(data(ops.yBL{ib},ops.xBL{ib},:), ops, 1);
+        end
     end
     
     % register frames

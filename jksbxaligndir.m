@@ -39,11 +39,20 @@ for i = 1:length(d)
     end
 
     tic
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    [~,plane_sorted] = sort(info.otwve,'descend'); % sorting from the top. 
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % Assume objective is already sorted descending. (objective 1 higher, i.e., shallower, than objective 2)
+    % Overall goal is to have all planes (including layers) sorted in descending order
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%    
     if info.volscan
         num_plane = length(info.otwave_um);
     else
         num_plane = 1;
+        plane_sorted = 1;
     end        
+    
     m1 = cell(1,num_plane); % for green. Empty if only pmt1 was used.
     m2 = cell(1,num_plane); % for red. Empty if only pmt0 was used.        
     T1 = cell(1,num_plane); % Empty if only pmt1 was used.
@@ -54,7 +63,7 @@ for i = 1:length(d)
     channels = info.channels;
     
     blockimaging = 0;            
-    num_layer = 0;
+    num_layer = 1;
     num_block = [];
     block_message_i = [];
     for message_i = 1 : length(info.messages)
@@ -98,8 +107,7 @@ for i = 1:length(d)
             for jj = 1 : length(layer_trials{ii})
                 for kk = 1 : length(trials)
                     if trials(kk).trialnum == layer_trials{ii}(jj)
-                        trial_frames{ii} = [trial_frames{ii}, ...
-                            trials(kk).frames(1)+num_plane : trials(kk).frames(2)-num_plane];% ignore first and last frame of each plane, each trial (because of possible clipping by laser blanking and re-opening)
+                        trial_frames{ii} = [trial_frames{ii}, trials(kk).frames(1) : trials(kk).frames(2)];
                         break
                     end
                 end
@@ -111,41 +119,16 @@ for i = 1:length(d)
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%
         frame_to_align = cell(1,num_layer*num_plane); % this is going to be used for the rest of the analysis.        
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
         for ind_layer = 1 : num_layer                        
             for ind_plane = 1 : num_plane
-                frame_to_align{(ind_layer-1)*num_plane + ind_plane} = intersect(ind_plane-1:num_plane:max_idx, trial_frames{ind_layer});                  
+                frame_to_align{(ind_layer-1)*num_plane + plane_sorted(ind_plane)} = intersect(plane_sorted(i_sorted_plane)-1:num_plane:max_idx, trial_frames{ind_layer});                  
             end
         end
-% %                 [m{ind_layer*num_plane}, T{ind_layer*num_plane}] = jksbxalignx(fn,frame_to_align{ind_layer*num_plane});
-
-% % %     %                             movements = sqrt(diff(T{temp_ind}(:,1)).^2 + diff(T{temp_ind}(:,2)).^2);
-% % %     %                             movements_std = std(movements);                        
-% % %     %                             if ~isempty(find(movements > 2*movements_std,1))
-% % %     %                                 fix_ind = find(movements > 2 * movements_std) + 1; % because of diff
-% % %     %                                 for jj = 1 : length(fix_ind)
-% % %     %                                     if fix_ind(jj) < length(movements)
-% % %     %                                         T{temp_ind}(fix_ind(jj),:) = round((T{temp_ind}(fix_ind(jj)-1,:) + T{temp_ind}(fix_ind(jj)+1,:)) / 2);
-% % %     %                                     else
-% % %     %                                         T{temp_ind}(fix_ind(jj),:) = T{temp_ind}(fix_ind(jj)-1,:);
-% % %     %                                     end
-% % %     %                                 end
-% % %     %                                 m{temp_ind} = zeros(size(m{temp_ind}));
-% % %     %                                 for jj = 1 : length(T{temp_ind})                                
-% % %     %                                     m{temp_ind} = m{temp_ind} + circshift(double(squeeze(sbxread(fn,jj-1,1)))/length(T{temp_ind}),T{temp_ind}(jj,:));
-% % %     %                                 end
-% % %     %                             end
 
     else % if not block_imaging
-        for j = 1 : num_plane
-            temp_start = num_plane -1; 
-            frame_dif = mod(max_idx+1,num_plane) - mod(j,num_plane);
-            if frame_dif < 0
-                temp_end = max_idx - (num_plane + frame_dif);
-            else
-                temp_end = max_idx - frame_dif;
-            end
-            frame_to_align{j} = intersect(temp_start:num_plane:temp_end,trial_frames);             
+        for ind_plane = 1 : num_plane
+            frame_to_align{plane_sorted(ind_plane)} = intersect(plane_sorted(ind_plane):num_plane:max_idx,trial_frames);             
         end        
     end
     
