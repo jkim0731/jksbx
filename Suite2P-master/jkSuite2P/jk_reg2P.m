@@ -217,7 +217,7 @@ end
 for i = 1:numel(ops1)
     ops1{i}.mimg1 = ops1{i}.mimg1/sum(ops1{i}.Nframes);
     if red_mean || red_align
-        red_expts = ismember(ops.expts, getOr(ops, 'expred', []));
+        red_expts = ismember(ops.session, getOr(ops, 'expred', []));
         ops1{i}.mimgRED = ops1{i}.mimgRED/sum(ops1{i}.Nframes(red_expts));
         if red_binary
             fclose(fidRED{i});

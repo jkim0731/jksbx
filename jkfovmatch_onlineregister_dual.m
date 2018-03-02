@@ -3,10 +3,10 @@
 close all
 
 num_iter = 50;
-mouse_num = '041';
-layer = 2;
+mouse_num = '049';
+layer = 1;
 
-ref_fn_list1 = {'036_5555_001','037_5555_001','038_5555_001','039_5555_001','041_5555_001'};
+ref_fn_list1 = {'049_999_000'};
 ref_fn_list2 = {'036_5554_001','037_5554_001','038_5554_001','039_5554_001','041_5554_001'};
 if layer == 1
     for i = 1 : length(ref_fn_list1)
@@ -32,7 +32,7 @@ ref1 = mat2gray(m1{end}); % all m's are cell from 2017/11/29. Every .align file 
 ref2 = mat2gray(m2{end});
 
 figure(1), imagesc(ref1(101:end-10,101:end-10)), axis image, 
-% figure(2), imagesc(ref2(101:end-10,101:end-10)), axis image
+figure(2), imagesc(ref2(101:end-10,101:end-10)), axis image
 
 mmfile = memmapfile('scanbox.mmap','Writable',true, ...
     'Format', { 'int16' [1 16] 'header' } , 'Repeat', 1);
@@ -52,13 +52,24 @@ while(true)
         mmfile.Format = {'int16' [1 16] 'header' ; ...
             'uint16' double([mmfile.Data.header(2) mmfile.Data.header(3)]) 'chA'; ...
             'uint16' double([mmfile.Data.header(2) mmfile.Data.header(3)]) 'chB'};
-%         aaa = mmfile.Data;
         if i == 1 
-            mchA = double(intmax('uint16')-mmfile.Data.chA)/num_iter;
-            mchB = double(intmax('uint16')-mmfile.Data.chB)/num_iter;
+            mchA = double(intmax('uint16')-mmfile.Data.chA);
+            mchB = double(intmax('uint16')-mmfile.Data.chB);
         else
-            mchA = mchA + double(intmax('uint16')-mmfile.Data.chA)/num_iter;    
-            mchB = mchB + double(intmax('uint16')-mmfile.Data.chB)/num_iter;
+            prev_mchA = mchA;
+            mchA = double(intmax('uint16')-mmfile.Data.chA);
+            prev_mchB = mchB;
+            mchB = double(intmax('uint16')-mmfile.Data.chB);    
+            
+            
+            [u1, v1] = jkfftalign(mchA(50:end-50,50:end-50),prev_mchA(50:end-50,50:end-50));
+            [u2, v2] = jkfftalign(mchB(50:end-50,50:end-50),prev_mchB(50:end-50,50:end-50));
+
+            Ar = circshift(mchA,[u1,v1]);
+            mchA = (Ar+prev_mchA)/2;
+            
+            Br = circshift(mchB,[u1,v1]);
+            mchB = (Br+prev_mchB)/2;
         end
         mmfile.Data.header(1) = -1; % signal Scanbox that frame has been consumed!
     end  

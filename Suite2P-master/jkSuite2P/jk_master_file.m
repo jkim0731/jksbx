@@ -43,12 +43,12 @@ ops0.fig                    = 1; % turn off figure generation with 0
 % ops0.diameter               = 12; % most important parameter. Set here, or individually per experiment in make_db file
 
 % ---- root paths for files and temporary storage (ideally an SSD drive. my SSD is C:/)
-ops0.RootStorage            = 'D:\TPM\JK\'; % Suite2P assumes a folder structure, check out README file
-ops0.temp_tiff              = 'D:\TPM\JK\temp.tif'; % copies each remote tiff locally first, into this file
-ops0.RegFileRoot            = 'D:\TPM\JK\';  % location for binary file
+ops0.RootStorage            = 'D:\2p\JK\'; % Suite2P assumes a folder structure, check out README file
+ops0.temp_tiff              = 'D:\2p\JK\temp.tif'; % copies each remote tiff locally first, into this file
+ops0.RegFileRoot            = 'D:\2p\JK\';  % location for binary file
 ops0.DeleteBin              = 0; % set to 1 for batch processing on a limited hard drive
-ops0.ResultsSavePath        = 'D:\TPM\JK\'; % a folder structure is created inside
-ops0.RegFileTiffLocation    = 'D:\TPM\JK\tiffs\'; % leave empty to NOT save registered tiffs (slow)
+ops0.ResultsSavePath        = 'D:\2p\JK\'; % a folder structure is created inside
+ops0.RegFileTiffLocation    = 'D:\2p\JK\tiffs\'; % leave empty to NOT save registered tiffs (slow)
 % if you want to save red channel tiffs, also set ops0.REDbinary = 1
 
 % ---- registration options ------------------------------------- %
@@ -81,7 +81,7 @@ if isinf(ops0.outerNeuropil)
 end
 
 % ----- spike deconvolution and neuropil subtraction options ----- %
-% ops0.imageRate              = 7; % imaging rate (cumulative over
+% ops0.imageRate              = 30; % imaging rate (cumulative over
 % planes!). Approximate, for initialization of deconvolution kernel.
 % Calculated later by info from sbx.
 ops0.sensorTau              = 0.5; % decay half-life (or timescale). Approximate, for initialization of deconvolution kernel.
@@ -92,7 +92,7 @@ ops0.AlignToRedChannel      = 0; % compute registration offsets using red channe
 ops0.REDbinary              = 0; % make a binary file of registered red frames
 % if db.expred, then compute mean red image for green experiments with red
 % channel available while doing registration
-ops0.redMeanImg             = 0; 
+ops0.redMeanImg             = 1; 
 % for red cell detection (identify_redcells_sourcery.m)
 % redratio = red pixels inside / red pixels outside
 % redcell = redratio > mean(redratio) + redthres*std(redratio)
@@ -109,14 +109,13 @@ for iexp = 1:length(db0)
     
     % add info from scanbox .mat data and calculate ops0.imageRate
     matfnlist = dir([ops0.RootStorage, filesep, db.mouse_name, filesep, sprintf('%s_%03d_',db.mouse_name,db.session), '*.mat']);
-
-    load(fullfile(matfnlist(1).folder, matfnlist(1).name)) % loading 'info' variable from scanbox .mat file. using the first one of the session    
-    db.info = info;
-    if db.info.volscan
-        ops0.imageRate = db.info.resfreq*(2-db.info.scanmode)/db.info.sz(1)/length(db.info.otwave);
-    else
-        ops0.imageRate = db.info.resfreq*(2-db.info.scanmode)/db.info.sz(1);
+    try    
+        load(fullfile(matfnlist(1).folder, matfnlist(1).name)) % loading 'info' variable from scanbox .mat file. using the first one of the session    
+    catch
+        load([ops0.RootStorage, filesep, db.mouse_name, filesep, matfnlist(1).name])
     end
+    db.info = info;
+    ops0.imageRate = db.info.resfreq*(2-db.info.scanmode)/db.info.sz(1);
 
     if db.info.scanmode
         ops0.useX = 1 : db.info.sz(2);
@@ -161,21 +160,21 @@ for iexp = 1:length(db0)
     jk_run_pipeline(db, ops0);
     
     % deconvolved data into st, and neuropil subtraction coef in stat
-    add_deconvolution(ops0, db);
+    jk_add_deconvolution(ops0, db);
     
     % add red channel information (if it exists)
     if isfield(db,'expred') && ~isempty(db.expred)
         % creates mean red channel image aligned to green channel
         % use this if you didn't get red channel during registration
         % OR you have a separate experiment with red and green just for this
-        red_expts = ismember(db.expts, getOr(db, 'expred', []));
+        red_expts = ismember(db.session, getOr(db, 'expred', []));
         if ~ops0.redMeanImg || sum(red_expts)==0
-            run_REDaddon_sourcery(db, ops0);
+            jkrun_REDaddon_sourcery(db, ops0);
         end
         
         % identify red cells in mean red channel image
         % fills dat.stat.redcell, dat.stat.notred, dat.stat.redprob
-        identify_redcells_sourcery(db, ops0);         
+        jk_identify_redcells_sourcery(db, ops0);         
     end
     
 end

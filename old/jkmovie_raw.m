@@ -8,7 +8,7 @@ writerObj = VideoWriter([fname '_raw.m4v'],'MPEG-4');
 writerObj.Quality = 96;
 writerObj.FrameRate = 30;
 open(writerObj);
-load([fname, '.align'], '-mat')
+
 for(i=1:length(idx))
     z = sbxread(fname,idx(i),1);
     z = squeeze(z);
