@@ -22,7 +22,12 @@
 addpath('C:\Users\shires\Documents\GitHub\jksbx\Suite2P-master') % add the path to your make_db file
 
 % overwrite any of these default options in your make_db file for individual experiments
-make_db_example; % RUN YOUR OWN MAKE_DB SCRIPT TO RUN HERE
+jk_make_db; % RUN YOUR OWN MAKE_DB SCRIPT TO RUN HERE
+
+
+ops0.optotune_ringing_time = 5; % in ms. To crop top portion of each frame.
+
+
 
 ops0.toolbox_path = 'C:\Users\shires\Documents\GitHub\jksbx\Suite2P-master';
 if exist(ops0.toolbox_path, 'dir')
@@ -38,12 +43,12 @@ ops0.fig                    = 1; % turn off figure generation with 0
 % ops0.diameter               = 12; % most important parameter. Set here, or individually per experiment in make_db file
 
 % ---- root paths for files and temporary storage (ideally an SSD drive. my SSD is C:/)
-ops0.RootStorage            = 'Y:\Whiskernas\JK_temp\2p\'; % Suite2P assumes a folder structure, check out README file
-ops0.temp_tiff              = 'Y:\Whiskernas\JK_temp\2p\temp.tif'; % copies each remote tiff locally first, into this file
-ops0.RegFileRoot            = 'Y:\Whiskernas\JK_temp\2p\';  % location for binary file
+ops0.RootStorage            = 'D:\TPM\JK\'; % Suite2P assumes a folder structure, check out README file
+ops0.temp_tiff              = 'D:\TPM\JK\temp.tif'; % copies each remote tiff locally first, into this file
+ops0.RegFileRoot            = 'D:\TPM\JK\';  % location for binary file
 ops0.DeleteBin              = 0; % set to 1 for batch processing on a limited hard drive
-ops0.ResultsSavePath        = 'Y:\Whiskernas\JK_temp\2p\'; % a folder structure is created inside
-ops0.RegFileTiffLocation    = 'Y:\Whiskernas\JK_temp\2p\'; % leave empty to NOT save registered tiffs (slow)
+ops0.ResultsSavePath        = 'D:\TPM\JK\'; % a folder structure is created inside
+ops0.RegFileTiffLocation    = 'D:\TPM\JK\tiffs\'; % leave empty to NOT save registered tiffs (slow)
 % if you want to save red channel tiffs, also set ops0.REDbinary = 1
 
 % ---- registration options ------------------------------------- %
@@ -84,10 +89,10 @@ ops0.maxNeurop              = 1; % for the neuropil contamination to be less tha
 
 % ----- if you have a RED channel ---------------------- ------------%
 ops0.AlignToRedChannel      = 0; % compute registration offsets using red channel
-ops0.REDbinary              = 1; % make a binary file of registered red frames
+ops0.REDbinary              = 0; % make a binary file of registered red frames
 % if db.expred, then compute mean red image for green experiments with red
 % channel available while doing registration
-ops0.redMeanImg             = 1; 
+ops0.redMeanImg             = 0; 
 % for red cell detection (identify_redcells_sourcery.m)
 % redratio = red pixels inside / red pixels outside
 % redcell = redratio > mean(redratio) + redthres*std(redratio)
@@ -99,10 +104,11 @@ db0 = db;
 %% RUN THE PIPELINE HERE
 
 for iexp = 1:length(db0)
+    %%
     db = db0(iexp);
     
     % add info from scanbox .mat data and calculate ops0.imageRate
-    matfnlist = dir([db.RootStorage, filesep, db.mouse_name, filesep, sprintf('%s_%03d_',db.mouse_name,db.session), '*.mat']);
+    matfnlist = dir([ops0.RootStorage, filesep, db.mouse_name, filesep, sprintf('%s_%03d_',db.mouse_name,db.session), '*.mat']);
 
     load(fullfile(matfnlist(1).folder, matfnlist(1).name)) % loading 'info' variable from scanbox .mat file. using the first one of the session    
     db.info = info;
@@ -112,11 +118,26 @@ for iexp = 1:length(db0)
         ops0.imageRate = db.info.resfreq*(2-db.info.scanmode)/db.info.sz(1);
     end
 
+    if db.info.scanmode
+        ops0.useX = 1 : db.info.sz(2);
+    else
+        ops0.useX = 100 : db.info.sz(2);
+    end
+    if db.info.volscan % chop off first optotune_ringing_time ms of each plane because of optotune ringing
+        if db.info.scanmode
+            ops0.useY = round(ops0.optotune_ringing_time/ (1000/db.info.resfreq) ) : db.info.sz(1); 
+        else
+            ops0.useY = round(ops0.optotune_ringing_time/ (1000/db.info.resfreq) *2) : db.info.sz(1);
+        end
+    else
+        db.useY = 1: db.info.sz(1);
+    end
+    
     curr_dir = pwd;
     db.sbxfnlist = cell(length(matfnlist),1);    
-    cd([db.RootStorage, filesep, db.mouse_name])        
+    cd([ops0.RootStorage, filesep, db.mouse_name])        
     for ifile = 1 : length(matfnlist)
-        [~, db.sbxfnlist{ifile}, ~] = fileparts(matfnlist{isession}(ifile).name);
+        [~, db.sbxfnlist{ifile}, ~] = fileparts(matfnlist(ifile).name);
         jksbxsplittrial(db.sbxfnlist{ifile});
         load([db.sbxfnlist{ifile},'.trials'],'-mat')        
         if ifile == 1
@@ -136,7 +157,7 @@ for iexp = 1:length(db0)
     db.nplanes = db.num_layer * db.num_plane; % nplanes meaning total # of planes that are imaged, while num_plane #of planes during a single imaging block (or within a layer)
     db.nsessions = length(db.session);
     cd(curr_dir)
-        
+    %%
     jk_run_pipeline(db, ops0);
     
     % deconvolved data into st, and neuropil subtraction coef in stat

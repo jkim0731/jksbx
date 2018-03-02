@@ -3,8 +3,8 @@
 % db(iexp).diameter, or ops0.diameter. 
 
 i = 0;
-mice = {'036'};
-sessions = [1:21,901];
+mice = {'030'};
+sessions = 4;
 for mi = 1 : length(mice)
     for si = 1 : length(sessions)
         i = i + 1;
@@ -13,24 +13,24 @@ for mi = 1 : length(mice)
     end
 end
 
-mice = {'039'};
-sessions = [1:28,901];
-for mi = 1 : length(mice)
-    for si = 1 : length(sessions)        
-        i = i + 1;
-        db(i).mouse_name    = mice{mi};
-        db(i).session       = sessions(si);        
-    end
-end
+% mice = {'039'};
+% sessions = [1:28,901];
+% for mi = 1 : length(mice)
+%     for si = 1 : length(sessions)        
+%         i = i + 1;
+%         db(i).mouse_name    = mice{mi};
+%         db(i).session       = sessions(si);        
+%     end
+% end
 
 
 
 
 %% examples
-db(i).mouse_name    = '039';
-db(i).session       = [3,4,5,6,9,10,11,18,19];        
-db(i).targetSession = 4; %targetSession determines which session to be reference for registration
-
+% db(i).mouse_name    = '039';
+% db(i).session       = [3,4,5,6,9,10,11,18,19];        
+% db(i).targetSession = 4; %targetSession determines which session to be reference for registration
+% 
 
 % %
 % i = i+1;

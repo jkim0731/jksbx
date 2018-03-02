@@ -4,6 +4,6 @@ curr_dir = pwd;
 cd(ops.RootDir)
 
 data = jksbxreadframes_multifile(ops.sbxfnlist, ops.frame_to_use{plane});
-data = data(channel,:,:,:);
+data = squeeze(data(channel,:,:,:));
 
 cd(curr_dir)

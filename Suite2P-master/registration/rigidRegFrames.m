@@ -18,7 +18,6 @@ startFrame = 1:nFramesPerBatch:nFrames;
 endFrame = min(startFrame+nFramesPerBatch-1, nFrames);
 dreg = zeros(size(data), orig_class);
 
-
 for iBatch = 1:nBatches
     idx = startFrame(iBatch):endFrame(iBatch);
     if ops.useGPU

@@ -17,17 +17,18 @@ end
 if nargin == 4
     maxidx_list = vargin{1};
 else
-    maxidx_list = [];
+    maxidx_list = 0;
     for i = 1 : length(cellfn)        
         maxidx_list = [maxidx_list, maxidx_list(end) + sbx_maxidx(cellfn{i}) + 1]; % each idx starts with 0
     end
 end
-z = sbxread(cellfn{1});
-z = zeros([size(z,1) size(z,2) size(z,3) N]);
+maxidx_list(1) = [];
+z = sbxread(cellfn{1},0,1);
+z = zeros([size(z,1) size(z,2) size(z,3) N],'uint16');
 idx = frames(randperm(length(frames),N));
 
 for j = 1 : length(idx)     
-    ifile = length(maxidx_list < idx(j)) + 1;
+    ifile = length(find(maxidx_list < idx(j))) + 1;
     if ifile == 1
         z(:,:,:,j) = sbxread(cellfn{1}, idx(j), 1);    
     else

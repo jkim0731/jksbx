@@ -35,7 +35,7 @@ else
     processed = 0;
 end
 
-% run reg2P if the binaries do not exist
+%% run reg2P if the binaries do not exist
 %%%% if tiffs have already been registered, set ops.doRegistration = 0
 %%%% and reg2P will just create binary file
 % ops1 are the settings and values from registration
@@ -87,8 +87,8 @@ for i = 1 : numel(ops1)
         stat                         = classifyROI(stat, ops.clustrules);
         
         
-        save(sprintf('%s/F_%s_%s_plane%d.mat', ops.ResultsSavePath, ...
-            ops.mouse_name, ops.date, ops.iplane),  'ops',  'stat',...
+        save(sprintf('%s/F_%s_%03d_plane%d.mat', ops.ResultsSavePath, ...
+            ops.mouse_name, ops.session, ops.iplane),  'ops',  'stat',...
             'Fcell', 'FcellNeu', '-v7.3')
     end
 

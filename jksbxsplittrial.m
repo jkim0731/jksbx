@@ -99,7 +99,7 @@ function jksbxsplittrial(fn)
             end
             %%
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            [~,plane_sorted] = sort(info.otwve,'descend'); % sorting from the top. 
+            [~,plane_sorted] = sort(info.otwave,'descend'); % sorting from the top. 
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%
             % Assume objective is already sorted descending. (objective 1 higher, i.e., shallower, than objective 2)
             % Overall goal is to have all planes (including layers) sorted in descending order
@@ -171,7 +171,7 @@ function jksbxsplittrial(fn)
 
                 for ind_layer = 1 : num_layer                        
                     for ind_plane = 1 : num_plane
-                        frame_to_use{(ind_layer-1)*num_plane + plane_sorted(ind_plane)} = intersect(plane_sorted(i_sorted_plane)-1:num_plane:max_idx, trial_frames{ind_layer});                  
+                        frame_to_use{(ind_layer-1)*num_plane + plane_sorted(ind_plane)} = intersect(ind_plane-1:num_plane:max_idx, trial_frames{ind_layer});                  
                     end
                 end
 

@@ -34,11 +34,8 @@ BiDiPhase          = ops.BiDiPhase;
 fs = ops.fsroot; 
 %% find the mean frame after aligning a random subset
 
-ops.Ly = ops.info.size(1);
-ops.Lx = ops.info.size(2);
-% Do I need to crop the image? 2018/02/21 JK 
-% -> Not if registration is only done in a cropped image.
-% -> Yes if it's using the whole image, since there can be dead bands and bidirectional imaging artifacts.
+ops.Ly = length(ops.useY);
+ops.Lx = length(ops.useX);
 
 % split into subsets (for high scanning resolution recordings)
 [xFOVs, yFOVs] = get_xyFOVs(ops);
@@ -47,15 +44,15 @@ targetSession      = getOr(ops, {'targetSession'}, []);
 
 if ops.doRegistration
     % get frames for initial registration
-    IMG = jkGetRandFrames(ops);
+    IMG = jkGetRandFrames(ops); % ops.useX and useY are already treated inside jkGetRandFrames
     % compute phase shifts from bidirectional scanning    
     if ops.dobidi
         ops.BiDiPhase = BiDiPhaseOffsets(IMG(:,:,1,:)); % BiDi is same across all planes in each session        
     end
     BiDiPhase = ops.BiDiPhase;    
-    fprintf('bi-directional scanning offset = %d pixels for session # %d\n', BiDiPhase(isessions), ops.session(isession));
+    fprintf('bi-directional scanning offset = %d pixels for session %d\n', BiDiPhase, ops.session);
     if abs(BiDiPhase) > 0
-       IMG = ShiftBiDi(BiDiPhase, IMG, Ly, Lx);
+       IMG = ShiftBiDi(BiDiPhase, IMG, ops.Ly, ops.Lx);
     end
 
     % makes blocks (number = numBlocks) and masks for smoothing registration offsets across blocks
@@ -65,18 +62,16 @@ if ops.doRegistration
     end
     
     % for each plane: align chosen frames to average to generate target image
-
-
     ops1 = cell(nplanes,size(xFOVs,2));
     for iplane = 1 : nplanes
         if ops.nonrigid && ~(ops.alignAcrossPlanes || ops.interpolateAcrossPlanes)
             ops1{iplane} = nonrigidAlignIterative(squeeze(IMG(:,:,ops.planesToProcess(iplane),:)), ops);
         else
             for iFOV = 1:size(xFOVs,2)
-                ops1{iplane,iFOV} = alignIterative(single(squeeze(IMG(IMG(yFOVs(:,iFOV),xFOVs(:,iFOV),ops.planesToProcess(iplane),:))), ops));
+                ops1{iplane,iFOV} = alignIterative(single(squeeze(IMG(yFOVs(:,iFOV),xFOVs(:,iFOV),ops.planesToProcess(iplane),:))), ops);
             end
         end
-        fprintf('target image acquired for plane %d/%d of session %d\n', ops.planesToProcess(iplane), nplanes, ops.session);
+        fprintf('target image acquired for plane %d/%d of mouse %s session %d\n', ops.planesToProcess(iplane), nplanes, ops.mouse_name, ops.session);
     end
     
     if ops.alignTargetImages % align target images of all planes to each other
@@ -92,7 +87,7 @@ if ops.doRegistration
     
     % display target image
     if ops.fig && ops.showTargetRegistration
-        PlotRegMean(ops1,ops);
+        jkPlotRegMean(ops1,ops);
         drawnow
     end
     clear IMG
@@ -101,13 +96,13 @@ else   % don't recompute mean image
     ops1 = cell(nplanes,1);
     for iplane = 1 : nplanes
         ops1{iplane} = ops;
-        ops1{iplane}.mimg = zeros(Ly, Lx);
+        ops1{iplane}.mimg = zeros(ops.Ly, ops.Lx);
     end
 end
 
 %% initialize mean imgs and shifts
 
-for iplanes = 1 : nplanes
+for iplane = 1 : nplanes
     if ops.nonrigid
         ops1{iplane}.mimgB = cell(prod(ops.numBlocks),1);
         for ib = 1:ops.numBlocks(1)*ops.numBlocks(2)
@@ -120,7 +115,7 @@ for iplanes = 1 : nplanes
             end
             ops1{iplane,iFOV}.DS                = [];
             ops1{iplane,iFOV}.CorrFrame         = [];
-            ops1{iplaneiFOV}.mimg1             = zeros(ops1{iplane}.Ly, ops1{iplaneiFOV}.Lx);
+            ops1{iplane,iFOV}.mimg1             = zeros(ops1{iplane,iFOV}.Ly, ops1{iplane,iFOV}.Lx);
         end
     end
 end
@@ -128,13 +123,13 @@ end
 
 %% open files for registration
 
-[ops1, fid, fidRED, fidIntpol] = openBinFiles(ops, ops1, red_binary);
+[ops1, fid, fidRED, fidIntpol] = jkOpenBinFiles(ops, ops1, red_binary);
 
 %%
 tic
 % compute registration offsets and align using offsets
 
-xyValid = true(Ly,Lx);
+xyValid = true(ops.Ly,ops.Lx);
 if red_align
     reg_channel = rchannel;
 else
@@ -145,7 +140,8 @@ end
 for iplane = 1 : nplanes
     % only load frames of registration channel
     data = jkLoadFramesBuff(ops, iplane, reg_channel);
-    if abs(BiDiPhase) > 0; data = ShiftBiDi(BiDiPhase, data, Ly, Lx); end
+    data = data(ops.useY, ops.useX, :, :);
+    if abs(BiDiPhase) > 0; data = ShiftBiDi(BiDiPhase, data, ops.Ly, ops.Lx); end
 
     % get the registration offsets for each frame
     if ops.doRegistration
@@ -154,7 +150,7 @@ for iplane = 1 : nplanes
         else                
             dsall = zeros(size(data,3),2,size(xFOVs,2));
             for iFOV = 1 : size(xFOVs,2)
-                [dsall(:,:,iFOV), ops1{iplane,iFOV}] = jkRigidOffsets(data, ops, ops1{iplane,iFOV});
+                [dsall(:,:,iFOV), ops1{iplane,iFOV}] = jkRigidOffsets(data(yFOVs(:,iFOV),xFOVs(:,iFOV),:), ops, ops1{iplane,iFOV});
             end                
         end
     end
@@ -164,25 +160,26 @@ for iplane = 1 : nplanes
         if red_align
             data_red = data;
             data = jkLoadFramesBuff(ops, iplane, ichannel);
-            if abs(BiDiPhase) > 0; data = ShiftBiDi(BiDiPhase, data, Ly, Lx);  end
+            data = data(ops.useY, ops.useX, :, :);
+            if abs(BiDiPhase) > 0; data = ShiftBiDi(BiDiPhase, data, ops.Ly, ops.Lx);  end
         end
         % load red channel for red binary file if not already loaded for red alignment
-        if red_mean_expt && ~red_align
+        if red_mean && ~red_align
             data_red = jkLoadFramesBuff(ops, iplane, rchannel);
-            if abs(BiDiPhase) > 0; data_red = ShiftBiDi(BiDiPhase, data_red, Ly, Lx); end
+            if abs(BiDiPhase) > 0; data_red = ShiftBiDi(BiDiPhase, data_red, ops.Ly, ops.Lx); end
         end
         % align the frames according to the registration offsets
         if ops.nonrigid
             [dreg, xyValid] = nonrigidMovie(data, ops, dsall, xyValid);
         else
-            dreg = rigidMovie(data, ops1{iplane}, dsall, yFOVs, xFOVs);
+            dreg = rigidMovie(data, ops1, dsall, yFOVs, xFOVs); % Just need to pass ops.useGPU, but to comply with previous code, pass all of ops1.
         end
 
-        if red_mean_expt || red_align
+        if red_mean || red_align
             if ops.nonrigid
                 [dreg2, xyValid] = nonrigidMovie(data_red, ops, dsall, xyValid);
             else
-                dreg2 = rigidMovie(data_red, ops1{iplane}, dsall, yFOVs, xFOVs);
+                dreg2 = rigidMovie(data_red, ops1, dsall, yFOVs, xFOVs);
             end
         end
     else
@@ -193,11 +190,11 @@ for iplane = 1 : nplanes
     % write dreg to bin file+
     for iFOV = 1:size(xFOVs,2)
         dwrite = dreg(yFOVs(:,iFOV),xFOVs(:,iFOV),:);
-        fwrite(fid{i,iFOV}, dwrite, class(data));
+        fwrite(fid{iplane,iFOV}, dwrite, class(data));
         ops1{iplane,iFOV}.Nframes = size(dwrite,3);
         ops1{iplane,iFOV}.mimg1 = ops1{iplane,iFOV}.mimg1 + sum(dwrite,3);
 
-        if red_mean_expt || red_align
+        if red_mean || red_align
             dwrite = dreg2(yFOVs(:,iFOV),xFOVs(:,iFOV),:);
             ops1{iplane,iFOV}.mimgRED = ops1{iplane,iFOV}.mimgRED + sum(dwrite,3);
         end
@@ -237,7 +234,6 @@ for i = 1:numel(ops1)
 end
 
 %%
-
 % get mean of first and last frames in block (to check for drift)
 if ~isempty(ops.nimgbegend) && ops.nimgbegend>0
     for i = 1:numel(ops1)
@@ -252,12 +248,12 @@ end
 if ~isempty(ops.RegFileTiffLocation)
     for i = 1:numel(ops1)
         fid{i}      = fopen(ops1{i}.RegFile, 'r');
-        ops1{i}     = write_reg_to_tiff(fid{i}, ops1{isession}{i}, i, 0);
+        ops1{i}     = jk_write_reg_to_tiff(fid{i}, ops1{i}, i, 0);
         fclose(fid{i});
 
         if red_binary
             fidRED{i}   = fopen(ops1{i}.RegFile2, 'r');
-            ops1{i}     = write_reg_to_tiff(fidRED{i}, ops1{i}, i, 1);
+            ops1{i}     = jk_write_reg_to_tiff(fidRED{i}, ops1{i}, i, 1);
             fclose(fidRED{i});
         end   
     end
@@ -273,7 +269,7 @@ if ops.interpolateAcrossPlanes == 1 && ~isempty(RegFileBinLocation)
         folder = fullfile(ops1{i}.RegFileBinLocation, ops1{i}.mouse_name, ...
             ops1{i}.session, 'interpolated');
         filename = fullfile(folder, ...
-            sprintf('%s_%s_%s_plane%d.bin', ops.mouse_name, ops.session, i));
+            sprintf('%s_%03d_plane%d.bin', ops.mouse_name, ops.session, i));
         if ismember(i, planesToInterp)
             fidCopy = fopen(ops1{i}.RegFile, 'w');
             fidOrig = fopen(filename, 'r');
@@ -301,8 +297,8 @@ if ops.doRegistration
     ops1 = getRangeNoOutliers(ops, ops1);
 else
     for i = 1:numel(ops1)
-        ops1{i}.yrange = 1:Ly;
-        ops1{i}.xrange = 1:Lx;
+        ops1{i}.yrange = 1:ops.Ly;
+        ops1{i}.xrange = 1:ops.Lx;
     end
 end
 
@@ -311,6 +307,6 @@ savepath = sprintf('%s/', ops.ResultsSavePath);
 if ~exist(savepath, 'dir')
     mkdir(savepath)
 end
-save(sprintf('%s/regops_%s_%s.mat', ops.ResultsSavePath, ...
+save(sprintf('%s/regops_%s_%03d.mat', ops.ResultsSavePath, ...
     ops.mouse_name, ops.session),  'ops1')
 end
