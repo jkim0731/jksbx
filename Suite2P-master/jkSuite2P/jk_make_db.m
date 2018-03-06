@@ -3,14 +3,23 @@
 % db(iexp).diameter, or ops0.diameter. 
 
 i = 0;
-mice = {'049'};
-sessions = 995:998;
+mice = {'025'};
+sessions = 6:25;
 for mi = 1 : length(mice)
     for si = 1 : length(sessions)
         i = i + 1;
         db(i).mouse_name    = mice{mi};
         db(i).session       = sessions(si);        
-        db(i).expred        = sessions(si);
+    end
+end
+
+mice = {'027'};
+sessions = 0:25;
+for mi = 1 : length(mice)
+    for si = 1 : length(sessions)
+        i = i + 1;
+        db(i).mouse_name    = mice{mi};
+        db(i).session       = sessions(si);        
     end
 end
 

@@ -43,12 +43,12 @@ ops0.fig                    = 1; % turn off figure generation with 0
 % ops0.diameter               = 12; % most important parameter. Set here, or individually per experiment in make_db file
 
 % ---- root paths for files and temporary storage (ideally an SSD drive. my SSD is C:/)
-ops0.RootStorage            = 'D:\2p\JK\'; % Suite2P assumes a folder structure, check out README file
-ops0.temp_tiff              = 'D:\2p\JK\temp.tif'; % copies each remote tiff locally first, into this file
-ops0.RegFileRoot            = 'D:\2p\JK\';  % location for binary file
-ops0.DeleteBin              = 0; % set to 1 for batch processing on a limited hard drive
-ops0.ResultsSavePath        = 'D:\2p\JK\'; % a folder structure is created inside
-ops0.RegFileTiffLocation    = 'D:\2p\JK\tiffs\'; % leave empty to NOT save registered tiffs (slow)
+ops0.RootStorage            = 'E:\2p'; % Suite2P assumes a folder structure, check out README file
+% ops0.temp_tiff              = 'D:\TPM\JK\temp.tif'; % copies each remote tiff locally first, into this file
+ops0.RegFileRoot            = 'D:\TPM\JK\';  % location for binary file
+ops0.DeleteBin              = 1; % set to 1 for batch processing on a limited hard drive
+ops0.ResultsSavePath        = 'D:\TPM\JK\'; % a folder structure is created inside
+ops0.RegFileTiffLocation    = ''; % leave empty to NOT save registered tiffs (slow)
 % if you want to save red channel tiffs, also set ops0.REDbinary = 1
 
 % ---- registration options ------------------------------------- %
@@ -76,7 +76,7 @@ ops0.outerNeuropil  = Inf; % radius of neuropil surround
 % if infinity, then neuropil surround radius is a function of cell size
 if isinf(ops0.outerNeuropil)
     ops0.minNeuropilPixels = 400; % minimum number of pixels in neuropil surround
-    ops0.ratioNeuropil     = 5; % ratio btw neuropil radius and cell radius
+    ops0.ratioNeuropil     = 2; % ratio btw neuropil radius and cell radius
     % radius of surround neuropil = ops0.ratioNeuropil * (radius of cell)
 end
 
@@ -84,8 +84,8 @@ end
 % ops0.imageRate              = 30; % imaging rate (cumulative over
 % planes!). Approximate, for initialization of deconvolution kernel.
 % Calculated later by info from sbx.
-ops0.sensorTau              = 0.5; % decay half-life (or timescale). Approximate, for initialization of deconvolution kernel.
-ops0.maxNeurop              = 1; % for the neuropil contamination to be less than this (sometimes good, i.e. for interneurons)
+ops0.sensorTau              = 1; % decay half-life (or timescale). Approximate, for initialization of deconvolution kernel.
+ops0.maxNeurop              = 0.8; % for the neuropil contamination to be less than this (sometimes good, i.e. for interneurons)
 
 % ----- if you have a RED channel ---------------------- ------------%
 ops0.AlignToRedChannel      = 0; % compute registration offsets using red channel
@@ -108,7 +108,10 @@ for iexp = 1:length(db0)
     db = db0(iexp);
     
     % add info from scanbox .mat data and calculate ops0.imageRate
-    matfnlist = dir([ops0.RootStorage, filesep, db.mouse_name, filesep, sprintf('%s_%03d_',db.mouse_name,db.session), '*.mat']);
+    matfnlist = dir([ops0.RootStorage, filesep, db.mouse_name, filesep, sprintf('%s_%03d_',db.mouse_name,db.session), '*.sbx']);
+    for ifile = 1 : length(matfnlist)
+        matfnlist(ifile).name = [matfnlist(ifile).name(1:end-4), '.mat'];
+    end
     try    
         load(fullfile(matfnlist(1).folder, matfnlist(1).name)) % loading 'info' variable from scanbox .mat file. using the first one of the session    
     catch
@@ -155,6 +158,21 @@ for iexp = 1:length(db0)
     db.blockimaging = blockimaging; db.num_layer = num_layer;   db.num_plane = num_plane;
     db.nplanes = db.num_layer * db.num_plane; % nplanes meaning total # of planes that are imaged, while num_plane #of planes during a single imaging block (or within a layer)
     db.nsessions = length(db.session);
+    
+    % for red channel detection and treatment
+    if info.channels == 2 % pmt0 only
+        db.expred = [];
+        ops0.REDbinary = 0;
+        ops0.redMeanImg = 0;
+        ops0.AlignToRedChannel = 0; % just to make sure
+    elseif info.channels == 1 % pmt0 & pmt1 
+        db.expred = db.session;
+        ops0.REDbinary = 1;
+        ops0.redMeanImg = 1;
+    else
+        error('only red channel')
+    end
+    
     cd(curr_dir)
     %%
     jk_run_pipeline(db, ops0);

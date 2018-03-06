@@ -23,15 +23,13 @@ red_align          = getOr(ops, {'AlignToRedChannel'}, 0); % register planes to 
 red_binary         = getOr(ops, {'REDbinary'}, 0); % write red channel to a binary file
 % extract mean red channel from blocks of recording with two channels
 red_mean           = getOr(ops, {'redMeanImg'}, 0);
-if red_binary
-    red_mean = 1;
-end
-if red_mean
-    disp('computing mean RED image if ~isempty(db.expred)');
+if red_mean 
+    disp('computing mean RED image');
+else
+    disp('no red channel')
 end
 
 BiDiPhase          = ops.BiDiPhase;
-fs = ops.fsroot; 
 %% find the mean frame after aligning a random subset
 
 ops.Ly = length(ops.useY);
