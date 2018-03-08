@@ -15,7 +15,7 @@ ops.NavgFramesSVD   = min(ops.NavgFramesSVD, ntotframes);
 nt0 = ceil(ntotframes / ops.NavgFramesSVD);
 
 if isfield(ops, 'chunk_align') && ~isempty(ops.chunk_align); chunk_align   = ops.chunk_align(iplane);
-else chunk_align = 1; end
+else, chunk_align = 1; end
 
 if chunk_align>9
     nt0 =  ops.chunk_align;

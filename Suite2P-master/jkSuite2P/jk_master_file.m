@@ -28,7 +28,6 @@ jk_make_db; % RUN YOUR OWN MAKE_DB SCRIPT TO RUN HERE
 ops0.optotune_ringing_time = 5; % in ms. To crop top portion of each frame.
 
 
-
 ops0.toolbox_path = 'C:\Users\shires\Documents\GitHub\jksbx\Suite2P-master';
 if exist(ops0.toolbox_path, 'dir')
 	addpath(genpath(ops0.toolbox_path)) % add local path to the toolbox
@@ -41,6 +40,7 @@ end
 ops0.useGPU                 = 1; % if you can use an Nvidia GPU in matlab this accelerates registration approx 3 times. You only need the Nvidia drivers installed (not CUDA).
 ops0.fig                    = 1; % turn off figure generation with 0
 % ops0.diameter               = 12; % most important parameter. Set here, or individually per experiment in make_db file
+%                                   % being calculated in jk_run_pipeline according to the imaging magnification
 
 % ---- root paths for files and temporary storage (ideally an SSD drive. my SSD is C:/)
 ops0.RootStorage            = 'E:\2p'; % Suite2P assumes a folder structure, check out README file
@@ -71,8 +71,8 @@ ops0.signalExtraction       = 'surround'; % how to extract ROI and neuropil sign
 
 % ----- neuropil options (if 'surround' option) ------------------- %
 % all are in measurements of pixels
-ops0.innerNeuropil  = 2; % padding around cell to exclude from neuropil
-ops0.outerNeuropil  = Inf; % radius of neuropil surround
+ops0.innerNeuropil  = 5; % padding around cell to exclude from neuropil
+ops0.outerNeuropil  = 7; % radius of neuropil surround
 % if infinity, then neuropil surround radius is a function of cell size
 if isinf(ops0.outerNeuropil)
     ops0.minNeuropilPixels = 400; % minimum number of pixels in neuropil surround
@@ -118,19 +118,13 @@ for iexp = 1:length(db0)
         load([ops0.RootStorage, filesep, db.mouse_name, filesep, matfnlist(1).name])
     end
     db.info = info;
-    ops0.imageRate = db.info.resfreq*(2-db.info.scanmode)/db.info.sz(1);
-
-    if db.info.scanmode
-        ops0.useX = 1 : db.info.sz(2);
-    else
-        ops0.useX = 100 : db.info.sz(2);
-    end
+    ops0.imageRate = db.info.resfreq*(2-db.info.scanmode)/db.info.sz(1); % calculating imaging rate based on the scanning mode.     
+    ops0.useX = (1-db.info.scanmode)*100 + 1 : db.info.sz(2); % crop first 100 columns in bidirectional scanning. 
+%     if isfield(db.info, 'deadband')
+%         ops.useX = ops.useX(db.info.deadband(1): end - db.info.deadband(2));
+%     end
     if db.info.volscan % chop off first optotune_ringing_time ms of each plane because of optotune ringing
-        if db.info.scanmode
-            ops0.useY = round(ops0.optotune_ringing_time/ (1000/db.info.resfreq) ) : db.info.sz(1); 
-        else
-            ops0.useY = round(ops0.optotune_ringing_time/ (1000/db.info.resfreq) *2) : db.info.sz(1);
-        end
+        ops0.useY = round(ops0.optotune_ringing_time/ (1000/db.info.resfreq) *(2-db.info.scanmode)) : db.info.sz(1);
     else
         db.useY = 1: db.info.sz(1);
     end

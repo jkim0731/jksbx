@@ -154,12 +154,18 @@ function jksbxsplittrial(fn)
                 end
 
                 trial_frames = cell(1,num_layer); % allocate frames to each layer
+                frames_beginning = 0:num_plane:max_idx;
+                frames_ending = num_plane-1:num_plane:max_idx;
                 for ii = 1 : length(trial_frames)
                     trial_frames{ii} = []; 
                     for jj = 1 : length(layer_trials{ii})
                         for kk = 1 : length(trials)
-                            if trials(kk).trialnum == layer_trials{ii}(jj)
-                                trial_frames{ii} = [trial_frames{ii}, trials(kk).frames(1) : trials(kk).frames(2)];
+                            if trials(kk).trialnum == layer_trials{ii}(jj)                                
+                                begin_frame = frames_beginning(find(frames_beginning > trials(kk).frames(1), 1, 'first'));
+                                end_frame = frames_ending(find(frames_ending < trials(kk).frames(2), 1, 'last'));
+                                trial_frames{ii} = [trial_frames{ii}, begin_frame : end_frame];
+%                                 trial_frames{ii} = [trial_frames{ii}, trials(kk).frames(1) : trials(kk).frames(2)];
+%                                 Changed to include only the frames with full-FOV recording, and matching number of frames in each plane at the same layer in each trials. 2018/03/07 JK.
                                 break
                             end
                         end
@@ -179,8 +185,16 @@ function jksbxsplittrial(fn)
                 end
 
             else % if not block_imaging
+                trial_frames = [];
+                frames_beginning = 0:num_plane:max_idx;
+                frames_ending = num_plane-1:num_plane:max_idx;
+                for trial_i = 1 : length(trials)
+                    begin_frame = frames_beginning(find(frames_beginning > trials(trial_i).frames(1), 1, 'first'));
+                    end_frame = frames_ending(find(frames_ending > trials(trial_i).frames(2), 1, 'last'));                    
+                    trial_frames = [trial_frames, begin_frame : end_frame];
+                end
                 for ind_plane = 1 : num_plane
-                    frame_to_use{plane_sorted(ind_plane)} = intersect(plane_sorted(ind_plane):num_plane:max_idx,0:info.max_idx);             
+                    frame_to_use{plane_sorted(ind_plane)} = intersect(plane_sorted(ind_plane):num_plane:max_idx,trial_frames);             
                 end        
             end
         else

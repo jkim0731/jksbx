@@ -4,7 +4,7 @@
 
 i = 0;
 mice = {'025'};
-sessions = 6:25;
+sessions = 2:10;
 for mi = 1 : length(mice)
     for si = 1 : length(sessions)
         i = i + 1;
@@ -13,15 +13,15 @@ for mi = 1 : length(mice)
     end
 end
 
-mice = {'027'};
-sessions = 0:25;
-for mi = 1 : length(mice)
-    for si = 1 : length(sessions)
-        i = i + 1;
-        db(i).mouse_name    = mice{mi};
-        db(i).session       = sessions(si);        
-    end
-end
+% mice = {'027'};
+% sessions = 0:25;
+% for mi = 1 : length(mice)
+%     for si = 1 : length(sessions)
+%         i = i + 1;
+%         db(i).mouse_name    = mice{mi};
+%         db(i).session       = sessions(si);        
+%     end
+% end
 
 % mice = {'039'};
 % sessions = [1:28,901];
