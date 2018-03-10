@@ -47,7 +47,10 @@ else
         [B,T1] = jksbxalignx(fname,idx1);
     end
    
-    [u, v] = jkfftalign(A,B);
+    Ap = A(151:end-50,151:end-50);
+    Bp = B(151:end-50,151:end-50);
+    
+    [u, v] = jkfftalign(Ap,Bp);
      
     Ar = circshift(A,[u, v]);
     m = (Ar+B)/2;

@@ -41,7 +41,7 @@ for i = 1:length(d)
     tic
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    [~,plane_sorted] = sort(info.otwve,'descend'); % sorting from the top. 
+    [~,plane_sorted] = sort(info.otwave,'descend'); % sorting from the top. 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Assume objective is already sorted descending. (objective 1 higher, i.e., shallower, than objective 2)
     % Overall goal is to have all planes (including layers) sorted in descending order
