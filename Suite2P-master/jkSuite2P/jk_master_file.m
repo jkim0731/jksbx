@@ -19,6 +19,7 @@
 
 % check out the README file for detailed instructions
 % **** and for more options available ****
+
 addpath('C:\Users\shires\Documents\GitHub\jksbx\Suite2P-master') % add the path to your make_db file
 
 % overwrite any of these default options in your make_db file for individual experiments
@@ -59,6 +60,7 @@ ops0.SubPixel               = Inf; % 2 is alignment by 0.5 pixel, Inf is the exa
 ops0.NimgFirstRegistration  = 200; % number of images to include in the first registration pass 
 ops0.nimgbegend             = 0; % frames to average at beginning and end of blocks
 ops0.dobidi                 = 1; % infer and apply bidirectional phase offset
+ops0.nonrigid               = 1;
 
 % ---- cell detection options ------------------------------------------%
 ops0.ShowCellMap            = 1; % during optimization, show a figure of the clusters
@@ -103,8 +105,13 @@ ops0.redmax                 = 1; % the higher the max the more NON-red cells
 db0 = db;
 %% RUN THE PIPELINE HERE
 
+running_times = zeros(length(db0),1);
+running_times_deconv = zeros(length(db0),1);
+running_times_red = zeros(length(db0),1);
+
 for iexp = 1:length(db0)
     %%
+    tic_start = tic;
     db = db0(iexp);
     
     % add info from scanbox .mat data and calculate ops0.imageRate
@@ -171,8 +178,12 @@ for iexp = 1:length(db0)
     %%
     jk_run_pipeline(db, ops0);
     
+    running_times(iexp) = toc(tic_start)/60; % in min
+    
     % deconvolved data into st, and neuropil subtraction coef in stat
     jk_add_deconvolution(ops0, db);
+    
+    running_times_deconv(iexp) = toc(tic_start)/60; % in min
     
     % add red channel information (if it exists)
     if isfield(db,'expred') && ~isempty(db.expred)
@@ -188,6 +199,8 @@ for iexp = 1:length(db0)
         % fills dat.stat.redcell, dat.stat.notred, dat.stat.redprob
         jk_identify_redcells_sourcery(db, ops0);         
     end
+    
+    running_times_red(iexp) = toc(tic_start)/60; % in min
     
 end
 %% STRUCTURE OF RESULTS FILE

@@ -4,7 +4,7 @@
 
 i = 0;
 mice = {'025'};
-sessions = 2:10;
+sessions = 4:10;
 for mi = 1 : length(mice)
     for si = 1 : length(sessions)
         i = i + 1;

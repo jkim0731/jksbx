@@ -99,21 +99,19 @@ else   % don't recompute mean image
 end
 
 %% initialize mean imgs and shifts
-
 for iplane = 1 : nplanes
-    if ops.nonrigid
-        ops1{iplane}.mimgB = cell(prod(ops.numBlocks),1);
-        for ib = 1:ops.numBlocks(1)*ops.numBlocks(2)
-            ops1{iplane}.mimgB{ib} = ops1{iplane}.mimg(ops1{iplane}.yBL{ib}, ops1{iplane}.xBL{ib});
+    for iFOV = 1:size(xFOVs,2)
+        if red_mean || red_align
+            ops1{iplane,iFOV}.mimgRED       = zeros(ops1{iplane,iFOV}.Ly, ops1{iplane,iFOV}.Lx);
         end
-    else
-        for iFOV = 1:size(xFOVs,2)
-            if red_mean || red_align
-                ops1{iplane,iFOV}.mimgRED       = zeros(ops1{iplane,iFOV}.Ly, ops1{iplane,iFOV}.Lx);
+        ops1{iplane,iFOV}.DS                = [];
+        ops1{iplane,iFOV}.CorrFrame         = [];
+        ops1{iplane,iFOV}.mimg1             = zeros(ops1{iplane,iFOV}.Ly, ops1{iplane,iFOV}.Lx);
+        if ops.nonrigid
+            ops1{iplane}.mimgB = cell(prod(ops.numBlocks),1);
+            for ib = 1:ops.numBlocks(1)*ops.numBlocks(2)
+                ops1{iplane}.mimgB{ib} = ops1{iplane}.mimg(ops1{iplane}.yBL{ib}, ops1{iplane}.xBL{ib});
             end
-            ops1{iplane,iFOV}.DS                = [];
-            ops1{iplane,iFOV}.CorrFrame         = [];
-            ops1{iplane,iFOV}.mimg1             = zeros(ops1{iplane,iFOV}.Ly, ops1{iplane,iFOV}.Lx);
         end
     end
 end
