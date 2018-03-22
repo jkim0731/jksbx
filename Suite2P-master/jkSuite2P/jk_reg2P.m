@@ -186,7 +186,7 @@ for iplane = 1 : nplanes
     % write dreg to bin file+
     for iFOV = 1:size(xFOVs,2)
         dwrite = dreg(yFOVs(:,iFOV),xFOVs(:,iFOV),:);
-        fwrite(fid{iplane,iFOV}, dwrite, class(data));
+        fwrite(fid{iplane,iFOV}, dwrite, class(data));              
         ops1{iplane,iFOV}.Nframes = size(dwrite,3);
         ops1{iplane,iFOV}.mimg1 = ops1{iplane,iFOV}.mimg1 + sum(dwrite,3);
 

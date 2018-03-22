@@ -55,7 +55,7 @@ for k = 1:niter
     end
     
     % at each iteration run the deconvolution on the residual
-    switch getOr(ops, 'deconvType', 'OASIS')
+    switch getOr(ops, 'deconvType', 'L0')
         case 'OASIS'
             if exist('oasisAR1.m', 'file') ~= 2
                warning('Could not find oasisAR1.m in your path. Please download the separate OASIS github repository and add to your path.') ;
@@ -64,7 +64,7 @@ for k = 1:niter
             end
             [sp, ca, sd2, Fbase] = OASISpreprocess(ops,  Fsub);
         case 'L0'
-            [sp, ca, sd2] = deconvolution_standalone(ops, Fsub);
+            [sp, ca, sd2, Fbase] = deconvolution_standalone(ops, Fsub);
         otherwise
             error('Please choose deconvolution method as OASIS or L0')
     end

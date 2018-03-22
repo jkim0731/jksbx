@@ -1,4 +1,4 @@
-function [sp, ca, sd, F1, tproc, kernel] = deconvolution_standalone(ops, ca, neu, gt)
+function [sp, ca, sd, Fbase, F1, tproc, kernel] = deconvolution_standalone(ops, ca, neu, gt)
 % takes as input the calcium and (optionally) neuropil traces,  
 % both NT by NN (number of neurons).
 

@@ -1,11 +1,22 @@
 
 function [u,v] = jkfftalign(A,B)
 
+<<<<<<< HEAD
 N = min(size(A))-80;
 
 yidx = round(size(A,1)/2-N/2) + 1 : round(size(A,1)/2+ N/2);
 xidx = round(size(A,2)/2-N/2) + 1 : round(size(A,2)/2+ N/2);
+=======
+N = min(min(size(A)), min(size(B)));
+>>>>>>> origin/master
 
+if min(size(B)) < min(size(A))
+    yidx = round(size(B,1)/2-N/2) + 1 : round(size(B,1)/2+ N/2);
+    xidx = round(size(B,2)/2-N/2) + 1 : round(size(B,2)/2+ N/2);
+else
+    yidx = round(size(A,1)/2-N/2) + 1 : round(size(A,1)/2+ N/2);
+    xidx = round(size(A,2)/2-N/2) + 1 : round(size(A,2)/2+ N/2);
+end
 A = A(yidx,xidx);
 B = B(yidx,xidx);
 
