@@ -39,7 +39,7 @@ end
 % mex -largeArrayDims SpikeDetection/deconvL0.c (or .cpp) % MAKE SURE YOU COMPILE THIS FIRST FOR DECONVOLUTION
 
 ops0.useGPU                 = 1; % if you can use an Nvidia GPU in matlab this accelerates registration approx 3 times. You only need the Nvidia drivers installed (not CUDA).
-ops0.fig                    = 1; % turn off figure generation with 0
+ops0.fig                    = 0; % turn off figure generation with 0
 % ops0.diameter               = 12; % most important parameter. Set here, or individually per experiment in make_db file
 %                                   % being calculated in jk_run_pipeline according to the imaging magnification
 
@@ -60,27 +60,29 @@ ops0.SubPixel               = Inf; % 2 is alignment by 0.5 pixel, Inf is the exa
 ops0.NimgFirstRegistration  = 200; % number of images to include in the first registration pass 
 ops0.nimgbegend             = 0; % frames to average at beginning and end of blocks
 ops0.dobidi                 = 1; % infer and apply bidirectional phase offset
-ops0.nonrigid               = 1;
+% ops0.nonrigid               = 1;
 
 % ---- cell detection options ------------------------------------------%
-ops0.ShowCellMap            = 1; % during optimization, show a figure of the clusters
+ops0.ShowCellMap            = 0; % during optimization, show a figure of the clusters
 ops0.sig                    = 0.5;  % spatial smoothing length in pixels; encourages localized clusters
 ops0.nSVDforROI             = 300; % how many SVD components for cell clustering
 ops0.NavgFramesSVD          = 5000; % how many (binned) timepoints to do the SVD based on
 ops0.signalExtraction       = 'surround'; % how to extract ROI and neuropil signals: 
+% ops0.writeSVDroi            = 1;
 %  'raw' (no cell overlaps), 'regression' (allows cell overlaps), 
 %  'surround' (no cell overlaps, surround neuropil model)
 
 % ----- neuropil options (if 'surround' option) ------------------- %
 % all are in measurements of pixels
-ops0.innerNeuropil  = 5; % padding around cell to exclude from neuropil
-ops0.outerNeuropil  = 7; % radius of neuropil surround
+ops0.innerNeuropil  = 3; % padding around cell to exclude from neuropil
+ops0.outerNeuropil  = Inf; % radius of neuropil surround
 % if infinity, then neuropil surround radius is a function of cell size
 if isinf(ops0.outerNeuropil)
-    ops0.minNeuropilPixels = 400; % minimum number of pixels in neuropil surround
+    ops0.minNeuropilPixels = 200; % minimum number of pixels in neuropil surround
     ops0.ratioNeuropil     = 2; % ratio btw neuropil radius and cell radius
     % radius of surround neuropil = ops0.ratioNeuropil * (radius of cell)
 end
+ops0.saveNeuropil          = 1;
 
 % ----- spike deconvolution and neuropil subtraction options ----- %
 % ops0.imageRate              = 30; % imaging rate (cumulative over
@@ -181,7 +183,9 @@ for iexp = 1:length(db0)
     running_times(iexp) = toc(tic_start)/60; % in min
     
     % deconvolved data into st, and neuropil subtraction coef in stat
-    jk_add_deconvolution(ops0, db);
+    if isfield(db,'doDeconvolution') && db.doDeconvolution
+        jk_add_deconvolution(ops0, db);
+    end
     
     running_times_deconv(iexp) = toc(tic_start)/60; % in min
     

@@ -7,7 +7,7 @@ ops0.LoadRegMean                    = getOr(ops0, {'LoadRegMean'}, 0);
 ops0.getROIs                        = getOr(ops0, {'getROIs'}, 1);   % whether to run the optimization
 ops0.getSVDcomps                    = getOr(ops0, {'getSVDcomps'}, 0);   % whether to save SVD components to disk for later processing
 
-ops0                                = jk_build_ops3(db, ops0); % after this, ops0 = db + ops0
+ops0                                = jk_build_ops3(db, ops0); % after this, ops0 = db + ops0. for conflicting fields, db gets priority
 if ~isfield(ops0, 'diameter') || isempty(ops0.diameter)
     warning('you have not specified mean diameter of your ROIs')
     warning('for best performance, please set db(iexp).diameter for each experiment')

@@ -50,7 +50,7 @@ cF = NaN(Nkv, sum(ops.Nframes), 'single');
 sF = NaN(Nkv, sum(ops.Nframes), 'single');
 
 while 1
-    data = fread(fid,  Ly*Lx*nimgbatch, '*int16');
+    data = fread(fid,  Ly*Lx*nimgbatch, 'uint16=>uint16');
     if isempty(data)
         break;
     end

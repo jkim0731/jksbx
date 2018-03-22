@@ -130,11 +130,11 @@ if nargin==1 || ~strcmp(clustModel, 'CNMF')
         fclose(fid);
         
         try
-            save(sprintf('%s/SVDroi_%s_%s_plane%d.mat', ops.ResultsSavePath, ...
-                ops.mouse_name, ops.date, ops.iplane), 'U', 'Sv', 'Fs', 'ops', '-v6');
+            save(sprintf('%s/SVDroi_%s_%03d_plane%d.mat', ops.ResultsSavePath, ...
+                ops.mouse_name, ops.session, ops.iplane), 'U', 'Sv', 'Fs', 'ops', '-v6');
         catch
-            save(sprintf('%s/SVDroi_%s_%s_plane%d.mat', ops.ResultsSavePath, ...
-                ops.mouse_name, ops.date, ops.iplane), 'U', 'Sv', 'Fs', 'ops');
+            save(sprintf('%s/SVDroi_%s_%03d_plane%d.mat', ops.ResultsSavePath, ...
+                ops.mouse_name, ops.session, ops.iplane), 'U', 'Sv', 'Fs', 'ops');
         end
     end
     
