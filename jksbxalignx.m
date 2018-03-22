@@ -1,10 +1,10 @@
-function [m,T] = jksbxalignx(fname,idx,varargin)
+function [m,T] = jksbxalignx(fname,idx, varargin)
 
 % Aligns images in fname for all indices in idx
 % 
 % m - mean image after the alignment
 % T - optimal translation for each frame
-
+% 
 if nargin < 3
     ch = 1; % green (pmt0) when 2 channel imaging. 
 else
@@ -27,7 +27,7 @@ elseif (length(idx)==2)
     Ap = A(151:end-50,151:end-50);
     Bp = B(151:end-50,151:end-50);
     
-    [u, v] = jkfftalign(Ap,Bp);
+    [u, v] = fftalign(Ap,Bp);
     
     Ar = circshift(A,[u,v]);
     m = (Ar+B)/2;
@@ -37,20 +37,14 @@ else
     
     idx0 = idx(1:floor(end/2));
     idx1 = idx(floor(end/2)+1 : end);
-    try
-        [A,T0] = jksbxalignx(fname,idx0,ch);
-        [B,T1] = jksbxalignx(fname,idx1,ch);
-    catch
-        disp(['fname = ', fname])
-        disp(['idx0 = ', num2str(idx0)])
-        [A,T0] = jksbxalignx(fname,idx0);
-        [B,T1] = jksbxalignx(fname,idx1);
-    end
+
+    [A,T0] = jksbxalignx(fname, idx0, ch);
+    [B,T1] = jksbxalignx(fname, idx1, ch);
    
     Ap = A(151:end-50,151:end-50);
     Bp = B(151:end-50,151:end-50);
     
-    [u, v] = jkfftalign(Ap,Bp);
+    [u, v] = fftalign(Ap,Bp);
      
     Ar = circshift(A,[u, v]);
     m = (Ar+B)/2;

@@ -29,23 +29,13 @@ for i = 1:length(d)
         sprintf('File %s is already aligned',fn);
         continue
     elseif exist([fn,'.trials'],'file') % ignore frames outside of each trial, because those are blank. If not treated, these lead to weird interference pattern during bidirectional scanning.
-        load([fn,'.trials'],'-mat')
-        trial_frames = [];
-        for tn = 1 : length(trials)
-            trial_frames = [trial_frames, trials(tn).frames(1)+1:trials(tn).frames(2)-1]; % ignore the first and the last frames of each trial (because of possible clipping by laser blanking and re-opening)
-        end
+        load([fn,'.trials'],'-mat', 'frame_to_use') 
     else % no trial file
-        trial_frames = 0:info.max_idx;
+        frame_to_use{1} = 0:info.max_idx;
     end
 
     tic
     
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    [~,plane_sorted] = sort(info.otwave,'descend'); % sorting from the top. 
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    % Assume objective is already sorted descending. (objective 1 higher, i.e., shallower, than objective 2)
-    % Overall goal is to have all planes (including layers) sorted in descending order
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%    
     if info.volscan
         num_plane = length(info.otwave_um);
     else
@@ -58,108 +48,34 @@ for i = 1:length(d)
     T1 = cell(1,num_plane); % Empty if only pmt1 was used.
     T2 = cell(1,num_plane); % Empty if only pmt0 was used.
     
-    frame_to_align = cell(1,num_plane); % frames subject for alignment, based on the actual total frames (no pre-allocating for each plane)    
-    max_idx = info.max_idx;
-    channels = info.channels;
-    
-    blockimaging = 0;            
-    num_layer = 1;
-    num_block = [];
-    block_message_i = [];
-    for message_i = 1 : length(info.messages)
-        if ~isempty(strfind(info.messages{message_i},'objective')) % for now, assume that number of planes is same across different blocks 
-            blockimaging = 1;                
-            num_block = [num_block, str2double(info.messages{message_i}(end))]; % number of layer on each imaging block. (1, 2, 3, ..., num_layer, 1, 2, 3, ..., num_layer, 1, 2, 3, ...)
-            num_layer = max([num_layer, str2double(info.messages{message_i}(end))]); % total num of layer
-            block_message_i = [block_message_i, message_i]; % index of info.messages written with imaging layer. (like a split marker)
-        end
-    end
-    
-    if blockimaging
-        if isempty(strfind(info.messages{1},'objective'))
-            temp_num_layer = mod(num_block(1)-1,num_layer);
-            if temp_num_layer == 0
-                temp_num_layer = num_layer;
-            end
-            num_block = [temp_num_layer, num_block]; % if the info.messages did not start with a layer indication, add the first layer at the beginning
-            block_message_i = [0, block_message_i]; % the beginning index is 0 now.
-        end
-        if isempty(strfind(info.messages{end},'objective'))
-            temp_num_layer = mod(num_block(end)+1,num_layer);
-            if temp_num_layer == 0
-                temp_num_layer = num_layer;
-            end
-            num_block = [num_block, temp_num_layer]; % if the info.messages did not end with a layer indication, add the next layer at the end
-            block_message_i = [block_message_i, length(info.messages) + 1]; % adding index at the end (1 larger index than the actual info.messages length)
-        end
-
-        layer_trials = cell(1,num_layer); % allocate trials to each layer
-        for ii = 1 : num_layer
-            layer_trials{ii} = [];
-        end
-        for ii = 1 : length(block_message_i)-1
-            layer_trials{num_block(ii)} = [layer_trials{num_block(ii)}, str2double(info.messages{block_message_i(ii)+1}) : str2double(info.messages{block_message_i(ii+1)-1})];
-        end
-
-        trial_frames = cell(1,num_layer); % allocate frames to each layer
-        for ii = 1 : length(trial_frames)
-            trial_frames{ii} = []; 
-            for jj = 1 : length(layer_trials{ii})
-                for kk = 1 : length(trials)
-                    if trials(kk).trialnum == layer_trials{ii}(jj)
-                        trial_frames{ii} = [trial_frames{ii}, trials(kk).frames(1) : trials(kk).frames(2)];
-                        break
-                    end
-                end
-            end
-        end                
-
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        % Very important variable
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        frame_to_align = cell(1,num_layer*num_plane); % this is going to be used for the rest of the analysis.        
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-        for ind_layer = 1 : num_layer                        
-            for ind_plane = 1 : num_plane
-                frame_to_align{(ind_layer-1)*num_plane + plane_sorted(ind_plane)} = intersect(plane_sorted(i_sorted_plane)-1:num_plane:max_idx, trial_frames{ind_layer});                  
-            end
-        end
-
-    else % if not block_imaging
-        for ind_plane = 1 : num_plane
-            frame_to_align{plane_sorted(ind_plane)} = intersect(plane_sorted(ind_plane):num_plane:max_idx,trial_frames);             
-        end        
-    end
-    
-    for j = 1 : length(frame_to_align)
-        if channels > 1 % 2 for pmt0 (green), 3 for pmt1 (red)
-            if channels == 2
-                [m1{j}, T1{j}] = jksbxalignx(fn,frame_to_align{j});
+    for j = 1 : length(frame_to_use)
+        if info.channels > 1 % 2 for pmt0 (green), 3 for pmt1 (red)
+            if info.channels == 2
+                [m1{j}, T1{j}] = sbxalignx(fn,frame_to_use{j});
             else % info.channels == 3
-                [m2{j}, T2{j}] = jksbxalignx(fn,frame_to_align{j});
+                [m2{j}, T2{j}] = sbxalignx(fn,frame_to_use{j});
             end
         else % 2 channel imaging
             if strcmp(ref,'green')
-                [m1{j}, T1{j}] = jksbxalignx(fn,frame_to_align{j});
+                [m1{j}, T1{j}] = sbxalignx(fn,frame_to_use{j});
                 T2{j} = T1{j};  
-                m2{j} = align2pre(fn,T2{j},frame_to_align{j},2);                     
+                m2{j} = align2pre(fn,T2{j},frame_to_use{j},2);                     
             elseif strcmp(ref,'red')
-                [m2{j}, T2{j}] = jksbxalignx(fn,frame_to_align{j}, 2);
+                [m2{j}, T2{j}] = jksbxalignx(fn,frame_to_use{j}, 2);
                 T1{j} = T2{j};  
-                m1{j} = align2pre(fn,T1{j},frame_to_align{j},1); 
+                m1{j} = align2pre(fn,T1{j},frame_to_use{j},1); 
             elseif strcmp(ref,'no') % no alignment at all. Use blank T arrays
-                T1{j} = zeros(length(frame_to_align{j}),2);    T2{j} = T1{j};
-                m1{j} = align2pre(fn,T1{j},frame_to_align{j},1);
-                m2{j} = align2pre(fn,T2{j},frame_to_align{j},2);
+                T1{j} = zeros(length(frame_to_use{j}),2);    T2{j} = T1{j};
+                m1{j} = align2pre(fn,T1{j},frame_to_use{j},1);
+                m2{j} = align2pre(fn,T2{j},frame_to_use{j},2);
             else % empty ref, meaning each channel is aligned by its own - alignment can be differ between channels, but could be used to compare between those 2 channels
-                [m1{j}, T1{j}] = jksbxalignx(fn,frame_to_align{j});
-                [m2{j}, T2{j}] = jksbxalignx(fn,frame_to_align{j}, 2);                    
+                [m1{j}, T1{j}] = jksbxalignx(fn,frame_to_use{j});
+                [m2{j}, T2{j}] = jksbxalignx(fn,frame_to_use{j}, 2);                    
             end
         end
     end
-    save([fn '.align'],'m1','m2','T1','T2','frame_to_align');        
-    fprintf('Done %s: Aligned %d images in %d min\n',fn,max_idx,round(toc/60));        
+    save([fn '.align'],'m1','m2','T1','T2','frame_to_use');        
+    fprintf('Done %s: Aligned %d images in %d min\n',fn,info.max_idx,round(toc/60));        
 end
 end
 
