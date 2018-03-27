@@ -44,11 +44,11 @@ ops0.fig                    = 0; % turn off figure generation with 0
 %                                   % being calculated in jk_run_pipeline according to the imaging magnification
 
 % ---- root paths for files and temporary storage (ideally an SSD drive. my SSD is C:/)
-ops0.RootStorage            = 'E:\2p'; % Suite2P assumes a folder structure, check out README file
+ops0.RootStorage            = 'D:\2p\JK\'; % Suite2P assumes a folder structure, check out README file
 % ops0.temp_tiff              = 'D:\TPM\JK\temp.tif'; % copies each remote tiff locally first, into this file
-ops0.RegFileRoot            = 'D:\TPM\JK\';  % location for binary file
+ops0.RegFileRoot            = 'D:\2p\JK\049';  % location for binary file
 ops0.DeleteBin              = 1; % set to 1 for batch processing on a limited hard drive
-ops0.ResultsSavePath        = 'D:\TPM\JK\'; % a folder structure is created inside
+ops0.ResultsSavePath        = 'D:\2p\JK\049'; % a folder structure is created inside
 ops0.RegFileTiffLocation    = ''; % leave empty to NOT save registered tiffs (slow)
 % if you want to save red channel tiffs, also set ops0.REDbinary = 1
 

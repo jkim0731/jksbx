@@ -1,8 +1,8 @@
 % UPDATE Christmas 2016: number of clusters determined automatically, but
 % do specify the "diameter" of an average cell for best results. You can do this with either
 % db(iexp).diameter, or ops0.diameter. 
-mice = {'025'};
-sessions = 3;
+mice = {'049'};
+sessions = 27 : 32;
 i = 0;
 
 
@@ -13,28 +13,18 @@ diameterlist = [10, 20, 40];
 
 for mi = 1 : length(mice)
     for si = 1 : length(sessions)  
-        for siglisti = 1 : length(siglist)
-            for nsvdlisti = 1 : length(nsvdlist)
-                for nframeslisti = 1 : length(nframeslist)
-                    for dlisti = 1 : length(diameterlist)
         i = i + 1;
         db(i).mouse_name    = mice{mi};
         db(i).session       = sessions(si);      
         db(i).nonrigid      = 0;
         db(i).doDeconvolution = 0;
-        db(i).ResultsSavePath = sprintf('D:\TPM\JK\suite2ptest\celltest\%02d\',i);
+        db(i).ResultsSavePath = 'D:\2p\JK\049\dia20\';
         db(i).signalExtraction = 'surround';
-        
-        
-        
-        db(i).sig                    = siglist(siglisti);  % spatial smoothing length in pixels; encourages localized clusters
-        db(i).nSVDforROI             = nsvdlist(nsvdlisti); % how many SVD components for cell clustering
-        db(i).NavgFramesSVD          = nframeslist(nframeslisti); % how many (binned) timepoints to do the SVD based on
-        db(i).diameter               = diameterlist(dlisti);
-                    end
-                end
-            end
-        end
+
+        db(i).sig                    = siglist(2);  % spatial smoothing length in pixels; encourages localized clusters
+        db(i).nSVDforROI             = nsvdlist(2); % how many SVD components for cell clustering
+        db(i).NavgFramesSVD          = nframeslist(2); % how many (binned) timepoints to do the SVD based on
+        db(i).diameter               = 20;
     end
 end
 

@@ -33,73 +33,72 @@ function jksbxsplittrial(fn)
             info.max_idx = info.blankstart-1;
         end
         
-        if isfield(info,'event_id')
-            if ~isempty(info.event_id)
-                % info.frame has limit at 2^16. Correct this
-                % Don't save this for now. 2017/06/20 JK
-                if info.max_idx > 2^16-1            
-                    if isfield(info,'frame')
-                        overlimit_idx = find(diff(info.frame)<0);
-                        for i = 1 : length(overlimit_idx)
-                            if i == length(overlimit_idx)
-                                info.frame(overlimit_idx(i)+1:end) = info.frame(overlimit_idx(i)+1:end) + i * 2^16;
-                            else
-                                info.frame(overlimit_idx(i)+1:overlimit_idx(i+1)) = info.frame(overlimit_idx(i)+1:overlimit_idx(i+1)) + i * 2^16;
-                            end                    
-                        end
+        if isfield(info,'event_id') && ~isempty(info.event_id)
+            % info.frame has limit at 2^16. Correct this
+            % Don't save this for now. 2017/06/20 JK
+            if info.max_idx > 2^16-1            
+                if isfield(info,'frame')
+                    overlimit_idx = find(diff(info.frame)<0);
+                    for i = 1 : length(overlimit_idx)
+                        if i == length(overlimit_idx)
+                            info.frame(overlimit_idx(i)+1:end) = info.frame(overlimit_idx(i)+1:end) + i * 2^16;
+                        else
+                            info.frame(overlimit_idx(i)+1:overlimit_idx(i+1)) = info.frame(overlimit_idx(i)+1:overlimit_idx(i+1)) + i * 2^16;
+                        end                    
                     end
                 end
+            end
 
-                % event_id 3 (trial started - state 40) should follow directly after event_id 2
-                % (end of a trial - state 35), but there are some error and event_id 3 is split
-                % into two events of 1 and 2. Compensate.
-                for i = 1 : size(info.event_id,1)-2
-                    if info.event_id(i) == 2
-                        if info.event_id(i+1) == 1
-                            if info.event_id(i+2) == 2
-                                dframe = info.frame(i+2) - info.frame(i+1);
-                                dline = info.line(i+2) - info.line(i+1) + info.sz(1) * dframe;
-                                if dline < 3 % ~ 1 ms tolerance in 31Hz 512 line imaging
-                                    info.event_id(i+1) = 0;
-                                    info.event_id(i+2) = 3;
-                                end
+            % event_id 3 (trial started - state 40) should follow directly after event_id 2
+            % (end of a trial - state 35), but there are some error and event_id 3 is split
+            % into two events of 1 and 2. Compensate.
+            for i = 1 : size(info.event_id,1)-2
+                if info.event_id(i) == 2
+                    if info.event_id(i+1) == 1
+                        if info.event_id(i+2) == 2
+                            dframe = info.frame(i+2) - info.frame(i+1);
+                            dline = info.line(i+2) - info.line(i+1) + info.sz(1) * dframe;
+                            if dline < 3 % ~ 1 ms tolerance in 31Hz 512 line imaging
+                                info.event_id(i+1) = 0;
+                                info.event_id(i+2) = 3;
                             end
                         end
                     end
                 end
-                % ? Need to consider 2 comes before 1 ?
-
-                start_event = find(info.event_id == 3); % pole up is linked to both ttl0 & ttl1 up, making the event as 3. Refer to make_and_upload_state_matrix.m in the behavior protocol.
-                end_event = find(info.event_id == 2); % pole down is linked to ttl1 down only. 
-
-                while start_event(1) > end_event(1) % exception error for when the event started with pole_down
-                    end_event = end_event(2:end);
-                end 
-                while start_event(end) > end_event(end) % exception error for when the event ended with pole_up
-                    start_event = start_event(1:end-1);
-                end
-
-                num_event = length(start_event); % now that all the events were matched with pole_up/pole_down events, # of start_events are same as # of events
-                bc_chunk_idx = cell(num_event,1); % ttl1 is for the bitcode of trialnum. 
-                for i = 1 : num_event
-                    if end_event(i)-start_event(i)  <= 1
-                        disp(['No bitcode arrival at event #' num2str(i) ' in ' fn '.sbx'])
-                    else
-                        bc_chunk_idx{i} = start_event(i):end_event(i)-1; % must have at least 2 indices
-                    end                
-                end                  
-
-                %% reading and saving
-                trials = struct('trialnum',[],'frames',[], 'lines', []);
-                for i = 1:num_event
-                    trials(i).trialnum = read_bitcode(bc_chunk_idx{i}, 10, 2, 5);                
-                    if isempty(find(cellfun(@(x) strcmp(x,num2str(trials(i).trialnum)),info.messages),1))
-                        disp(['Bitcode mismatch with message received by scanbox in event #' num2str(i) ' in ' fn '.sbx'])
-                    end
-                    trials(i).frames = [info.frame(start_event(i)),info.frame(end_event(i))];
-                    trials(i).lines = [info.line(start_event(i)),info.line(end_event(i))];
-                end         
             end
+            % ? Need to consider 2 comes before 1 ?
+
+            start_event = find(info.event_id == 3); % pole up is linked to both ttl0 & ttl1 up, making the event as 3. Refer to make_and_upload_state_matrix.m in the behavior protocol.
+            end_event = find(info.event_id == 2); % pole down is linked to ttl1 down only. 
+
+            while start_event(1) > end_event(1) % exception error for when the event started with pole_down
+                end_event = end_event(2:end);
+            end 
+            while start_event(end) > end_event(end) % exception error for when the event ended with pole_up
+                start_event = start_event(1:end-1);
+            end
+
+            num_event = length(start_event); % now that all the events were matched with pole_up/pole_down events, # of start_events are same as # of events
+            bc_chunk_idx = cell(num_event,1); % ttl1 is for the bitcode of trialnum. 
+            for i = 1 : num_event
+                if end_event(i)-start_event(i)  <= 1
+                    disp(['No bitcode arrival at event #' num2str(i) ' in ' fn '.sbx'])
+                else
+                    bc_chunk_idx{i} = start_event(i):end_event(i)-1; % must have at least 2 indices
+                end                
+            end                  
+
+            %% reading and saving
+            trials = struct('trialnum',[],'frames',[], 'lines', []);
+            for i = 1:num_event
+                trials(i).trialnum = read_bitcode(bc_chunk_idx{i}, 10, 2, 5);                
+                if isempty(find(cellfun(@(x) strcmp(x,num2str(trials(i).trialnum)),info.messages),1))
+                    disp(['Bitcode mismatch with message received by scanbox in event #' num2str(i) ' in ' fn '.sbx'])
+                end
+                trials(i).frames = [info.frame(start_event(i)),info.frame(end_event(i))];
+                trials(i).lines = [info.line(start_event(i)),info.line(end_event(i))];
+            end         
+            
             %%
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%
             [~,plane_sorted] = sort(info.otwave,'descend'); % sorting from the top. 

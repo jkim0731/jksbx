@@ -921,7 +921,7 @@ h.statmins(h.statnum) = str2double(get(hObject,'String'));
 
 goodcells = set_thres(h.dat.stat, h.statstrs, h.statmins, h.statmaxs);
 [h.dat.stat(~goodcells).iscell] = deal(0);
-[h.dat.stat(goodcells).iscell]  = deal(1);
+% [h.dat.stat(goodcells).iscell]  = deal(1);
 
 redraw_figure(h);
 
