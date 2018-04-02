@@ -1,44 +1,30 @@
 % UPDATE Christmas 2016: number of clusters determined automatically, but
 % do specify the "diameter" of an average cell for best results. You can do this with either
 % db(iexp).diameter, or ops0.diameter. 
-mice = {'049'};
-sessions = 27 : 32;
+mice = {'030'};
+sessions = {1:25,901,902};
 i = 0;
 
-
-siglist = [0.2,0.5,1];
-nsvdlist = [100,300,1000];
-nframeslist = [1000,5000,10000];
-diameterlist = [10, 20, 40];
-
 for mi = 1 : length(mice)
-    for si = 1 : length(sessions)  
+    for si = 1 : length(sessions{mi})  
         i = i + 1;
         db(i).mouse_name    = mice{mi};
-        db(i).session       = sessions(si);      
-        db(i).nonrigid      = 0;
-        db(i).doDeconvolution = 0;
-        db(i).ResultsSavePath = 'D:\2p\JK\049\dia20\';
-        db(i).signalExtraction = 'surround';
-
-        db(i).sig                    = siglist(2);  % spatial smoothing length in pixels; encourages localized clusters
-        db(i).nSVDforROI             = nsvdlist(2); % how many SVD components for cell clustering
-        db(i).NavgFramesSVD          = nframeslist(2); % how many (binned) timepoints to do the SVD based on
-        db(i).diameter               = 20;
+        db(i).session       = sessions{mi}(si);      
+        db(i).RootStorage   = 'F:\JKbackup_20180113\TPM\';
     end
 end
 
-% mice = {'027'};
-% sessions = 0:25;
-% for mi = 1 : length(mice)
-%     for si = 1 : length(sessions)
-%         i = i + 1;
-%         db(i).mouse_name    = mice{mi};
-%         db(i).session       = sessions(si);        
-%     end
-% end
+mice = {'036','037','038','039','041'};
+sessions = {[1:21,901],[1:19,901,902],[1:26,901],[1:28,901],[1:25,901]};
+for mi = 1 : length(mice)
+    for si = 1 : length(sessions)
+        i = i + 1;
+        db(i).mouse_name    = mice{mi};
+        db(i).session       = sessions{mi}(si);          
+    end
+end
 
-% mice = {'039'};
+% mice = {'037'};
 % sessions = [1:28,901];
 % for mi = 1 : length(mice)
 %     for si = 1 : length(sessions)        

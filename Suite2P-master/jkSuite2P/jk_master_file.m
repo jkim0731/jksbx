@@ -26,7 +26,7 @@ addpath('C:\Users\shires\Documents\GitHub\jksbx\Suite2P-master') % add the path 
 jk_make_db; % RUN YOUR OWN MAKE_DB SCRIPT TO RUN HERE
 
 
-ops0.optotune_ringing_time = 5; % in ms. To crop top portion of each frame.
+ops0.optotune_ringing_time = 8; % in ms. To crop top portion of each frame.
 
 
 ops0.toolbox_path = 'C:\Users\shires\Documents\GitHub\jksbx\Suite2P-master';
@@ -39,16 +39,16 @@ end
 % mex -largeArrayDims SpikeDetection/deconvL0.c (or .cpp) % MAKE SURE YOU COMPILE THIS FIRST FOR DECONVOLUTION
 
 ops0.useGPU                 = 1; % if you can use an Nvidia GPU in matlab this accelerates registration approx 3 times. You only need the Nvidia drivers installed (not CUDA).
-ops0.fig                    = 0; % turn off figure generation with 0
+ops0.fig                    = 1; % turn off figure generation with 0
 % ops0.diameter               = 12; % most important parameter. Set here, or individually per experiment in make_db file
 %                                   % being calculated in jk_run_pipeline according to the imaging magnification
 
 % ---- root paths for files and temporary storage (ideally an SSD drive. my SSD is C:/)
-ops0.RootStorage            = 'D:\2p\JK\'; % Suite2P assumes a folder structure, check out README file
+ops0.RootStorage            = 'D:\TPM\JK\'; % Suite2P assumes a folder structure, check out README file
 % ops0.temp_tiff              = 'D:\TPM\JK\temp.tif'; % copies each remote tiff locally first, into this file
-ops0.RegFileRoot            = 'D:\2p\JK\049';  % location for binary file
+ops0.RegFileRoot            = 'D:\TPM\JK\';  % location for binary file
 ops0.DeleteBin              = 1; % set to 1 for batch processing on a limited hard drive
-ops0.ResultsSavePath        = 'D:\2p\JK\049'; % a folder structure is created inside
+ops0.ResultsSavePath        = 'D:\TPM\JK\'; % a folder structure is created inside
 ops0.RegFileTiffLocation    = ''; % leave empty to NOT save registered tiffs (slow)
 % if you want to save red channel tiffs, also set ops0.REDbinary = 1
 
@@ -60,13 +60,13 @@ ops0.SubPixel               = Inf; % 2 is alignment by 0.5 pixel, Inf is the exa
 ops0.NimgFirstRegistration  = 200; % number of images to include in the first registration pass 
 ops0.nimgbegend             = 0; % frames to average at beginning and end of blocks
 ops0.dobidi                 = 1; % infer and apply bidirectional phase offset
-% ops0.nonrigid               = 1;
+ops0.nonrigid               = 0;
 
 % ---- cell detection options ------------------------------------------%
 ops0.ShowCellMap            = 0; % during optimization, show a figure of the clusters
-ops0.sig                    = 0.5;  % spatial smoothing length in pixels; encourages localized clusters
-ops0.nSVDforROI             = 300; % how many SVD components for cell clustering
-ops0.NavgFramesSVD          = 5000; % how many (binned) timepoints to do the SVD based on
+ops0.sig                    = 1;  % spatial smoothing length in pixels; encourages localized clusters
+ops0.nSVDforROI             = 1000; % how many SVD components for cell clustering
+ops0.NavgFramesSVD          = 1000; % how many (binned) timepoints to do the SVD based on
 ops0.signalExtraction       = 'surround'; % how to extract ROI and neuropil signals: 
 % ops0.writeSVDroi            = 1;
 %  'raw' (no cell overlaps), 'regression' (allows cell overlaps), 
@@ -88,6 +88,7 @@ ops0.saveNeuropil          = 1;
 % ops0.imageRate              = 30; % imaging rate (cumulative over
 % planes!). Approximate, for initialization of deconvolution kernel.
 % Calculated later by info from sbx.
+ops0.doDeconvolution        = 0;
 ops0.sensorTau              = 1; % decay half-life (or timescale). Approximate, for initialization of deconvolution kernel.
 ops0.maxNeurop              = 0.8; % for the neuropil contamination to be less than this (sometimes good, i.e. for interneurons)
 
@@ -116,15 +117,19 @@ for iexp = 1:length(db0)
     tic_start = tic;
     db = db0(iexp);
     
+    if ~isfield(db, 'RootStorage')
+        db.RootStorage = ops0.RootStorage;
+    end
+    
     % add info from scanbox .mat data and calculate ops0.imageRate
-    matfnlist = dir([ops0.RootStorage, filesep, db.mouse_name, filesep, sprintf('%s_%03d_',db.mouse_name,db.session), '*.sbx']);
+    matfnlist = dir([db.RootStorage, filesep, db.mouse_name, filesep, sprintf('%s_%03d_',db.mouse_name,db.session), '*.sbx']);
     for ifile = 1 : length(matfnlist)
         matfnlist(ifile).name = [matfnlist(ifile).name(1:end-4), '.mat'];
     end
     try    
         load(fullfile(matfnlist(1).folder, matfnlist(1).name)) % loading 'info' variable from scanbox .mat file. using the first one of the session    
     catch
-        load([ops0.RootStorage, filesep, db.mouse_name, filesep, matfnlist(1).name])
+        load([db.RootStorage, filesep, db.mouse_name, filesep, matfnlist(1).name])
     end
     db.info = info;
     ops0.imageRate = db.info.resfreq*(2-db.info.scanmode)/db.info.sz(1); % calculating imaging rate based on the scanning mode.     
@@ -140,7 +145,7 @@ for iexp = 1:length(db0)
     
     curr_dir = pwd;
     db.sbxfnlist = cell(length(matfnlist),1);    
-    cd([ops0.RootStorage, filesep, db.mouse_name])        
+    cd([db.RootStorage, filesep, db.mouse_name])        
     for ifile = 1 : length(matfnlist)
         [~, db.sbxfnlist{ifile}, ~] = fileparts(matfnlist(ifile).name);
         jksbxsplittrial(db.sbxfnlist{ifile});

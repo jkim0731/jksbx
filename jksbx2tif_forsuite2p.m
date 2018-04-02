@@ -5,15 +5,22 @@ tic
 if ~exist([fn,'.trials'],'file')
     jksbxsplittrial(fn)
 end
-if ~exist([fn,'.align'],'file')
-    jksbxaligndir({fn},'green')
-end
+
+load([fn,'.trials'],'-mat') % loading 'frame_to_use'
+ftu = frame_to_use;
 
 if nargin > 1
     ch = varargin{1};
 else
     ch = 1;
 end
+
+if nargin > 2
+    fnummax = varargin{2};
+else
+    fnummax = 4000;
+end
+
 curr_dir = pwd;
 global info
 sbxread(fn,0,1);
@@ -21,32 +28,25 @@ if ~exist(fn,'dir')
     mkdir(fn)
 end
 cd(fn)
-if isfield(info.aligned, 'm')
-    m = info.aligned.m;
-elseif isfield(info.aligned, 'm1')
-    m = info.aligned.m1;
-else
-    error('no aligned average image')
-end
-for i = 1 : length(m)    
+for i = 1 : length(frame_to_use)    
     if ~exist(num2str(i),'dir')
         mkdir(num2str(i))
     end
 end
+
 cd(curr_dir)
 
-fta = info.aligned.frame_to_align;
-
-for i = 1 : length(m)
-    parfor j = 1 : length(fta{i})
-        a = sbxread(fn,fta{i}(j),1);
+for i = 1 : length(ftu)
+    for j = 1 : length(ftu{i})        
+        a = sbxread(fn,ftu{i}(j),1);
         a = squeeze(a(ch,101:end,101:end));
         if ch == 1
-            temp_fn = sprintf('%s_%d_%05d_green.tif',fn,i,j);
+            temp_fn = sprintf('%s_%d_green_%02d.tif',fn,i,ceil(j/fnummax));
         elseif ch == 2
-            temp_fn = sprintf('%s_%d_%05d_red.tif',fn,i,j);
-        end
-        imwrite(a,[pwd,filesep,fn,filesep,num2str(i),filesep,temp_fn],'tif');
+            temp_fn = sprintf('%s_%d_red_%02d.tif',fn,i,ceil(j/fnummax));
+        end        
+        imwrite(a,[pwd,filesep,fn,filesep,num2str(i),filesep,temp_fn],'WriteMode', 'append');
     end            
 end    
+
 toc

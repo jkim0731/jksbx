@@ -4,7 +4,7 @@ function ops = jk_build_ops3(db, ops)
 ops.nplanes = getOr(ops, 'nplanes', 1);
 ops.nchannels = getOr(ops, 'nchannels', 1);
 if ~isfield(ops, 'RootDir')
-    ops.RootDir = fullfile(ops.RootStorage, db.mouse_name);
+    ops.RootDir = fullfile(db.RootStorage, db.mouse_name);
 end
 ops = addfields(ops, db);
     
