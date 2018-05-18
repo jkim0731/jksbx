@@ -15,7 +15,7 @@ B = B(yidx,xidx);
 
 C = fftshift(real(ifft2(fft2(A).*fft2(rot90(B,2)))));
 [~,i] = max(C(:));
-[ii jj] = ind2sub(size(C),i);
+[ii, jj] = ind2sub(size(C),i);
 
 u = round(N/2-ii);
 v = round(N/2-jj);
