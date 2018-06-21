@@ -57,7 +57,7 @@ ops0.doRegistration         = 1; % skip (0) if data is already registered
 ops0.showTargetRegistration = 1; % shows the image targets for all planes to be registered
 ops0.PhaseCorrelation       = 1; % set to 0 for non-whitened cross-correlation
 ops0.SubPixel               = Inf; % 2 is alignment by 0.5 pixel, Inf is the exact number from phase correlation
-ops0.NimgFirstRegistration  = 200; % number of images to include in the first registration pass 
+ops0.NimgFirstRegistration  = 500; % number of images to include in the first registration pass 
 ops0.nimgbegend             = 0; % frames to average at beginning and end of blocks
 ops0.dobidi                 = 1; % infer and apply bidirectional phase offset
 ops0.nonrigid               = 0;
@@ -117,7 +117,7 @@ for iexp = 1:length(db0)
     tic_start = tic;
     db = db0(iexp);
     
-    if ~isfield(db, 'RootStorage')
+    if ~isfield(db, 'RootStorage') || isempty(db.RootStorage)
         db.RootStorage = ops0.RootStorage;
     end
     
@@ -129,14 +129,22 @@ for iexp = 1:length(db0)
     try    
         load(fullfile(matfnlist(1).folder, matfnlist(1).name)) % loading 'info' variable from scanbox .mat file. using the first one of the session    
     catch
-        load([db.RootStorage, filesep, db.mouse_name, filesep, matfnlist(1).name])
+        try
+            load([db.RootStorage, filesep, db.mouse_name, filesep, matfnlist(1).name])
+        catch
+            continue
+        end
     end
     db.info = info;
+    ops0.diameter = getOr(db, 'diameter', 10*str2double(info.config.magnification_list(info.config.magnification,:)));
     ops0.imageRate = db.info.resfreq*(2-db.info.scanmode)/db.info.sz(1); % calculating imaging rate based on the scanning mode.     
-    ops0.useX = (1-db.info.scanmode)*100 + 1 : db.info.sz(2); % crop first 100 columns in bidirectional scanning. 
-%     if isfield(db.info, 'deadband')
-%         ops.useX = ops.useX(db.info.deadband(1): end - db.info.deadband(2));
-%     end
+        
+    if isfield(db.info, 'deadband')
+        ops0.useX = max((1-db.info.scanmode)*100, round(db.info.deadband(1)/2) + 10) + 1 : ...
+            db.info.sz(2)-round(db.info.deadband(2)/2)-10; % crop first 100 columns in bidirectional scanning. and also considering deadband (10 as buffer for bidirectional alignment)
+    else
+        ops0.useX = (1-db.info.scanmode)*100: db.info.sz(2)-10;
+    end
     if db.info.volscan % chop off first optotune_ringing_time ms of each plane because of optotune ringing
         ops0.useY = round(ops0.optotune_ringing_time/ (1000/db.info.resfreq) *(2-db.info.scanmode)) : db.info.sz(1);
     else
@@ -148,7 +156,11 @@ for iexp = 1:length(db0)
     cd([db.RootStorage, filesep, db.mouse_name])        
     for ifile = 1 : length(matfnlist)
         [~, db.sbxfnlist{ifile}, ~] = fileparts(matfnlist(ifile).name);
-        jksbxsplittrial(db.sbxfnlist{ifile});
+        if db.session == 9998 || db.session == 9999
+            jksbxsplittrial_nobitcode(db.sbxfnlist{ifile}); % temporary solution for not sending bitcode during piezo stimulation before 2018/02
+        else
+            jksbxsplittrial(db.sbxfnlist{ifile});
+        end
         load([db.sbxfnlist{ifile},'.trials'],'-mat')        
         if ifile == 1
             db.frame_to_use = frame_to_use; % frame_to_use is in cell format. 
@@ -159,7 +171,7 @@ for iexp = 1:length(db0)
                 db.frame_to_use{iplane} = [db.frame_to_use{iplane}, db.max_idx(end) + 1 + frame_to_use{iplane}];
             end
             db.trials = [db.trials, trials];
-            db.max_idx = [db.max_idx, db.max_idx(end)+sbx_maxidx(db.sbxfnlist(ifile))+1];
+            db.max_idx = [db.max_idx, db.max_idx(end)+sbx_maxidx(db.sbxfnlist{ifile})+1];
         end
     end
     
@@ -170,12 +182,12 @@ for iexp = 1:length(db0)
     % for red channel detection and treatment
     if info.channels == 2 % pmt0 only
         db.expred = [];
-        ops0.REDbinary = 0;
+%         ops0.REDbinary = 0;
         ops0.redMeanImg = 0;
         ops0.AlignToRedChannel = 0; % just to make sure
     elseif info.channels == 1 % pmt0 & pmt1 
         db.expred = db.session;
-        ops0.REDbinary = 1;
+%         ops0.REDbinary = 1;
         ops0.redMeanImg = 1;
     else
         error('only red channel')

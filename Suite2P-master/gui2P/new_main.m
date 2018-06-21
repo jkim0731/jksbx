@@ -252,7 +252,7 @@ h.st0(:,1) = double([h.dat.stat.iscell]);
 %
 statLabels  = h.statLabels;
 prior       = h.prior;
-st          = cat(1, h.st, h.st0);
+st          = cat(1, h.st(:,1:6), h.st0); % I don't know why but h.st is r by 7 matrix... 2018/05/01 JK
 save(h.dat.cl.fpath, 'st', 'statLabels', 'prior')
 
 

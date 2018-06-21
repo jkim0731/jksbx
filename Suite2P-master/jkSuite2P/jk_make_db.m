@@ -1,41 +1,36 @@
 % UPDATE Christmas 2016: number of clusters determined automatically, but
 % do specify the "diameter" of an average cell for best results. You can do this with either
 % db(iexp).diameter, or ops0.diameter. 
-mice = {'030'};
-sessions = {1:25,901,902};
-i = 0;
 
-for mi = 1 : length(mice)
-    for si = 1 : length(sessions{mi})  
-        i = i + 1;
-        db(i).mouse_name    = mice{mi};
-        db(i).session       = sessions{mi}(si);      
-        db(i).RootStorage   = 'F:\JKbackup_20180113\TPM\';
-    end
-end
-
-mice = {'036','037','038','039','041'};
-sessions = {[1:21,901],[1:19,901,902],[1:26,901],[1:28,901],[1:25,901]};
-for mi = 1 : length(mice)
-    for si = 1 : length(sessions)
-        i = i + 1;
-        db(i).mouse_name    = mice{mi};
-        db(i).session       = sessions{mi}(si);          
-    end
-end
-
-% mice = {'037'};
-% sessions = [1:28,901];
-% for mi = 1 : length(mice)
-%     for si = 1 : length(sessions)        
+% i = 0;
+% mice = {'025'};
+% sessions = {[9998,9999]};
+% for mi = 1 : length(mice)    
+%     for si = 1 : length(sessions{mi})
 %         i = i + 1;
 %         db(i).mouse_name    = mice{mi};
-%         db(i).session       = sessions(si);        
+%         db(i).session       = sessions{mi}(si);          
 %     end
 % end
 
 
+i = 0;
+mice = {'039'};
+sessions = {[1],[],[],[]};
+for mi = 1 : length(mice)   
+    for si = 1 : length(sessions{mi})
+        i = i + 1;
+        db(i).mouse_name    = mice{mi};
+        db(i).session       = sessions{mi}(si);          
+        db(i).RootStorage   = 'H:\TPM\';
+%         db(i).AlignToRedChannel     = 0;
+    end
+end
 
+%% Other parameters
+% db(i).regOnly
+% db(i).RootStoragte
+% db(i).AlignToRedChannel
 
 %% examples
 % db(i).mouse_name    = '039';

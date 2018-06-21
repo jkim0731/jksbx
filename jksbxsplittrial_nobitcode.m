@@ -1,4 +1,9 @@
-function jksbxsplittrial(fn)
+function jksbxsplittrial_nobitcode(fn)
+
+% same as jksbxsplittrial, but when there was no bitcode sent to scanbox
+% (happened in experiments before 2018/02 during piezo stimulation)
+% Just use info.messages
+
 % splits an image (usually 30~60 min long) into each trials (use aligned-to-reference)
 % number each trials with bitcode
 
@@ -86,23 +91,12 @@ function jksbxsplittrial(fn)
                 start_event = start_event(1:end-1);
             end
 
-            num_event = length(start_event); % now that all the events were matched with pole_up/pole_down events, # of start_events are same as # of events
-            bc_chunk_idx = cell(num_event,1); % ttl1 is for the bitcode of trialnum. 
-            for i = 1 : num_event
-                if end_event(i)-start_event(i)  <= 1
-                    disp(['No bitcode arrival at event #' num2str(i) ' in ' fn '.sbx'])
-                else
-                    bc_chunk_idx{i} = start_event(i):end_event(i)-1; % must have at least 2 indices
-                end                
-            end                  
+            num_event = min(length(start_event),length(info.messages)); % now that all the events were matched with pole_up/pole_down events, # of start_events are same as # of events                                      
 
             %% reading and saving
             trials = struct('trialnum',[],'frames',[], 'lines', []);
             for i = 1:num_event
-                trials(i).trialnum = read_bitcode(bc_chunk_idx{i}, 10, 2, 5);                
-                if isempty(find(cellfun(@(x) strcmp(x,num2str(trials(i).trialnum)),info.messages),1))
-                    disp(['Bitcode mismatch with message received by scanbox in event #' num2str(i) ' in ' fn '.sbx'])
-                end
+                trials(i).trialnum = str2double(info.messages{i});
                 trials(i).frames = [info.frame(start_event(i)),info.frame(end_event(i))];
                 trials(i).lines = [info.line(start_event(i)),info.line(end_event(i))];
             end         
@@ -192,7 +186,6 @@ function jksbxsplittrial(fn)
                 end
 
             else % if not block_imaging
-                layer_trials = [];
                 trial_frames = [];
                 frames_beginning = 0:num_plane:max_idx;
                 frames_ending = num_plane-1:num_plane:max_idx;
@@ -206,59 +199,14 @@ function jksbxsplittrial(fn)
                 end        
             end
         else
-            layer_trials = [];
-            trials = []; trial_frames = 0:info.max_idx;
-            blockimaging = 0; num_layer = 1;
+            trials = []; trial_frames = [];
             if isfield(info, 'blankstart') % blankstart is set manually. Sometimes during file transfer using windows, the files get breached and turns into white blank frames. 2018/03/03 JK
                 info.max_idx = info.blankstart-1;
-            end            
-            [~,plane_sorted] = sort(info.otwave,'descend'); % sorting from the top. 
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            % Assume objective is already sorted descending. (objective 1 higher, i.e., shallower, than objective 2)
-            % Overall goal is to have all planes (including layers) sorted in descending order
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%    
-            if info.volscan                
-                num_plane = length(info.otwave_um);
-                for ind_plane = 1 : num_plane
-                    frame_to_use{plane_sorted(ind_plane)} = (plane_sorted(ind_plane):num_plane:info.max_idx);
-                end 
-            else
-                num_plane = 1;
-                plane_sorted = 1;
-                frame_to_use{1} = 0:info.max_idx;
-            end 
+            end
+            frame_to_use{1} = 0:info.max_idx;
+            blockimaging = 0; num_layer = 1; num_plane = 1;
         end
         clear global
 %     end
-    save([fn,'.trials'],'trials', 'frame_to_use', 'blockimaging', 'num_layer', 'num_plane', 'trial_frames', 'layer_trials');
-end
-
-%% reading the bitcode
-% First_gaptm, bittm (bit time), gaptm (gap time) from
-% "make_and_upload_start_matrix.m". 
-function trialnum = read_bitcode(bit_idx,first_gaptm,bittm,gaptm)
-    global info
-    line_rate = 1000/info.resfreq/(2-info.scanmode); % duration of imaging a line in ms
-    n = length(bit_idx);
-    dline = zeros(n-1,1);
-    for i = 1 : n-1
-        dframe = info.frame(bit_idx(i)+1) - info.frame(bit_idx(i));
-        dline(i) = info.line(bit_idx(i)+1) - info.line(bit_idx(i)) + info.sz(1) * dframe; 
-    end    
-    dbit = dline*line_rate; 
-    dbit(1) = dbit(1) - first_gaptm;
-    dbit = round(dbit/(bittm + gaptm));
-    invbitcode = [];
-    for i = 1 : n-1    
-        invbitcode = [invbitcode; zeros(dbit(i)-1,1);1];
-    end
-
-    trialnum = invbit2num(invbitcode);
-end
-%% function for converting inverse bitcode to a number
-function num = invbit2num(invbitcode)
-    num = 0;
-    for ii = 1 : length(invbitcode)
-        num = num + invbitcode(ii) * pow2(ii-1);
-    end
+    save([fn,'.trials'],'trials', 'frame_to_use', 'blockimaging', 'num_layer', 'num_plane', 'trial_frames');
 end
