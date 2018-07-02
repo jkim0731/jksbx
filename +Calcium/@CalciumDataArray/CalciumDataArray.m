@@ -63,7 +63,7 @@ classdef CalciumDataArray < handle
             end
             
             load(fnlist(1).name)            
-            obj.frameRate = dat.ops.imageRate / 4;
+            obj.frameRate = dat.ops.imageRate / dat.ops.num_plane;
             numTrials = length(dat.ops.trials);
             obj.trials = cell(numTrials,1);
             for i = 1 : length(obj.trials)
