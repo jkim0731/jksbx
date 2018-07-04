@@ -120,11 +120,18 @@ for iexp = 1:length(db0)
     if ~isfield(db, 'RootStorage') || isempty(db.RootStorage)
         db.RootStorage = ops0.RootStorage;
     end
-    
+    cd([db.RootStorage, filesep, db.mouse_name]) 
     % add info from scanbox .mat data and calculate ops0.imageRate
     matfnlist = dir([db.RootStorage, filesep, db.mouse_name, filesep, sprintf('%s_%03d_',db.mouse_name,db.session), '*.sbx']);
     for ifile = 1 : length(matfnlist)
         matfnlist(ifile).name = [matfnlist(ifile).name(1:end-4), '.mat'];
+        if db.session < 6000 && db.session > 4000 % spontaneous imaging
+            load(matfnlist(ifile).name)
+            info.event_id = [];
+            info.frame = [];
+            info.line = [];
+            save(matfnlist(ifile).name, 'info')
+        end
     end
     try    
         load(fullfile(matfnlist(1).folder, matfnlist(1).name)) % loading 'info' variable from scanbox .mat file. using the first one of the session    
@@ -135,6 +142,7 @@ for iexp = 1:length(db0)
             continue
         end
     end
+    
     db.info = info;
     ops0.diameter = getOr(db, 'diameter', 10*str2double(info.config.magnification_list(info.config.magnification,:)));
     ops0.imageRate = db.info.resfreq*(2-db.info.scanmode)/db.info.sz(1); % calculating imaging rate based on the scanning mode.     
@@ -153,10 +161,10 @@ for iexp = 1:length(db0)
     
     curr_dir = pwd;
     db.sbxfnlist = cell(length(matfnlist),1);    
-    cd([db.RootStorage, filesep, db.mouse_name])        
+      
     for ifile = 1 : length(matfnlist)
         [~, db.sbxfnlist{ifile}, ~] = fileparts(matfnlist(ifile).name);
-        if db.session == 9998 || db.session == 9999
+        if db.session > 8000
             jksbxsplittrial_nobitcode(db.sbxfnlist{ifile}); % temporary solution for not sending bitcode during piezo stimulation before 2018/02
         else
             jksbxsplittrial(db.sbxfnlist{ifile});
