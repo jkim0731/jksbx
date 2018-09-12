@@ -1,4 +1,4 @@
-function jksbxsplittrial_nobitcode(fn)
+function jksbxsplittrial_nobitcode(fn, varargin)
 
 % same as jksbxsplittrial, but when there was no bitcode sent to scanbox
 % (happened in experiments before 2018/02 during piezo stimulation)
@@ -30,12 +30,28 @@ function jksbxsplittrial_nobitcode(fn)
 % First gap time depends on TimeupSt of sBC in the state matrix. Bit time
 % and gap time depends on those in "make_and_upload_state_matrix.m" in Behavior 
 % Protocol. For 2port_ang_dist now, it's 10, 2, and 5 ms. 
+
+% 2018/07/09
+% including onFrames. For spontaneous and piezo imaging ~ 2018/06.
+% splittrial includes laser off frames, so onFrames can be included as an
+% input, and trials only within this onFrames are counted.
     %% check if already splitted or not
 %     if exist([fn,'.trials'],'file')
 %         fprintf('%s has already been split\n',fn)
 %         return
 %     else    
 
+    %% input arguments
+    if nargin > 1
+        if isnumeric(varargin{1}) && min(varargin{1}) > 0 
+            onFrames = varargin{1};
+            laserOffIncluded = 1;
+        else
+            error('Input argument is either not numeric or includes negative values')
+        end
+    else
+        laserOffIncluded = 0;
+    end
     %% index sorting    
         load([fn,'.mat']);
         clear info
@@ -164,7 +180,12 @@ function jksbxsplittrial_nobitcode(fn)
                             if trials(kk).trialnum == layer_trials{ii}(jj)                                
                                 begin_frame = frames_beginning(find(frames_beginning > trials(kk).frames(1), 1, 'first'));
                                 end_frame = frames_ending(find(frames_ending < trials(kk).frames(2), 1, 'last'));
-                                trial_frames{ii} = [trial_frames{ii}, begin_frame : end_frame];
+                                if laserOffIncluded
+                                    currTrialFrames = intersect(onFrames, begin_frame:end_frame);
+                                else
+                                    currTrialFrames = begin_frame:end_frame;
+                                end
+                                trial_frames{ii} = [trial_frames{ii}, currTrialFrames];                                
 %                                 trial_frames{ii} = [trial_frames{ii}, trials(kk).frames(1) : trials(kk).frames(2)];
 %                                 Changed to include only the frames with full-FOV recording, and matching number of frames in each plane at the same layer in each trials. 2018/03/07 JK.
                                 break
@@ -187,24 +208,57 @@ function jksbxsplittrial_nobitcode(fn)
 
             else % if not block_imaging
                 trial_frames = [];
+                frame_to_use = cell(num_plane,1);
                 frames_beginning = 0:num_plane:max_idx;
                 frames_ending = num_plane-1:num_plane:max_idx;
                 for trial_i = 1 : length(trials)
                     begin_frame = frames_beginning(find(frames_beginning > trials(trial_i).frames(1), 1, 'first'));
                     end_frame = frames_ending(find(frames_ending > trials(trial_i).frames(2), 1, 'last'));                    
-                    trial_frames = [trial_frames, begin_frame : end_frame];
+                    if laserOffIncluded
+                        currTrialFrames = intersect(onFrames, begin_frame:end_frame);
+                    else
+                        currTrialFrames = begin_frame:end_frame;
+                    end
+                    trial_frames = [trial_frames, currTrialFrames];
                 end
                 for ind_plane = 1 : num_plane
                     frame_to_use{plane_sorted(ind_plane)} = intersect(plane_sorted(ind_plane):num_plane:max_idx,trial_frames);             
                 end        
             end
         else
-            trials = []; trial_frames = [];
+            layer_trials = [];
+            trials = []; 
+            blockimaging = 0; num_layer = 1;
             if isfield(info, 'blankstart') % blankstart is set manually. Sometimes during file transfer using windows, the files get breached and turns into white blank frames. 2018/03/03 JK
                 info.max_idx = info.blankstart-1;
             end
-            frame_to_use{1} = 0:info.max_idx;
-            blockimaging = 0; num_layer = 1; num_plane = 1;
+            
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            % Assume objective is already sorted descending. (objective 1 higher, i.e., shallower, than objective 2)
+            % Overall goal is to have all planes (including layers) sorted in descending order
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%   
+            if info.volscan                
+                num_plane = length(info.otwave_um);
+                [~,plane_sorted] = sort(info.otwave,'descend'); % sorting from the top. 
+                for ind_plane = 1 : num_plane
+                    if laserOffIncluded
+                        trial_frames = onFrames;
+                        frame_to_use{plane_sorted(ind_plane)} = intersect(onFrames,(plane_sorted(ind_plane):num_plane:info.max_idx));
+                    else
+                        trial_frames = 0:info.max_idx;
+                        frame_to_use{plane_sorted(ind_plane)} = (plane_sorted(ind_plane):num_plane:info.max_idx);
+                    end 
+                end 
+            else
+                num_plane = 1;
+                frame_to_use = cell(num_plane,1);                
+                if laserOffIncluded
+                    trial_frames = onFrames;
+                else
+                    trial_frames = 0:info.max_idx;
+                end
+                frame_to_use{1} = trial_frames;
+            end
         end
         clear global
 %     end

@@ -56,7 +56,7 @@ try
     if isfield(h, 'dat') && isfield(h.dat, 'filename')
         root = fileparts(h.dat.filename);
     else
-        root = 'D:\DATA\F\';
+        root = 'D:\TPM\JK\';
     end
     [filename1,filepath1]=uigetfile(fullfile(root, 'F*.mat'), 'Select Data File');
     set(h.figure1, 'Name', filename1);
@@ -73,8 +73,17 @@ if flag
 rng('default')
 
 % keyboard;
-if isfield(h.dat, 'dat')
+if isfield(h.dat, 'dat') % for _proc.mat
     h.dat = h.dat.dat;
+    h.quadvalue = zeros(3);
+    for j = 1:3
+        for i = 1:3
+            set(h.(sprintf('Q%d%d', j,i)), 'BackgroundColor',[.92 .92 .92]);
+        end
+    end
+    h.dat.ylim = [0 h.dat.cl.Ly];
+    h.dat.xlim = [0 h.dat.cl.Lx]; 
+%     h.dat.F.ichosen = 1;
 else
     h.dat.filename = fullfile(filepath1, filename1);
     h.dat.cl.Ly       = numel(h.dat.ops.yrange);
@@ -120,7 +129,7 @@ else
         end
     end    
    
-    h.dat.F.ichosen = 1;
+%     h.dat.F.ichosen = 1;
     
     % loop through redcells and set h.dat.cl.rands(h.dat.F.ichosen) = 0
     for j = find([h.dat.stat.redcell])
@@ -199,6 +208,8 @@ end
 h.dat.procmap = 0;
 h.dat.map = 1;
 
+h = keyboard_navigation_reset(hObject,h); % for keyboard navigation of the cells 2018/09/10 JK
+
 redraw_fluorescence(h);
 redraw_figure(h);
 
@@ -246,15 +257,29 @@ h=redFig(h);
 h=ellipseFig(h);
 
 dat = h.dat;
-save([h.dat.filename(1:end-4) '_proc.mat'], 'dat')
-%
-h.st0(:,1) = double([h.dat.stat.iscell]);
-%
-statLabels  = h.statLabels;
-prior       = h.prior;
-st          = cat(1, h.st(:,1:6), h.st0); % I don't know why but h.st is r by 7 matrix... 2018/05/01 JK
-save(h.dat.cl.fpath, 'st', 'statLabels', 'prior')
+try
+    save([h.dat.filename(1:end-4) '_proc.mat'], 'dat')
+catch
+    if isfield(h, 'dat') && isfield(h.dat, 'filename')
+        [root, fn] = fileparts(h.dat.filename);
+    else
+        root = 'D:\TPM\JK\';
+    end
+    h.dat.filename = uigetfile(fullfile(root, [fn, '*.mat']));
+    save([h.dat.filename(1:end-4) '_proc.mat'], 'dat')
+end
 
+try
+    %
+    h.st0(:,1) = double([h.dat.stat.iscell]);
+    %
+
+    statLabels  = h.statLabels;
+    prior       = h.prior;
+    st          = cat(1, h.st(:,1:6), h.st0); % I don't know why but h.st is r by 7 matrix... 2018/05/01 JK
+    save(h.dat.cl.fpath, 'st', 'statLabels', 'prior')
+catch % it spits error when proc file was loaded and trying to overwrite 2018/09/07 JK
+end
 
 function figure1_ResizeFcn(hObject, eventdata, h)
 
@@ -318,6 +343,9 @@ set(h.(sprintf('Q%d%d', iy,ix)), 'BackgroundColor', [1 0 0]);
 function full_Callback(hObject, eventdata, h)
 h.dat.ylim = [0 h.dat.cl.Ly];
 h.dat.xlim = [0 h.dat.cl.Lx];
+
+h = keyboard_navigation_reset(hObject,h); % for keyboard navigation of the cells 2018/09/10 JK
+
 if h.dat.map==1
     redraw_figure(h);
 else
@@ -333,20 +361,25 @@ for i = 1:3
 end
 guidata(hObject,h);
 
+
 function quadrant(hObject, h, iy, ix)
 h.dat.ylim = [h.dat.figure.y0all(iy) h.dat.figure.y1all(iy+1)];
 h.dat.xlim = [h.dat.figure.x0all(ix) h.dat.figure.x1all(ix+1)];
 h.quadvalue(iy, ix) = 1;
 
+h = keyboard_navigation_reset(hObject,h); % for keyboard navigation of the cells 2018/09/10 JK
+
 guidata(hObject,h);
 
+redraw_fluorescence(h);
 if h.dat.map==1
     redraw_figure(h);
 else
     redraw_meanimg(h);
 end
 
-function figure1_WindowKeyPressFcn(hObject, eventdata, h)
+
+function h = figure1_WindowKeyPressFcn(hObject, eventdata, h)
 switch eventdata.Key
     case 'f'
         % flip currently selected unit
@@ -386,13 +419,189 @@ switch eventdata.Key
         pushbutton100_Callback(hObject, eventdata, h);
     case 'v'
         pushbutton104_Callback(hObject, eventdata, h);
+    % for keyboard navigation of the cells 2018/09/10 JK
+    case 'rightarrow'
+        h = next_cell_selection(hObject,h);
+    case 'leftarrow'
+        h = prev_cell_selection(hObject,h);
+    case 'downarrow'
+        h = isnotcell_side(hObject,h);
+    case 'uparrow'
+        h = iscell_side(hObject,h);
+    case 'space'
+        h = flip_cell(hObject,h);
+    case 'numpad1'
+        Q31_Callback(hObject, eventdata, h)
+    case 'numpad2'
+        Q32_Callback(hObject, eventdata, h)
+    case 'numpad3'
+        Q33_Callback(hObject, eventdata, h)
+    case 'numpad4'
+        Q21_Callback(hObject, eventdata, h)
+    case 'numpad5'
+        Q22_Callback(hObject, eventdata, h)
+    case 'numpad6'
+        Q23_Callback(hObject, eventdata, h)
+    case 'numpad7'
+        Q11_Callback(hObject, eventdata, h)
+    case 'numpad8'
+        Q12_Callback(hObject, eventdata, h)
+    case 'numpad9'
+        Q13_Callback(hObject, eventdata, h)
+    case 'numpad0'
+        full_Callback(hObject, eventdata, h)    
 end
+
+% ------------------ keyboard navigation ---------------------% 2018/09/10 JK
+function h = keyboard_navigation_reset(hObject,h)
+    h.showingIscellSide = 1; 
+    meds = [h.dat.stat.med];
+    ymeds = meds(1:2:end)';
+    xmeds = meds(2:2:end)';
+    h.currWindowInds = find((ymeds - h.dat.ylim(1)) .* (ymeds - h.dat.ylim(2)) < 0 & (xmeds - h.dat.xlim(1)) .* (xmeds - h.dat.xlim(2)) < 0);
+    h.iscellList = h.currWindowInds(find([h.dat.stat(h.currWindowInds).iscell]));
+    h.isnotcellList = h.currWindowInds(find([h.dat.stat(h.currWindowInds).iscell]==0));
+    h.iscellSelInd = 1;
+    h.isnotcellSelInd = 1;
+    try 
+        h.dat.F.ichosen = h.iscellList(h.iscellSelInd);
+    catch
+        h.dat.F.ichosen = h.isnotcellList(h.isnotcellSelInd);
+        h.showingIscellSide = 0;
+    end
+    
+    ichosen = h.dat.F.ichosen;
+    redraw_fluorescence(h);
+    
+    redraw_figure(h);
+    guidata(hObject,h);
+    
+    str = [];
+    if isfield(h, 'statLabels')
+        labels = [h.statLabels(2:end), {'iscell'}, {'redcell'},{'redprob'}];
+    elseif isfield(h, 'statstrs')
+        labels = [h.statstrs(2:end), {'iscell'}, {'redcell'},{'redprob'}];
+    else
+        labels = [{'iscell'}, {'redcell'},{'redprob'}];
+    end
+    for j =1:length(labels)
+       if isfield(h.dat.stat, labels{j})
+           sl = eval(sprintf('h.dat.stat(ichosen).%s', labels{j}));
+           strnew = sprintf('%s = %2.2f \n', labels{j}, sl);
+           str = cat(2, str, strnew);
+       end
+    end    
+    str = cat(2, str, ['cellNum = ', num2str(ichosen)]);
+    set(h.text54,'String', str);
+    
+    
+function h = keyboard_navigation_changed(hObject,h)
+    meds = [h.dat.stat.med];
+    ymeds = meds(1:2:end)';
+    xmeds = meds(2:2:end)';
+    h.currWindowInds = find((ymeds - h.dat.ylim(1)) .* (ymeds - h.dat.ylim(2)) < 0 & (xmeds - h.dat.xlim(1)) .* (xmeds - h.dat.xlim(2)) < 0);
+    h.iscellList = h.currWindowInds(find([h.dat.stat(h.currWindowInds).iscell]));
+    h.isnotcellList = h.currWindowInds(find([h.dat.stat(h.currWindowInds).iscell]==0));
+    
+    if h.showingIscellSide
+        if h.iscellSelInd > length(h.iscellList)
+            h.iscellSelInd = length(h.iscellList);
+        end
+        h.dat.F.ichosen = h.iscellList(h.iscellSelInd);
+    else
+        if h.isnotcellSelInd > length(h.isnotcellList)
+            h.isnotcellSelInd = length(h.isnotcellList);
+        end
+        h.dat.F.ichosen = h.isnotcellList(h.isnotcellSelInd);
+    end
+    ichosen = h.dat.F.ichosen;
+    redraw_fluorescence(h);
+    
+    redraw_figure(h);
+    guidata(hObject,h);
+    
+    str = [];
+    if isfield(h, 'statLabels')
+        labels = [h.statLabels(2:end), {'iscell'}, {'redcell'},{'redprob'}];
+    elseif isfield(h, 'statstrs')
+        labels = [h.statstrs(2:end), {'iscell'}, {'redcell'},{'redprob'}];
+    else
+        labels = [{'iscell'}, {'redcell'},{'redprob'}];
+    end
+    for j =1:length(labels)
+       if isfield(h.dat.stat, labels{j})
+           sl = eval(sprintf('h.dat.stat(ichosen).%s', labels{j}));
+           strnew = sprintf('%s = %2.2f \n', labels{j}, sl);
+           str = cat(2, str, strnew);
+       end
+    end
+    str = cat(2, str, ['cellNum = ', num2str(ichosen)]);
+    set(h.text54,'String', str);
+    
+
+function h = next_cell_selection(hObject,h)
+    if h.showingIscellSide 
+        if h.iscellSelInd < length(h.iscellList)
+            h.iscellSelInd = h.iscellSelInd + 1;
+            h = keyboard_navigation_changed(hObject,h);
+        end
+    else
+        if h.isnotcellSelInd < length(h.isnotcellList)
+            h.isnotcellSelInd = h.isnotcellSelInd + 1;
+            h = keyboard_navigation_changed(hObject,h);
+        end
+    end    
+    
+function h = prev_cell_selection(hObject,h)
+    if h.showingIscellSide 
+        if h.iscellSelInd > 1
+            h.iscellSelInd = h.iscellSelInd - 1;
+            h = keyboard_navigation_changed(hObject,h);
+        end
+    else
+        if h.isnotcellSelInd > 1
+            h.isnotcellSelInd = h.isnotcellSelInd - 1;
+            h = keyboard_navigation_changed(hObject,h);
+        end
+    end    
+    
+function h = isnotcell_side(hObject,h)
+    if h.showingIscellSide
+        h.showingIscellSide = 0;        
+        h = keyboard_navigation_changed(hObject,h);
+    end
+
+function h = iscell_side(hObject,h)
+    if h.showingIscellSide == 0
+        h.showingIscellSide = 1;
+        h = keyboard_navigation_changed(hObject,h);
+    end
+
+function h = flip_cell(hObject,h)
+    h.dat.stat(h.dat.F.ichosen).iscell = 1 - h.dat.stat(h.dat.F.ichosen).iscell;
+    
+    meds = [h.dat.stat.med];
+    ymeds = meds(1:2:end)';
+    xmeds = meds(2:2:end)';
+    h.currWindowInds = find((ymeds - h.dat.ylim(1)) .* (ymeds - h.dat.ylim(2)) < 0 & (xmeds - h.dat.xlim(1)) .* (xmeds - h.dat.xlim(2)) < 0);
+    h.iscellList = h.currWindowInds(find([h.dat.stat(h.currWindowInds).iscell]));
+    h.isnotcellList = h.currWindowInds(find([h.dat.stat(h.currWindowInds).iscell]==0));
+    
+    h.showingIscellSide = 1 - h.showingIscellSide;
+    if h.showingIscellSide
+        h.iscellSelInd = find(h.iscellList == h.dat.F.ichosen);
+    else
+        h.isnotcellSelInd = find(h.isnotcellList == h.dat.F.ichosen);
+    end
+    
+    h = keyboard_navigation_changed(hObject,h);
+        
 
 % ------------------ CELL CLICKING!! -------------------------%
 function figure1_WindowButtonDownFcn(hObject, eventdata, h)
 z = round(eventdata.Source.CurrentAxes.CurrentPoint(1,:));
 x = round(z(1));
-y  = round(z(2));
+y = round(z(2));
 
 if x>=1 && y>=1 && x<=h.dat.cl.Lx && y<=h.dat.cl.Ly && h.dat.res.iclust(y,x)>0
     h.dat.F.ichosen = h.dat.res.iclust(y, x);
@@ -433,7 +642,13 @@ if x>=1 && y>=1 && x<=h.dat.cl.Lx && y<=h.dat.cl.Ly && h.dat.res.iclust(y,x)>0
     guidata(hObject,h);
     
     str = [];
-    labels = [h.statLabels(2:end), {'iscell'}, {'redcell'},{'redprob'}];
+    if isfield(h, 'statLabels')
+        labels = [h.statLabels(2:end), {'iscell'}, {'redcell'},{'redprob'}];
+    elseif isfield(h, 'statstrs')
+        labels = [h.statstrs(2:end), {'iscell'}, {'redcell'},{'redprob'}];
+    else
+        labels = [{'iscell'}, {'redcell'},{'redprob'}];
+    end
     for j =1:length(labels)
        if isfield(h.dat.stat, labels{j})
            sl = eval(sprintf('h.dat.stat(ichosen).%s', labels{j}));
@@ -441,8 +656,8 @@ if x>=1 && y>=1 && x<=h.dat.cl.Lx && y<=h.dat.cl.Ly && h.dat.res.iclust(y,x)>0
            str = cat(2, str, strnew);
        end
     end
-    
-   set(h.text54,'String', str);
+    str = cat(2, str, ['cellNum = ', num2str(ichosen)]);
+    set(h.text54,'String', str);
 end
 
 

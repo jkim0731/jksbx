@@ -139,7 +139,7 @@ for iexp = 1:length(db0)
         try
             load([db.RootStorage, filesep, db.mouse_name, filesep, matfnlist(1).name])
         catch
-            continue
+            continue            
         end
     end
     
@@ -165,9 +165,11 @@ for iexp = 1:length(db0)
     for ifile = 1 : length(matfnlist)
         [~, db.sbxfnlist{ifile}, ~] = fileparts(matfnlist(ifile).name);
         if db.session > 8000
-            jksbxsplittrial_nobitcode(db.sbxfnlist{ifile}); % temporary solution for not sending bitcode during piezo stimulation before 2018/02
-        else
-            jksbxsplittrial(db.sbxfnlist{ifile});
+            onFrames = laser_on_frames(db.sbxfnlist{ifile});
+            jksbxsplittrial_nobitcode(db.sbxfnlist{ifile}, onFrames); % temporary solution for not sending bitcode during piezo stimulation before 2018/02
+        elseif db.session > 4000
+            onFrames = laser_on_frames(db.sbxfnlist{ifile});
+            jksbxsplittrial(db.sbxfnlist{ifile}, onFrames);
         end
         load([db.sbxfnlist{ifile},'.trials'],'-mat')        
         if ifile == 1

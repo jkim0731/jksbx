@@ -16,7 +16,7 @@
 
 i = 0;
 mice = {'039'};
-sessions = {[5551:5556,4441:4446],[],[],[]};
+sessions = {[5551:5556,4441:4446,8881,8882,9991,9992],[],[],[]};
 for mi = 1 : length(mice)   
     for si = 1 : length(sessions{mi})
         i = i + 1;
