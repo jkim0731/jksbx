@@ -56,7 +56,7 @@ try
     if isfield(h, 'dat') && isfield(h.dat, 'filename')
         root = fileparts(h.dat.filename);
     else
-        root = 'D:\TPM\JK\';
+        root = 'Y:\Whiskernas\JK\suite2p\';
     end
     [filename1,filepath1]=uigetfile(fullfile(root, 'F*.mat'), 'Select Data File');
     set(h.figure1, 'Name', filename1);
@@ -81,8 +81,8 @@ if isfield(h.dat, 'dat') % for _proc.mat
             set(h.(sprintf('Q%d%d', j,i)), 'BackgroundColor',[.92 .92 .92]);
         end
     end
-    h.dat.ylim = [0 h.dat.cl.Ly];
-    h.dat.xlim = [0 h.dat.cl.Lx]; 
+    h.dat.ylim = [1 h.dat.cl.Ly];
+    h.dat.xlim = [1 h.dat.cl.Lx]; 
 %     h.dat.F.ichosen = 1;
 else
     h.dat.filename = fullfile(filepath1, filename1);
@@ -119,15 +119,15 @@ else
         end
     end
     
-    h.dat.ylim = [0 h.dat.cl.Ly];
-    h.dat.xlim = [0 h.dat.cl.Lx];    
+    h.dat.ylim = [1 h.dat.cl.Ly];
+    h.dat.xlim = [1 h.dat.cl.Lx];    
     
     if ~isfield(h.dat.stat,'redcell')
         for j = 1:numel(h.dat.stat)
             h.dat.stat(j).redcell = 0;
             h.dat.stat(j).redprob = 0;
         end
-    end    
+    end
    
 %     h.dat.F.ichosen = 1;
     
@@ -137,11 +137,11 @@ else
     end
    
     % x and y limits on subquadrants
-    h.dat.figure.x0all = round(linspace(0, 19/20*h.dat.cl.Lx, 4));
-    h.dat.figure.y0all = round(linspace(0, 19/20*h.dat.cl.Ly, 4));
+    h.dat.figure.x0all = round(linspace(1, 19/20*h.dat.cl.Lx, 4));
+    h.dat.figure.y0all = round(linspace(1, 19/20*h.dat.cl.Ly, 4));
     h.dat.figure.x1all = round(linspace(1/20 * h.dat.cl.Lx, h.dat.cl.Lx, 4));
     h.dat.figure.y1all = round(linspace(1/20 * h.dat.cl.Ly, h.dat.cl.Ly, 4));
-    
+
 end
 
 % activate all pushbuttons
@@ -154,6 +154,7 @@ for j = 1:numel(pb)
     set(eval(sprintf('h.Q%d', pb(j))),'Enable','on')
 end
 set(h.full,'Enable', 'on');
+set(h.closeup, 'Enable', 'on');
 set(h.edit50,'Enable', 'on');
 set(h.edit50,'String', num2str(h.dat.cl.threshold));
 set(h.edit52,'Enable', 'on');
@@ -208,10 +209,14 @@ end
 h.dat.procmap = 0;
 h.dat.map = 1;
 
+h.resetFlag = 1;
 h = keyboard_navigation_reset(hObject,h); % for keyboard navigation of the cells 2018/09/10 JK
 
 redraw_fluorescence(h);
 redraw_figure(h);
+
+h.closeup.Value = 0; % indicating if the view is close-up
+h.view = 0; % quadrant view. 0 is full-view. necessary to switch back from close-up view.
 
 guidata(hObject,h)
 end
@@ -284,46 +289,55 @@ end
 function figure1_ResizeFcn(hObject, eventdata, h)
 
 function Q11_Callback(hObject, eventdata, h)
+h.view = 7;
 iy = 1; ix = 1;
 quadrant(hObject, h, iy, ix)
 paint_quadbutton(h, iy, ix);
 
 function Q12_Callback(hObject, eventdata, h)
+h.view = 8;
 iy = 1; ix = 2;
 quadrant(hObject, h, iy, ix)
 paint_quadbutton(h, iy, ix);
 
 function Q13_Callback(hObject, eventdata, h)
+h.view = 9;
 iy = 1; ix = 3;
 quadrant(hObject, h, iy, ix)
 paint_quadbutton(h, iy, ix);
 
 function Q21_Callback(hObject, eventdata, h)
+h.view = 4;
 iy = 2; ix = 1;
 quadrant(hObject, h, iy, ix)
 paint_quadbutton(h, iy, ix);
 
 function Q22_Callback(hObject, eventdata, h)
+h.view = 5;
 iy = 2; ix = 2;
 quadrant(hObject, h, iy, ix)
 paint_quadbutton(h, iy, ix);
 
 function Q23_Callback(hObject, eventdata, h)
+h.view = 6;
 iy = 2; ix = 3;
 quadrant(hObject, h, iy, ix)
 paint_quadbutton(h, iy, ix);
 
 function Q31_Callback(hObject, eventdata, h)
+h.view = 1;
 iy = 3; ix = 1;
 quadrant(hObject, h, iy, ix)
 paint_quadbutton(h, iy, ix);
 
 function Q32_Callback(hObject, eventdata, h)
+h.view = 2;
 iy = 3; ix = 2;
 quadrant(hObject, h, iy, ix)
 paint_quadbutton(h, iy, ix);
 
 function Q33_Callback(hObject, eventdata, h)
+h.view = 3;
 iy = 3; ix = 3;
 quadrant(hObject, h, iy, ix);
 paint_quadbutton(h, iy, ix);
@@ -341,11 +355,13 @@ end
 set(h.(sprintf('Q%d%d', iy,ix)), 'BackgroundColor', [1 0 0]); 
 
 function full_Callback(hObject, eventdata, h)
-h.dat.ylim = [0 h.dat.cl.Ly];
-h.dat.xlim = [0 h.dat.cl.Lx];
+h.view = 0;
+h.dat.ylim = [1 h.dat.cl.Ly];
+h.dat.xlim = [1 h.dat.cl.Lx];
 
-h = keyboard_navigation_reset(hObject,h); % for keyboard navigation of the cells 2018/09/10 JK
-
+if ~h.closeup.Value
+    h = keyboard_navigation_reset(hObject,h); % for keyboard navigation of the cells 2018/09/10 JK
+end
 if h.dat.map==1
     redraw_figure(h);
 else
@@ -361,14 +377,13 @@ for i = 1:3
 end
 guidata(hObject,h);
 
-
 function quadrant(hObject, h, iy, ix)
 h.dat.ylim = [h.dat.figure.y0all(iy) h.dat.figure.y1all(iy+1)];
 h.dat.xlim = [h.dat.figure.x0all(ix) h.dat.figure.x1all(ix+1)];
 h.quadvalue(iy, ix) = 1;
-
-h = keyboard_navigation_reset(hObject,h); % for keyboard navigation of the cells 2018/09/10 JK
-
+if ~h.closeup.Value
+    h = keyboard_navigation_reset(hObject,h); % for keyboard navigation of the cells 2018/09/10 JK
+end
 guidata(hObject,h);
 
 redraw_fluorescence(h);
@@ -380,80 +395,88 @@ end
 
 
 function h = figure1_WindowKeyPressFcn(hObject, eventdata, h)
-switch eventdata.Key
-    case 'f'
-        % flip currently selected unit
-        h.dat.stat(h.dat.F.ichosen).iscell = 1 - ...
-            h.dat.stat(h.dat.F.ichosen).iscell;
-        if h.dat.maxmap==1
-            redraw_figure(h);
-        end
-        guidata(hObject,h);
-    case 'q'
-        pushbutton87_Callback(hObject, eventdata, h);
-    case 'e'
-        pushbutton89_Callback(hObject, eventdata, h);
-    case 'r'
-        if size(h.dat.mimg, 3)>2
-            pushbutton90_Callback(hObject, eventdata, h);
-        end
-    case 't'
-        pushbutton92_Callback(hObject, eventdata, h);
-    case 'w'
-        pushbutton103_Callback(hObject, eventdata, h);
-    case 'p'
-        pushbutton86_Callback(hObject, eventdata, h);
-    case 'a'
-        pushbutton98_Callback(hObject, eventdata, h);
-    case 's'
-        pushbutton95_Callback(hObject, eventdata, h);
-    case 'd'
-        pushbutton96_Callback(hObject, eventdata, h);
-    case 'g'
-        pushbutton112_Callback(hObject, eventdata, h);
-    case 'z'
-        pushbutton102_Callback(hObject, eventdata, h);
-    case 'x'
-        pushbutton99_Callback(hObject, eventdata, h);
-    case 'c'
-        pushbutton100_Callback(hObject, eventdata, h);
-    case 'v'
-        pushbutton104_Callback(hObject, eventdata, h);
-    % for keyboard navigation of the cells 2018/09/10 JK
-    case 'rightarrow'
-        h = next_cell_selection(hObject,h);
-    case 'leftarrow'
-        h = prev_cell_selection(hObject,h);
-    case 'downarrow'
-        h = isnotcell_side(hObject,h);
-    case 'uparrow'
-        h = iscell_side(hObject,h);
-    case 'space'
-        h = flip_cell(hObject,h);
-    case 'numpad1'
-        Q31_Callback(hObject, eventdata, h)
-    case 'numpad2'
-        Q32_Callback(hObject, eventdata, h)
-    case 'numpad3'
-        Q33_Callback(hObject, eventdata, h)
-    case 'numpad4'
-        Q21_Callback(hObject, eventdata, h)
-    case 'numpad5'
-        Q22_Callback(hObject, eventdata, h)
-    case 'numpad6'
-        Q23_Callback(hObject, eventdata, h)
-    case 'numpad7'
-        Q11_Callback(hObject, eventdata, h)
-    case 'numpad8'
-        Q12_Callback(hObject, eventdata, h)
-    case 'numpad9'
-        Q13_Callback(hObject, eventdata, h)
-    case 'numpad0'
-        full_Callback(hObject, eventdata, h)    
+if isfield(h, 'dat')
+    switch eventdata.Key
+        case 'f'
+            % flip currently selected unit
+            h.dat.stat(h.dat.F.ichosen).iscell = 1 - ...
+                h.dat.stat(h.dat.F.ichosen).iscell;
+            if h.dat.maxmap==1
+                redraw_figure(h);
+            end
+            guidata(hObject,h);
+        case 'q'
+            pushbutton87_Callback(hObject, eventdata, h);
+        case 'e'
+            pushbutton89_Callback(hObject, eventdata, h);
+        case 'r'
+            if size(h.dat.mimg, 3)>2
+                pushbutton90_Callback(hObject, eventdata, h);
+            end
+        case 't'
+            pushbutton92_Callback(hObject, eventdata, h);
+        case 'w'
+            pushbutton103_Callback(hObject, eventdata, h);
+        case 'p'
+            pushbutton86_Callback(hObject, eventdata, h);
+        case 'a'
+            pushbutton98_Callback(hObject, eventdata, h);
+        case 's'
+            pushbutton95_Callback(hObject, eventdata, h);
+        case 'd'
+            pushbutton96_Callback(hObject, eventdata, h);
+        case 'g'
+            pushbutton112_Callback(hObject, eventdata, h);
+        case 'z'
+            pushbutton102_Callback(hObject, eventdata, h);
+        case 'x'
+            pushbutton99_Callback(hObject, eventdata, h);
+        case 'c'
+            pushbutton100_Callback(hObject, eventdata, h);
+        case 'v'
+            pushbutton104_Callback(hObject, eventdata, h);
+        % for keyboard navigation of the cells 2018/09/10 JK
+        case 'rightarrow'
+            h = next_cell_selection(hObject,h);
+        case 'leftarrow'
+            h = prev_cell_selection(hObject,h);
+        case 'downarrow'
+            h = isnotcell_side(hObject,h);
+        case 'uparrow'
+            h = iscell_side(hObject,h);
+        case 'space'
+            h = flip_cell(hObject,h);
+        case 'numpad1'            
+            Q31_Callback(hObject, eventdata, h)
+        case 'numpad2'
+            Q32_Callback(hObject, eventdata, h)
+        case 'numpad3'
+            Q33_Callback(hObject, eventdata, h)
+        case 'numpad4'
+            Q21_Callback(hObject, eventdata, h)
+        case 'numpad5'
+            Q22_Callback(hObject, eventdata, h)
+        case 'numpad6'
+            Q23_Callback(hObject, eventdata, h)
+        case 'numpad7'
+            Q11_Callback(hObject, eventdata, h)
+        case 'numpad8'
+            Q12_Callback(hObject, eventdata, h)
+        case 'numpad9'
+            Q13_Callback(hObject, eventdata, h)
+        case 'return'
+            full_Callback(hObject, eventdata, h)
+        case 'decimal'
+            closeup_Callback(hObject, eventdata, h)
+        case 'numpad0'
+            closeup_Callback(hObject, eventdata, h)            
+    end
 end
+
 
 % ------------------ keyboard navigation ---------------------% 2018/09/10 JK
 function h = keyboard_navigation_reset(hObject,h)
+if h.resetFlag % it's off (0) when toggle closeup
     h.showingIscellSide = 1; 
     meds = [h.dat.stat.med];
     ymeds = meds(1:2:end)';
@@ -493,51 +516,60 @@ function h = keyboard_navigation_reset(hObject,h)
     end    
     str = cat(2, str, ['cellNum = ', num2str(ichosen)]);
     set(h.text54,'String', str);
-    
+end
     
 function h = keyboard_navigation_changed(hObject,h)
-    meds = [h.dat.stat.med];
-    ymeds = meds(1:2:end)';
-    xmeds = meds(2:2:end)';
-    h.currWindowInds = find((ymeds - h.dat.ylim(1)) .* (ymeds - h.dat.ylim(2)) < 0 & (xmeds - h.dat.xlim(1)) .* (xmeds - h.dat.xlim(2)) < 0);
-    h.iscellList = h.currWindowInds(find([h.dat.stat(h.currWindowInds).iscell]));
-    h.isnotcellList = h.currWindowInds(find([h.dat.stat(h.currWindowInds).iscell]==0));
-    
-    if h.showingIscellSide
-        if h.iscellSelInd > length(h.iscellList)
-            h.iscellSelInd = length(h.iscellList);
+    if ~h.closeup.Value
+        meds = [h.dat.stat.med];
+        ymeds = meds(1:2:end)';
+        xmeds = meds(2:2:end)';
+        h.currWindowInds = find((ymeds - h.dat.ylim(1)) .* (ymeds - h.dat.ylim(2)) < 0 & (xmeds - h.dat.xlim(1)) .* (xmeds - h.dat.xlim(2)) < 0);
+        h.iscellList = h.currWindowInds(find([h.dat.stat(h.currWindowInds).iscell]));
+        h.isnotcellList = h.currWindowInds(find([h.dat.stat(h.currWindowInds).iscell]==0));
+
+        if h.showingIscellSide
+            if h.iscellSelInd > length(h.iscellList)
+                h.iscellSelInd = length(h.iscellList);
+            end
+            try
+                h.dat.F.ichosen = h.iscellList(h.iscellSelInd);
+            catch
+                return
+            end
+        else
+            if h.isnotcellSelInd > length(h.isnotcellList)
+                h.isnotcellSelInd = length(h.isnotcellList);
+            end
+            try
+                h.dat.F.ichosen = h.isnotcellList(h.isnotcellSelInd);
+            catch
+                return
+            end
         end
-        h.dat.F.ichosen = h.iscellList(h.iscellSelInd);
-    else
-        if h.isnotcellSelInd > length(h.isnotcellList)
-            h.isnotcellSelInd = length(h.isnotcellList);
+        ichosen = h.dat.F.ichosen;
+        redraw_fluorescence(h);
+
+        redraw_figure(h);
+        guidata(hObject,h);
+
+        str = [];
+        if isfield(h, 'statLabels')
+            labels = [h.statLabels(2:end), {'iscell'}, {'redcell'},{'redprob'}];
+        elseif isfield(h, 'statstrs')
+            labels = [h.statstrs(2:end), {'iscell'}, {'redcell'},{'redprob'}];
+        else
+            labels = [{'iscell'}, {'redcell'},{'redprob'}];
         end
-        h.dat.F.ichosen = h.isnotcellList(h.isnotcellSelInd);
+        for j =1:length(labels)
+           if isfield(h.dat.stat, labels{j})
+               sl = eval(sprintf('h.dat.stat(ichosen).%s', labels{j}));
+               strnew = sprintf('%s = %2.2f \n', labels{j}, sl);
+               str = cat(2, str, strnew);
+           end
+        end
+        str = cat(2, str, ['cellNum = ', num2str(ichosen)]);
+        set(h.text54,'String', str);
     end
-    ichosen = h.dat.F.ichosen;
-    redraw_fluorescence(h);
-    
-    redraw_figure(h);
-    guidata(hObject,h);
-    
-    str = [];
-    if isfield(h, 'statLabels')
-        labels = [h.statLabels(2:end), {'iscell'}, {'redcell'},{'redprob'}];
-    elseif isfield(h, 'statstrs')
-        labels = [h.statstrs(2:end), {'iscell'}, {'redcell'},{'redprob'}];
-    else
-        labels = [{'iscell'}, {'redcell'},{'redprob'}];
-    end
-    for j =1:length(labels)
-       if isfield(h.dat.stat, labels{j})
-           sl = eval(sprintf('h.dat.stat(ichosen).%s', labels{j}));
-           strnew = sprintf('%s = %2.2f \n', labels{j}, sl);
-           str = cat(2, str, strnew);
-       end
-    end
-    str = cat(2, str, ['cellNum = ', num2str(ichosen)]);
-    set(h.text54,'String', str);
-    
 
 function h = next_cell_selection(hObject,h)
     if h.showingIscellSide 
@@ -659,9 +691,6 @@ if x>=1 && y>=1 && x<=h.dat.cl.Lx && y<=h.dat.cl.Ly && h.dat.res.iclust(y,x)>0
     str = cat(2, str, ['cellNum = ', num2str(ichosen)]);
     set(h.text54,'String', str);
 end
-
-
-
 
 %------------------------ BACKGROUND --------------------------------%
 
@@ -785,7 +814,8 @@ else
     h.dat.cl.rands   = .1 + .7*rand(length(h.dat.stat), 1);
 end
 h.dat.cl.rands(logical([h.dat.stat.redcell])) = 0;
-I = redraw_figure(h);
+h.dat.map = 1;
+redraw_figure(h);
 set_maskCcolor(h, 1);
 guidata(hObject,h);
 
@@ -939,12 +969,14 @@ end
 % --- threshold setting for classifier
 function edit50_Callback(hObject, eventdata, h)
 h.dat.cl.threshold = str2double(get(h.edit50,'String'));
-for j = 1:length(h.dat.stat)
-    h.dat.stat(j).iscell = h.dat.stat(j).cellProb > h.dat.cl.threshold;
-end
-redraw_figure(h);
+if ~isnan(h.dat.cl.threshold)
+    for j = 1:length(h.dat.stat)
+        h.dat.stat(j).iscell = h.dat.stat(j).cellProb > h.dat.cl.threshold;
+    end    
+    redraw_figure(h);
 
-guidata(hObject,h);
+    guidata(hObject,h);
+end
 
 function edit50_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to edit50 (see GCBO)
@@ -1195,10 +1227,82 @@ for j = 1:length(statstrs)
     svals = [stat.(statstrs{j})];
     goodcells = goodcells & (svals > statmins(j) & svals < statmaxs(j));    
 end
-    
-    
-    
 
 
+% --- Executes on button press in closeup.
+function closeup_Callback(hObject, eventdata, h)
+if h.closeup.Value % when it was already in close-up
+    pb = [11 12 13 21 22 23 31 32 33];
+    for j = 1:numel(pb)
+        set(eval(sprintf('h.Q%d', pb(j))),'Enable','on')
+    end
+    set(h.full,'Enable', 'on');
+    
+    switch h.view
+        case 1
+            h.dat.ylim = [h.dat.figure.y0all(3) h.dat.figure.y1all(3+1)];
+            h.dat.xlim = [h.dat.figure.x0all(1) h.dat.figure.x1all(1+1)];
+            Q31_Callback(hObject, eventdata, h)
+        case 2
+            h.dat.ylim = [h.dat.figure.y0all(3) h.dat.figure.y1all(3+1)];
+            h.dat.xlim = [h.dat.figure.x0all(2) h.dat.figure.x1all(2+1)];
+            Q32_Callback(hObject, eventdata, h)
+        case 3
+            h.dat.ylim = [h.dat.figure.y0all(3) h.dat.figure.y1all(3+1)];
+            h.dat.xlim = [h.dat.figure.x0all(3) h.dat.figure.x1all(3+1)];
+            Q33_Callback(hObject, eventdata, h)
+        case 4
+            h.dat.ylim = [h.dat.figure.y0all(2) h.dat.figure.y1all(2+1)];
+            h.dat.xlim = [h.dat.figure.x0all(1) h.dat.figure.x1all(1+1)];
+            Q21_Callback(hObject, eventdata, h)
+        case 5
+            h.dat.ylim = [h.dat.figure.y0all(2) h.dat.figure.y1all(2+1)];
+            h.dat.xlim = [h.dat.figure.x0all(2) h.dat.figure.x1all(2+1)];            
+            Q22_Callback(hObject, eventdata, h)
+        case 6
+            h.dat.ylim = [h.dat.figure.y0all(2) h.dat.figure.y1all(2+1)];
+            h.dat.xlim = [h.dat.figure.x0all(3) h.dat.figure.x1all(3+1)];            
+            Q23_Callback(hObject, eventdata, h)
+        case 7
+            h.dat.ylim = [h.dat.figure.y0all(1) h.dat.figure.y1all(1+1)];
+            h.dat.xlim = [h.dat.figure.x0all(1) h.dat.figure.x1all(1+1)];            
+            Q11_Callback(hObject, eventdata, h)
+        case 8
+            h.dat.ylim = [h.dat.figure.y0all(1) h.dat.figure.y1all(1+1)];
+            h.dat.xlim = [h.dat.figure.x0all(2) h.dat.figure.x1all(2+1)];            
+            Q12_Callback(hObject, eventdata, h)
+        case 9
+            h.dat.ylim = [h.dat.figure.y0all(1) h.dat.figure.y1all(1+1)];
+            h.dat.xlim = [h.dat.figure.x0all(3) h.dat.figure.x1all(3+1)];            
+            Q13_Callback(hObject, eventdata, h)
+        case 0
+            h.dat.ylim = [1 h.dat.cl.Ly];
+            h.dat.xlim = [1 h.dat.cl.Lx];            
+            full_Callback(hObject, eventdata, h)
+    end
+    
+    h.closeup.Value = 0;
+else
+    diameter = h.dat.ops.diameter;
+    ichosen = h.dat.F.ichosen;
+    med = h.dat.stat(ichosen).med;
+    h.dat.ylim = [round(max(1,med(1)-diameter*2)) round(min(h.dat.cl.Ly, med(1)+diameter*2))];
+    h.dat.xlim = [round(max(1,med(2)-diameter*2)) round(min(h.dat.cl.Lx, med(2)+diameter*2))];
+
+    if h.dat.map==1
+        redraw_figure(h);
+    else
+        redraw_meanimg(h);
+    end
+
+    pb = [11 12 13 21 22 23 31 32 33];
+    for j = 1:numel(pb)
+        set(eval(sprintf('h.Q%d', pb(j))),'Enable','off')
+    end
+    set(h.full,'Enable', 'off');
+    
+    h.closeup.Value = 1;
+end
+guidata(hObject,h);
 
 

@@ -10,7 +10,7 @@ for j = 1:numel(h.dat.Fcell)
     Fneu = cat(2, Fneu, h.dat.FcellNeu{j}(ichosen, :));
 end
 
-plot(my_conv_local(medfilt1(double(F), 3), 3))
+plot(my_conv_local(medfilt1(double(F), 3), 3), 'linewidth', 1.5)
 axis tight
 hold on
 
@@ -25,8 +25,8 @@ if isfield(h.dat.stat, 'baseline')
 end
 
 if isfield(h.dat, 'FcellNeu')
-    plot(baseline + coefNeu * my_conv_local(medfilt1(double(Fneu), 3), 3))
-    plot(F - coefNeu * Fneu)
+    plot(baseline + coefNeu * my_conv_local(medfilt1(double(Fneu), 3), 3), 'linewidth', 1.5)
+    plot(F - coefNeu * Fneu, 'linewidth', 1.5)
 end
 
 box off
