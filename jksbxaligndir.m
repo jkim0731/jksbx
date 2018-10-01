@@ -20,28 +20,40 @@ else
     ref = '';
 end
 
+if nargin >=3    
+    skip = varargin{3};
+    if strcmp(skip,'skip') || strcmp(skip,'noskip')
+    else
+        error('3rd input should be either ''skip'' or ''noskip''')
+    end
+else
+    skip = 1;
+end    
+
 % Align all *.sbx files in the list
 
 for i = 1:length(d)
     fn = strtok(d(i).name,'.');
-    temp = sbxread(fn,0,1); 
-    if exist([fn,'.align'],'file')
+    sbxread(fn,0,1); % loading global variable 'info'
+    if info.volscan
+        num_plane = length(info.otwave_um);        
+    else
+        num_plane = 1;
+    end
+    
+    if exist([fn,'.align'],'file') && strcmp(skip,'skip')        
         sprintf('File %s is already aligned',fn);
         continue
     elseif exist([fn,'.trials'],'file') % ignore frames outside of each trial, because those are blank. If not treated, these lead to weird interference pattern during bidirectional scanning.
         load([fn,'.trials'],'-mat', 'frame_to_use') 
     else % no trial file
-        frame_to_use{1} = 0:info.max_idx;
+        frame_to_use = cell(num_plane,1);
+        for pi = 1 : num_plane
+            frame_to_use{pi} = (pi-1):num_plane:info.max_idx;
+        end
     end
 
     tic
-    
-    if info.volscan
-        num_plane = length(info.otwave_um);
-    else
-        num_plane = 1;
-        plane_sorted = 1;
-    end        
     
     m1 = cell(1,num_plane); % for green. Empty if only pmt1 was used.
     m2 = cell(1,num_plane); % for red. Empty if only pmt0 was used.        
