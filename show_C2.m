@@ -81,7 +81,7 @@ figure,
 for i_plane = 1 : length(plane)
     plane_frames = plane(i_plane)-1:num_plane:max_idx;
     diffImg = zeros(info.sz);
-    for i = 1 : length(stim_start_frames)
+    for i = 1 : min(length(stim_start_frames), length(stim_end_frames))
         baseline_frames = intersect(plane_frames,baseline_start_frames(i):baseline_end_frames(i));
         stim_frames = intersect(plane_frames,stim_start_frames(i):stim_end_frames(i));
         if ~isempty(baseline_frames) && ~isempty(stim_frames)

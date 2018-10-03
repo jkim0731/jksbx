@@ -5,7 +5,7 @@ function [zstack, zstack_maxproj] = make_zstack(fn_base, varargin)
 % squeezed if number of channels == 1
 % save the file
 
-savefn = [fn_base,'_zstack'];
+savefn = ['zstack_', fn_base];
 fnlist = dir([fn_base, '*.sbx']);
 load([fnlist(1).name(1:end-4), '.mat']) % loading an example info to check the number of channels (and which channel it was)
 
@@ -39,8 +39,16 @@ if length(channels) == 2 && info.channels ~= 1
 end
 
 zstack = zeros([info.sz(1),info.sz(2),length(fnlist),length(channels)],'uint16');
-  
-for i = 1 : length(fnlist)                
+knobbyInfo = struct;
+
+for i = 1 : length(fnlist)
+    load([fnlist(i).name(1:end-4), '.mat']) % loading info
+    fname = strsplit(fnlist(i).name(1:end-4),'_');
+    knobbyInfo(i).fname = str2double(fname{end});
+    knobbyInfo(i).x = info.config.knobby.pos.x;
+    knobbyInfo(i).y = info.config.knobby.pos.y;
+    knobbyInfo(i).z = info.config.knobby.pos.z;
+    knobbyInfo(i).a = info.config.knobby.pos.a;
     align_fn = [fnlist(i).name(1:end-4), '.align']; 
     if ~exist(align_fn,'file')
         jksbxaligndir({align_fn(1:end-4)}) % running alignment if not done yet.
@@ -61,5 +69,5 @@ for i = 1 : size(zstack,4)
 end
 zstack = squeeze(zstack);
 zstack_maxproj = squeeze(zstack_maxproj);
-save(savefn, 'zstack', 'zstack_maxproj')
+save(savefn, 'zstack', 'zstack_maxproj', 'knobbyInfo')
         

@@ -8,7 +8,7 @@ function [m,T] = align_zstack(zstack)
 
 if size(zstack,3) == 1
     
-    m = squeeze(zstack(:,:,1));    
+    m = squeeze(zstack(:,:,1));
     T = [0 0];
     
 elseif size(zstack,3) == 2
@@ -35,7 +35,7 @@ else
     Ap = adapthisteq(A(50:end-50,151:end-50));
     Bp = adapthisteq(B(50:end-50,151:end-50));
     
-    [u, v] = jkfftalign(Ap,Bp);    
+    [u, v] = jkfftalign(Ap,Bp);
      
     Ar = circshift(A,[u, v]);
     m = (Ar+B)/2;

@@ -15,18 +15,29 @@
 
 
 i = 0;
-mice = {'039'};
-sessions = {[5551:5556,4441:4446,8881,8882,9991,9992],[],[],[]};
-for mi = 1 : length(mice)   
+mice = {'041'};
+sessions = {[3]};
+for mi = 1 : length(mice)
     for si = 1 : length(sessions{mi})
         i = i + 1;
         db(i).mouse_name    = mice{mi};
         db(i).session       = sessions{mi}(si);          
-        db(i).RootStorage   = 'H:\TPM\';
-%         db(i).AlignToRedChannel     = 0;
+        db(i).RootStorage   = 'E:\';
+        db(i).AlignToRedChannel     = 0;
     end
 end
 
+mice = {'052'};
+sessions = {[24,27:29]};
+for mi = 1 : length(mice)
+    for si = 1 : length(sessions{mi})
+        i = i + 1;
+        db(i).mouse_name    = mice{mi};
+        db(i).session       = sessions{mi}(si);          
+        db(i).RootStorage   = 'F:\';
+%         db(i).AlignToRedChannel     = 0;
+    end
+end
 %% Other parameters
 % db(i).regOnly
 % db(i).RootStoragte

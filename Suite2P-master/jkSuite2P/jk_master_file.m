@@ -93,7 +93,7 @@ ops0.sensorTau              = 1; % decay half-life (or timescale). Approximate, 
 ops0.maxNeurop              = 0.8; % for the neuropil contamination to be less than this (sometimes good, i.e. for interneurons)
 
 % ----- if you have a RED channel ---------------------- ------------%
-ops0.AlignToRedChannel      = 0; % compute registration offsets using red channel
+ops0.AlignToRedChannel      = 1; % compute registration offsets using red channel
 ops0.REDbinary              = 0; % make a binary file of registered red frames
 % if db.expred, then compute mean red image for green experiments with red
 % channel available while doing registration
@@ -163,15 +163,21 @@ for iexp = 1:length(db0)
     db.sbxfnlist = cell(length(matfnlist),1);    
       
     for ifile = 1 : length(matfnlist)
-        [~, db.sbxfnlist{ifile}, ~] = fileparts(matfnlist(ifile).name);
-        if db.session > 8000
-            onFrames = laser_on_frames(db.sbxfnlist{ifile});
-            jksbxsplittrial_nobitcode(db.sbxfnlist{ifile}, onFrames); % temporary solution for not sending bitcode during piezo stimulation before 2018/02
-        elseif db.session > 4000
-            onFrames = laser_on_frames(db.sbxfnlist{ifile});
-            jksbxsplittrial(db.sbxfnlist{ifile}, onFrames);
+        [~, db.sbxfnlist{ifile}, ~] = fileparts(matfnlist(ifile).name);       
+        try
+            load([db.sbxfnlist{ifile},'.trials'],'-mat')
+        catch
+            if db.session > 8000
+                onFrames = laser_on_frames(db.sbxfnlist{ifile});
+                jksbxsplittrial_nobitcode(db.sbxfnlist{ifile}, onFrames); % temporary solution for not sending bitcode during piezo stimulation before 2018/02
+            elseif db.session > 4000
+                onFrames = laser_on_frames(db.sbxfnlist{ifile});
+                jksbxsplittrial(db.sbxfnlist{ifile}, onFrames);
+            else
+                jksbxsplittrial(db.sbxfnlist{ifile});
+            end
+            load([db.sbxfnlist{ifile},'.trials'],'-mat')
         end
-        load([db.sbxfnlist{ifile},'.trials'],'-mat')        
         if ifile == 1
             db.frame_to_use = frame_to_use; % frame_to_use is in cell format. 
             db.trials = trials; % trials is a structure, containing trialnum, frames, and lines
