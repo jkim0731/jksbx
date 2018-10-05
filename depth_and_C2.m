@@ -76,7 +76,13 @@ end
 % figure, subplot(1,2,1), imagesc((sum(zstackDura,3) - sum(zstackDura(centerPoint(1),centerPoint(2),:),3)) * zstepum), axis image,
 % subplot(1,2,2), imagesc(depthCompensation), axis image
 
-dat.depthComp = depthCompensation;
+dat.depth.depthComp = depthCompensation;
+dat.depth.tiltAngle = tiltAngle;
+xyUmperpix = 1.4 / str2double(dat.ops.info.config.magnification_list(dat.ops.info.config.magnification,:));
+dat.depth.xyUmperpix = xyUmperpix;
+dat.depth.tiltGradUmperpix = tiltGradUmperpix;
+% calculate the window angle (relative orthogonal to the focal plane (35 degrees))
+dat.depth.windowAngle = atand(tiltGradUmperpix/xyUmperpix);
 % 
 % 
 % 
