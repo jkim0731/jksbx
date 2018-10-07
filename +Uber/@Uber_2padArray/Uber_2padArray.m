@@ -6,7 +6,6 @@ classdef Uber_2padArray < handle
         trials = {};
         cellNums = [];
         cellDepths = [];
-        cellActive = [];
         frameRate = [];
         mimg = {};
         cellmap = {};
@@ -21,7 +20,6 @@ classdef Uber_2padArray < handle
             obj.sessionName = bArray.sessionName;
             obj.cellNums = caArray.cellInd;            
             obj.cellDepths = caArray.cellDepth;
-            obj.cellActive = caArray.active;
             
             btrialNums = cellfun(@(x) x.trialNum, bArray.trials);
             wltrialNums = cellfun(@(x) x.trialNum, wlArray.trials);

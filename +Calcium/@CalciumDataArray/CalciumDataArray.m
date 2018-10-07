@@ -4,6 +4,10 @@ classdef CalciumDataArray < handle
     % Pachitariu). 
     % Currently optimized for 2pad experiments, 2 blocks, 4 planes in each
     % block. 
+    
+    % assume dF/F is calculated already and saved in F_*_proc_final.mat
+    % 'dat'
+    
     % Inputs: 
 %         suite2p files (Fmouse_session_plane#_proc.mat)
 %         mat file from scanbox
@@ -15,18 +19,15 @@ classdef CalciumDataArray < handle
         mimg = {}; 
         cellmap = {}; % cell roi of each plane. Each ROI has it's corresponding cell #, except for the first digit reserved for plane #.
         trials = {};        
-        dF = {}; % dF/F_0 with 20th percentile
+        dF = {}; % dF/F_0 with 5th percentile
         cellInd = []; % cell number as index
         cellDepth = [];
         frameRate = [];
         imagingDepth = [];
         pixResolution = [];
         rollingWindowForBaseF = 100; % in s
-        baseFprctile = 20;
+        baseFprctile = 5;
         active = []; % records if the cell is active (1) or not (0). 
-        activeThreshold = 1; % dF/F threshold
-        activePercentile = 90; % 
-        
     end
         
     properties (Dependent = true)
@@ -60,7 +61,6 @@ classdef CalciumDataArray < handle
                 obj.dF = cell(length(find([dat.stat.iscell])),1);
                 obj.cellInd = zeros(length(find([dat.stat.iscell])),1);
                 obj.cellDepth = zeros(length(find([dat.stat.iscell])),1);
-                obj.active = zeros(length(find([dat.stat.iscell])),1);
                 for j = 1 : length(dat.stat)
                     fprintf('processing cells %d/%d of plane #%d\n', j, length(dat.stat),i)
                     if dat.stat(j).iscell
@@ -68,17 +68,8 @@ classdef CalciumDataArray < handle
                         tempCellmap = numCells;
                         obj.cellInd(numCells) = numCells + i*1000;
                         obj.cellDepth(numCells) = round(dat.stat(j).depth);
-                        tempF = dat.Fcell{1}(j,:) - dat.FcellNeu{1}(j,:) * dat.stat(j).neuropilCoefficient;
-                        window = round(obj.rollingWindowForBaseF*(dat.ops.imageRate/dat.ops.num_plane));
-                        tempFF = [tempF, tempF(end-window+1:end)];
-                        baseF = zeros(size(tempF));
-                        for k = 1 : length(baseF)
-                            baseF(k) = prctile(tempFF(k:k+window),obj.baseFprctile);
-                        end
-                        obj.dF{numCells} = (tempF-baseF)./baseF;
-                        if prctile(obj.dF{numCells}, obj.activePercentile) > obj.activeThreshold
-                            obj.active = 1;
-                        end
+                        
+                        obj.dF{numCells} = dat.dF(j,:);
                         if i <= dat.ops.num_plane
                             cellNums{1} = [cellNums{1}, numCells + i*1000];
                             cellDepth{1} = [cellDepth{1}, dat.stat(j).depth];
@@ -118,7 +109,7 @@ classdef CalciumDataArray < handle
                 end
                 obj.trials{i}.dF = zeros(length(obj.trials{i}.cellNums),obj.trials{i}.frameNum);
                 for j = 1 : length(obj.trials{i}.cellNums)
-                    obj.trials{i}.dF(j,:) = obj.F{obj.cellInd == obj.trials{i}.cellNums(j)}(obj.trials{i}.inds);
+                    obj.trials{i}.dF(j,:) = obj.dF{obj.cellInd == obj.trials{i}.cellNums(j)}(obj.trials{i}.inds);
                 end
             end
             
