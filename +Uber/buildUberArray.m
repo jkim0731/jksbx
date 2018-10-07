@@ -6,19 +6,19 @@ caSessionName = sprintf('%03d',session);
 
 savefn = sprintf('Uber%s%s.mat',mouseName, sessionName); 
 
-bDirBase = 'J:\SoloData\';
+bDirBase = 'C:\Data\SoloData\';
 bDir = [bDirBase, mouseName];
 
-wDirBase = 'J:\WhiskerVideo\';
+wDirBase = 'C:\Data\WhiskerVideo\';
 wDir = [wDirBase, mouseName, sessionName];
 
-caDirBase = 'J:\suite2p\';
+caDirBase = 'C:\Data\suite2p\';
 caDir = sprintf('%s%03d\\',caDirBase, mouse);
 
 cd(caDir)
-if exist(savefn, 'file')
-    load(savefn)
-else
+% if exist(savefn, 'file')
+%     load(savefn)
+% else
     if exist('b','var') && iscell(b)
         if isprop(b{1}, 'mouseName') && strcmp(b{1}.mouseName, mouseName)
             if exist('bSession','var')
@@ -65,10 +65,10 @@ else
 
     if strcmp(bSession.mouseName, wlArray.mouseName) && strcmp(bSession.mouseName, wlArray.mouseName) ...
             && strcmp(bSession.sessionName, wlArray.sessionName) && strcmp(bSession.sessionName, ['S', caArray.sessionName(2:3)])
-        u = Uber.Uber_2padArray(bSession, wlArray, caArray);    
+        u = Uber.Uber_2padArray(bSession, wlArray, caArray);
     else
         disp('mouseName or sessionName mismatch')
     end
 
     save(savefn, 'u')
-end
+% end

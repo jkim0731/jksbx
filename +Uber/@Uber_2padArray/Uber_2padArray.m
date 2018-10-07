@@ -5,6 +5,8 @@ classdef Uber_2padArray < handle
         trialNums = [];
         trials = {};
         cellNums = [];
+        cellDepths = [];
+        cellActive = [];
         frameRate = [];
         mimg = {};
         cellmap = {};
@@ -17,12 +19,14 @@ classdef Uber_2padArray < handle
         function obj = Uber_2padArray(bArray,wlArray,caArray)            
             obj.mouseName = bArray.mouseName;
             obj.sessionName = bArray.sessionName;
-            obj.cellNums = caArray.cellInd;
+            obj.cellNums = caArray.cellInd;            
+            obj.cellDepths = caArray.cellDepth;
+            obj.cellActive = caArray.active;
             
             btrialNums = cellfun(@(x) x.trialNum, bArray.trials);
             wltrialNums = cellfun(@(x) x.trialNum, wlArray.trials);
             catrialNums = cellfun(@(x) x.trialNum, caArray.trials);
-            obj.trialNums = intersect(btrialNums, intersect(wltrialNums, catrialNums));            
+            obj.trialNums = intersect(btrialNums, intersect(wltrialNums, catrialNums));
             
             obj.trials = cell(length(obj.trialNums),1);
             for i = 1 : length(obj.trials)
@@ -35,8 +39,7 @@ classdef Uber_2padArray < handle
             
             obj.frameRate = caArray.frameRate;
             obj.mimg = caArray.mimg;
-            obj.cellmap = caArray.cellmap;
-            
+            obj.cellmap = caArray.cellmap;            
         end                
     end
     

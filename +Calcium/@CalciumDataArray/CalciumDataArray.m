@@ -14,10 +14,19 @@ classdef CalciumDataArray < handle
         sessionName = '';
         mimg = {}; 
         cellmap = {}; % cell roi of each plane. Each ROI has it's corresponding cell #, except for the first digit reserved for plane #.
-        trials = {};
-        F = {}; % cell calcium trace
+        trials = {};        
+        dF = {}; % dF/F_0 with 20th percentile
         cellInd = []; % cell number as index
+        cellDepth = [];
         frameRate = [];
+        imagingDepth = [];
+        pixResolution = [];
+        rollingWindowForBaseF = 100; % in s
+        baseFprctile = 20;
+        active = []; % records if the cell is active (1) or not (0). 
+        activeThreshold = 1; % dF/F threshold
+        activePercentile = 90; % 
+        
     end
         
     properties (Dependent = true)
@@ -37,29 +46,50 @@ classdef CalciumDataArray < handle
             obj.mouseName = mouseName;
             obj.sessionName = sessionName;
             
-            cellNums{1} = [];
-            cellNums{2} = [];
+            cellNums{1} = []; cellDepth{1} = [];
+            cellNums{2} = []; cellDepth{2} = [];
 
-            fnlist = dir(['F_', mouseName, '_', sessionName, '_plane*_proc.mat']);            
+            fnlist = dir(['F_', mouseName, '_', sessionName, '_plane*_proc_final.mat']);
             for i = 1 : length(fnlist)
                 load(fnlist(i).name);
-                obj.mimg{i} = dat.ops.mimg(dat.ops.yrange, dat.ops.xrange);
-                obj.cellmap{i} = zeros([length(dat.ops.yrange), length(dat.ops.xrange)],'single');
+                obj.mimg{i} = dat.ops.mimg1;
+                obj.cellmap{i} = zeros(size(dat.ops.mimg1),'single');
+                tempCellmap = zeros([length(dat.ops.yrange), length(dat.ops.xrange)],'single');
                 
                 numCells = 0;
+                obj.dF = cell(length(find([dat.stat.iscell])),1);
+                obj.cellInd = zeros(length(find([dat.stat.iscell])),1);
+                obj.cellDepth = zeros(length(find([dat.stat.iscell])),1);
+                obj.active = zeros(length(find([dat.stat.iscell])),1);
                 for j = 1 : length(dat.stat)
+                    fprintf('processing cells %d/%d of plane #%d\n', j, length(dat.stat),i)
                     if dat.stat(j).iscell
                         numCells = numCells + 1;
-                        obj.cellmap{i}(dat.stat(j).ipix) = numCells;
-                        obj.cellInd(end+1) = numCells + i*1000;
-                        obj.F{end+1} = dat.Fcell{1}(j,:) - dat.FcellNeu{1}(j,:) * dat.stat(j).neuropilCoefficient;
-                        if i <= 4
+                        tempCellmap = numCells;
+                        obj.cellInd(numCells) = numCells + i*1000;
+                        obj.cellDepth(numCells) = round(dat.stat(j).depth);
+                        tempF = dat.Fcell{1}(j,:) - dat.FcellNeu{1}(j,:) * dat.stat(j).neuropilCoefficient;
+                        window = round(obj.rollingWindowForBaseF*(dat.ops.imageRate/dat.ops.num_plane));
+                        tempFF = [tempF, tempF(end-window+1:end)];
+                        baseF = zeros(size(tempF));
+                        for k = 1 : length(baseF)
+                            baseF(k) = prctile(tempFF(k:k+window),obj.baseFprctile);
+                        end
+                        obj.dF{numCells} = (tempF-baseF)./baseF;
+                        if prctile(obj.dF{numCells}, obj.activePercentile) > obj.activeThreshold
+                            obj.active = 1;
+                        end
+                        if i <= dat.ops.num_plane
                             cellNums{1} = [cellNums{1}, numCells + i*1000];
+                            cellDepth{1} = [cellDepth{1}, dat.stat(j).depth];
                         else
                             cellNums{2} = [cellNums{2}, numCells + i*1000];
+                            cellDepth{2} = [cellDepth{2}, dat.stat(j).depth];
                         end
+                        
                     end
                 end
+                obj.cellmap{i}(dat.ops.yrange,dat.ops.xrange) = tempCellmap;
             end
             
             load(fnlist(1).name)            
@@ -72,11 +102,13 @@ classdef CalciumDataArray < handle
                 if ~isempty(find(ismember(dat.ops.frame_to_use{4},obj.trials{i}.frames),1,'first'))
                     obj.trials{i}.planes = 1:4;
                     basePlane = 4;
-                    obj.trials{i}.cellNums = cellNums{1};                    
+                    obj.trials{i}.cellNums = cellNums{1};
+                    obj.trials{i}.cellDepth = cellDepth{1};
                 else                    
                     obj.trials{i}.planes = 5:8;
                     basePlane = 8;
                     obj.trials{i}.cellNums = cellNums{2};
+                    obj.trials{i}.cellDepth = cellDepth{2};
                 end
                 obj.trials{i}.inds = find(ismember(dat.ops.frame_to_use{basePlane},obj.trials{i}.frames));
                 obj.trials{i}.frameNum = length(obj.trials{i}.inds);                
@@ -84,11 +116,15 @@ classdef CalciumDataArray < handle
                 for j = 1 : 4
                     obj.trials{i}.time{5-j} = (frames + (j-1)) / dat.ops.imageRate;
                 end
-                obj.trials{i}.F = zeros(length(obj.trials{i}.cellNums),obj.trials{i}.frameNum);
+                obj.trials{i}.dF = zeros(length(obj.trials{i}.cellNums),obj.trials{i}.frameNum);
                 for j = 1 : length(obj.trials{i}.cellNums)
-                    obj.trials{i}.F(j,:) = obj.F{obj.cellInd == obj.trials{i}.cellNums(j)}(obj.trials{i}.inds);
+                    obj.trials{i}.dF(j,:) = obj.F{obj.cellInd == obj.trials{i}.cellNums(j)}(obj.trials{i}.inds);
                 end
-            end            
+            end
+            
+            obj.imagingDepth = dat.depth.imagingDepth;
+            obj.pixResolution = dat.depth.xyUmperpix;
+            
         end
     end
 
