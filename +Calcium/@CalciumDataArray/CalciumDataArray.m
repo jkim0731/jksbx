@@ -58,26 +58,21 @@ classdef CalciumDataArray < handle
                 tempCellmap = zeros([length(dat.ops.yrange), length(dat.ops.xrange)],'single');
                 
                 numCells = 0;
-                obj.dF = cell(length(find([dat.stat.iscell])),1);
-                obj.cellInd = zeros(length(find([dat.stat.iscell])),1);
-                obj.cellDepth = zeros(length(find([dat.stat.iscell])),1);
                 for j = 1 : length(dat.stat)
                     fprintf('processing cells %d/%d of plane #%d\n', j, length(dat.stat),i)
                     if dat.stat(j).iscell
                         numCells = numCells + 1;
-                        tempCellmap = numCells;
-                        obj.cellInd(numCells) = numCells + i*1000;
-                        obj.cellDepth(numCells) = round(dat.stat(j).depth);
-                        
-                        obj.dF{numCells} = dat.dF(j,:);
+                        tempCellmap(dat.stat(j).ipix) = numCells + i*1000;
+                        obj.cellInd(end+1) = numCells + i*1000;
+                        obj.cellDepth(end+1) = round(dat.stat(j).depth);                        
+                        obj.dF{end+1} = dat.dF(j,:);
                         if i <= dat.ops.num_plane
                             cellNums{1} = [cellNums{1}, numCells + i*1000];
                             cellDepth{1} = [cellDepth{1}, dat.stat(j).depth];
                         else
                             cellNums{2} = [cellNums{2}, numCells + i*1000];
                             cellDepth{2} = [cellDepth{2}, dat.stat(j).depth];
-                        end
-                        
+                        end                        
                     end
                 end
                 obj.cellmap{i}(dat.ops.yrange,dat.ops.xrange) = tempCellmap;
@@ -108,7 +103,7 @@ classdef CalciumDataArray < handle
                     obj.trials{i}.time{5-j} = (frames + (j-1)) / dat.ops.imageRate;
                 end
                 obj.trials{i}.dF = zeros(length(obj.trials{i}.cellNums),obj.trials{i}.frameNum);
-                for j = 1 : length(obj.trials{i}.cellNums)
+               for j = 1 : length(obj.trials{i}.cellNums) 
                     obj.trials{i}.dF(j,:) = obj.dF{obj.cellInd == obj.trials{i}.cellNums(j)}(obj.trials{i}.inds);
                 end
             end
