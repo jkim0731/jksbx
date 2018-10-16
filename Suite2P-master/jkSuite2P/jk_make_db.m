@@ -15,29 +15,29 @@
 
 
 i = 0;
-mice = {'041'};
-sessions = {[3]};
+mice = {'027'};
+sessions = {[16]};
 for mi = 1 : length(mice)
     for si = 1 : length(sessions{mi})
         i = i + 1;
         db(i).mouse_name    = mice{mi};
         db(i).session       = sessions{mi}(si);          
-        db(i).RootStorage   = 'E:\';
+        db(i).RootStorage   = 'D:\TPM\JK\suite2p\';
         db(i).AlignToRedChannel     = 0;
     end
 end
 
-mice = {'052'};
-sessions = {[24,27:29]};
-for mi = 1 : length(mice)
-    for si = 1 : length(sessions{mi})
-        i = i + 1;
-        db(i).mouse_name    = mice{mi};
-        db(i).session       = sessions{mi}(si);          
-        db(i).RootStorage   = 'F:\';
-%         db(i).AlignToRedChannel     = 0;
-    end
-end
+% mice = {'052'};
+% sessions = {[24,27:29]};
+% for mi = 1 : length(mice)
+%     for si = 1 : length(sessions{mi})
+%         i = i + 1;
+%         db(i).mouse_name    = mice{mi};
+%         db(i).session       = sessions{mi}(si);          
+%         db(i).RootStorage   = 'F:\';
+% %         db(i).AlignToRedChannel     = 0;
+%     end
+% end
 %% Other parameters
 % db(i).regOnly
 % db(i).RootStoragte

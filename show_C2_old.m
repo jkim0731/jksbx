@@ -1,4 +1,4 @@
-function show_C2(fn,varargin)
+function show_C2_old(fn,varargin)
 
 global info
 fn = strtok(fn,'.');
@@ -56,9 +56,8 @@ freq = info.resfreq/info.sz(1)*(2-info.scanmode);
 baseline_frame_num_each = floor(baseline_time * freq);
 udpDelayBuffer = 0.3; % in s
 bufferFrames = ceil(freq * udpDelayBuffer);
-baseline_start_frames = info.frame(info.event_id == 3)+bufferFrames;
-stim_start_frames = baseline_start_frames + baseline_frame_num_each-bufferFrames;
-% stim_end_frames = info.frame(info.event_id == 2) - floor(freq*2);
+stim_start_frames = info.frame(info.event_id == 3);
+baseline_start_frames = stim_start_frames - baseline_frame_num_each;
 stim_end_frames = info.frame(info.event_id == 2);
 if length(stim_end_frames) < length(stim_start_frames)
     stim_start_frames = stim_start_frames(1:end-1);
@@ -120,5 +119,5 @@ for i_plane = 1 : length(plane)
 % 
 %     diff_im = (stim_im - baseline_im)./ baseline_im * 100;
 
-    subplot(subplotnum1,subplotnum2,i_plane), imagesc(diffImg(101:end,101:end-70)), axis image, axis off
+    subplot(subplotnum1,subplotnum2,i_plane), imagesc(diffImg(101:end,101:end-70), [0 50]), axis image, axis off
 end

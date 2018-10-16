@@ -27,7 +27,6 @@ classdef CalciumDataArray < handle
         pixResolution = [];
         rollingWindowForBaseF = 100; % in s
         baseFprctile = 5;
-        active = []; % records if the cell is active (1) or not (0). 
     end
         
     properties (Dependent = true)

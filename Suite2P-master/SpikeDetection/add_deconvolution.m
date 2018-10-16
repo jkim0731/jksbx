@@ -2,7 +2,7 @@
 % by default it optimizes the neuropil coefficients
 % max neuropil coefficients set in ops.maxNeurop
 
-function add_deconvolution(ops, db, iplane0)
+function add_deconvolution(ops, db)
 ops = build_ops3(db, ops);
 ops0 = ops;
 
