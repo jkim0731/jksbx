@@ -28,13 +28,14 @@ else
     end    
 end
 
-if channels == 1 && info.channels == 3
-    error('no green channel in this z-stack')
-end
-if channels == 2 && info.channels == 2
-    error('no red channel in this z-stack')
-end
-if length(channels) == 2 && info.channels ~= 1
+if length(channels) < 2
+    if channels == 1 && info.channels == 3
+        error('no green channel in this z-stack')
+    end
+    if channels == 2 && info.channels == 2
+        error('no red channel in this z-stack')
+    end
+elseif length(channels) == 2 && info.channels ~= 1
     error('no two channels in this z-stack')
 end
 

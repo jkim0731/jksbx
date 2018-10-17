@@ -1,4 +1,6 @@
-function show_C2(fn,varargin)
+function diffImg = show_C2(fn,varargin)
+
+% for JK052~056
 
 global info
 fn = strtok(fn,'.');
@@ -59,7 +61,7 @@ bufferFrames = ceil(freq * udpDelayBuffer);
 baseline_start_frames = info.frame(info.event_id == 3)+bufferFrames;
 stim_start_frames = baseline_start_frames + baseline_frame_num_each-bufferFrames;
 % stim_end_frames = info.frame(info.event_id == 2) - floor(freq*2);
-stim_end_frames = info.frame(info.event_id == 2);
+stim_end_frames = stim_start_frames+floor(3 * freq);
 if length(stim_end_frames) < length(stim_start_frames)
     stim_start_frames = stim_start_frames(1:end-1);
 end
@@ -77,31 +79,23 @@ stim_end_frames(removeFrames) = [];
 %     stim_end_frames = stim_end_frames(2:end);
 % end
 baseline_end_frames = stim_start_frames - 1;
-
-figure,
-for i_plane = 1 : length(plane)
+diffImg = cell(length(plane),1);
+% figure,
+parfor i_plane = 1 : length(plane)
     plane_frames = plane(i_plane)-1:num_plane:max_idx;
-    diffImg = zeros(info.sz);
+    diffImg{i_plane} = zeros(info.sz);
     for i = 1 : min(length(stim_start_frames), length(stim_end_frames))
         baseline_frames = intersect(plane_frames,baseline_start_frames(i):baseline_end_frames(i));
         stim_frames = intersect(plane_frames,stim_start_frames(i):stim_end_frames(i));
         if ~isempty(baseline_frames) && ~isempty(stim_frames)
-            tempImg = double(sbxread(fn,baseline_frames(1),1));
-            baseImg = squeeze(tempImg(1,:,:,:))/length(baseline_frames);
-            for j = 2 : length(baseline_frames)
-                tempImg = double(sbxread(fn,baseline_frames(j),1));
-                baseImg = baseImg + squeeze(tempImg(1,:,:,:)/length(baseline_frames));            
-            end
-
-            tempImg = double(sbxread(fn,stim_frames(1),1));
-            stimImg = squeeze(tempImg(1,:,:,:))/length(stim_frames);
-            for j = 2 : length(stim_frames)
-                tempImg = double(sbxread(fn,stim_frames(j),1));
-                stimImg = stimImg + squeeze(tempImg(1,:,:,:)/length(stim_frames));            
-            end
-            diffTemp = (stimImg - baseImg)./ baseImg * 100;
-            diffImg = diffImg + diffTemp / length(stim_start_frames);
+             baseImg = mean(squeeze(jksbxreadframes(fn,baseline_frames)),3);            
+            stimImg = mean(squeeze(jksbxreadframes(fn,stim_frames)),3);
             
+            baseImg = imgaussfilt(baseImg);
+            stimImg = imgaussfilt(stimImg);
+            
+            diffTemp = (stimImg - baseImg)./ baseImg;
+            diffImg{i_plane} = diffImg{i_plane} + diffTemp / length(stim_start_frames);
         end
     end
 
@@ -120,5 +114,5 @@ for i_plane = 1 : length(plane)
 % 
 %     diff_im = (stim_im - baseline_im)./ baseline_im * 100;
 
-    subplot(subplotnum1,subplotnum2,i_plane), imagesc(diffImg(101:end,101:end-70)), axis image, axis off
+%     subplot(subplotnum1,subplotnum2,i_plane), imagesc(diffImg{i_plane}(101:end,101:end-70)), axis image, axis off
 end

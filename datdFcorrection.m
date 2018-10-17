@@ -1,38 +1,38 @@
-% clear
-% mice = [25,27,30,36,37,39,52,53,54,56];
-% sessions = {[4,19],[3,16],[3,21],[1,17],[7],[1,22],[3,21],[3],[3],[3]};  
-% rollingWindowForBaseF = 100; % in s
-% baseFprctile = 5;
-% baseDir = 'D:\TPM\JK\suite2p\';
-% for mi = 1 : length(mice)
-% % for mi = 1
-%     cd([baseDir, sprintf('%03d',mice(mi))])
-%     fList = dir('F_*_proc_final.mat');
-%     for i = 1 : length(fList)
-% %     for i = 1
-%         fprintf('mouse %03d session %d\n', mice(mi), i)
-%         load(fList(i).name)
-%         dat.rollingWindowForBaseF = rollingWindowForBaseF;
-%         dat.baseFprctile = baseFprctile;
-%         
-%         dF = zeros(size(dat.Fcell{1}), 'like', dat.Fcell{1});
-%         inds = find([dat.stat.iscell]);
-%         npcoeffs = min(min(dat.Fcell{1}(inds,:) ./ dat.FcellNeu{1}(inds,:), [], 2), ones(length(inds),1)*0.7);
-%                             
-%         len = size(dat.Fcell{1},2);
-%         window = round(rollingWindowForBaseF*(dat.ops.imageRate/dat.ops.num_plane));
-% 
-%         tempF = dat.Fcell{1}(inds,:) - dat.FcellNeu{1}(inds,:) .* npcoeffs;
-%         tempFF = [tempF, tempF(:,end-window+1:end)];
-%         ttbase = zeros(length(inds),size(tempF,2));
-%         parfor k = 1 : len
-%             ttbase(:,k) = prctile(tempFF(:,k:k+window),baseFprctile,2);
-%         end        
-%         dat.dF = (tempF - ttbase)./ttbase;
-%         dat.npcoeffs = npcoeffs;
-%         save(fList(i).name, 'dat')
-%     end
-% end
+clear
+mice = [25,27,30,36,37,39,52,53,54,56];
+sessions = {[4,19],[3,16],[3,21],[1,17],[7],[1,22],[3,21],[3],[3],[3]};  
+rollingWindowForBaseF = 100; % in s
+baseFprctile = 5;
+baseDir = 'D:\TPM\JK\suite2p\';
+for mi = 1 : length(mice)
+% for mi = 1
+    cd([baseDir, sprintf('%03d',mice(mi))])
+    fList = dir('F_*_proc_final.mat');
+    for i = 1 : length(fList)
+%     for i = 1
+        fprintf('mouse %03d session %d\n', mice(mi), i)
+        load(fList(i).name)
+        dat.rollingWindowForBaseF = rollingWindowForBaseF;
+        dat.baseFprctile = baseFprctile;
+        
+        dF = zeros(size(dat.Fcell{1}), 'like', dat.Fcell{1});
+        inds = find([dat.stat.iscell]);
+        npcoeffs = min(min(dat.Fcell{1}(inds,:) ./ dat.FcellNeu{1}(inds,:), [], 2), ones(length(inds),1)*0.7);
+                            
+        len = size(dat.Fcell{1},2);
+        window = round(rollingWindowForBaseF*(dat.ops.imageRate/dat.ops.num_plane));
+
+        tempF = dat.Fcell{1}(inds,:) - dat.FcellNeu{1}(inds,:) .* npcoeffs;
+        tempFF = [tempF, tempF(:,end-window+1:end)];
+        ttbase = zeros(length(inds),size(tempF,2));
+        parfor k = 1 : len
+            ttbase(:,k) = prctile(tempFF(:,k:k+window),baseFprctile,2);
+        end        
+        dat.dF = (tempF - ttbase)./ttbase;
+        dat.npcoeffs = npcoeffs;
+        save(fList(i).name, 'dat')
+    end
+end
 
 %% Split just for now. Integrate into the upper for loops later (2018/10/15)
 %% Error estimation. Using 5th percentile of std of smoothed n (5?) frames window.
@@ -91,7 +91,7 @@ for mi = 1 : length(mice)
             errorResponse(j,1) = prctile(errorResponseDist,5);
             errorResponse(j,2) = prctile(errorResponseDist,95);
         end
-        dat.noise = cellfun(@(x) sqrt(sum(diffs.^2)/length(diffs)), errorDiffs);
+        dat.noise = cellfun(@(x) sqrt(sum(x.^2)/length(x)), errorDiffs);
         dat.errorResponse = errorResponse;
         dat.errorDiffs = errorDiffs;
         dat.stdwindow = stdwindow;
