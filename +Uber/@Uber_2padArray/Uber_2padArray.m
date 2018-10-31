@@ -9,6 +9,18 @@ classdef Uber_2padArray < handle
         frameRate = [];
         mimg = {};
         cellmap = {};
+        noise = [];
+        npcoeff = [];
+        isC2 = [];
+        celly = [];
+        cellx = [];
+        c2ypoints = [];
+        c2xpoints = [];
+        fovsize = [];
+        fovyrange = {};
+        fovxrange = {};
+        fovdepth = {}; 
+        pixResolution = [];
     end
     
     properties (Dependent = true)
@@ -37,8 +49,20 @@ classdef Uber_2padArray < handle
             
             obj.frameRate = caArray.frameRate;
             obj.mimg = caArray.mimg;
-            obj.cellmap = caArray.cellmap;            
-        end                
+            obj.cellmap = caArray.cellmap;
+            obj.noise = caArray.noise;
+            obj.npcoeff = caArray.npcoeff;
+            obj.isC2 = caArray.isC2;
+            obj.celly = caArray.celly;
+            obj.cellx = caArray.cellx;
+            obj.c2ypoints = caArray.c2ypoints;
+            obj.c2xpoints = caArray.c2xpoints;
+            obj.fovsize = caArray.fovsize;
+            obj.fovyrange = caArray.fovyrange;
+            obj.fovxrange = caArray.fovxrange;
+            obj.fovdepth = caArray.fovdepth;
+            obj.pixResolution = caArray.pixResolution;
+        end
     end
     
     methods % Dependent property methods; cannot have attributes.

@@ -16,9 +16,9 @@ caDirBase = 'C:\Data\suite2p\';
 caDir = sprintf('%s%03d\\',caDirBase, mouse);
 
 cd(caDir)
-% if exist(savefn, 'file')
-%     load(savefn)
-% else
+if exist(savefn, 'file')
+    load(savefn)
+else
     if exist('b','var') && iscell(b)
         if isprop(b{1}, 'mouseName') && strcmp(b{1}.mouseName, mouseName)
             if exist('bSession','var')
@@ -71,4 +71,4 @@ cd(caDir)
     end
 
     save(savefn, 'u')
-% end
+end

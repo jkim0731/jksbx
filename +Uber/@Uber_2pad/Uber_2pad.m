@@ -45,8 +45,6 @@ classdef Uber_2pad < handle
         dF = []; % F should be (length(neuind),timepoints), calculated by Fneu - neuropilCoefficient * Fneuropil. dF/F_0.
         tpmTime = {}; % each frame has it's own time. plane from top to bottom
         
-        active = []; % 0 (inactive) or 1 (active) for each cell
-        
     end
     
     properties (Dependent = true)
@@ -149,9 +147,9 @@ classdef Uber_2pad < handle
             obj.tpmTime = cell(length(ca.time),1);
             for i = 1 : length(obj.tpmTime)
                 obj.tpmTime{i} = ca.time{1};
-            end            
+            end
+            
         end
-        
     end
     
     methods % Dependent property methods; cannot have attributes.
