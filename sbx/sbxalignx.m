@@ -4,9 +4,9 @@ function [m,T] = sbxalignx(fname,idx)
 % 
 % m - mean image after the alignment
 % T - optimal translation for each frame
+global info
 
-if(length(idx)==1)
-    
+if(length(idx)==1)    
     A = sbxread(fname,idx(1),1);
     A = squeeze(A(1,:,:));
     m = A;
@@ -19,8 +19,11 @@ elseif (length(idx)==2)
     A = squeeze(A(1,:,:));
     B = squeeze(B(1,:,:));
     
-    [u v] = fftalign(A,B);
-    
+    if info.scanmode == 0 % bidirectional    
+        [u, v] = fftalign(A(:,101:end),B(:,101:end));
+    else
+        [u, v] = fftalign(A,B);
+    end
     Ar = circshift(A,[u,v]);
     m = (Ar+B)/2;
     T = [[u v] ; [0 0]];
@@ -32,9 +35,12 @@ else
     
     [A,T0] = sbxalignx(fname,idx0);
     [B,T1] = sbxalignx(fname,idx1);
-   
-    [u v] = fftalign(A,B);
-     
+    
+    if info.scanmode == 0 % bidirectional    
+        [u, v] = fftalign(A(:,101:end),B(:,101:end));
+    else
+        [u, v] = fftalign(A,B);
+    end     
     Ar = circshift(A,[u, v]);
     m = (Ar+B)/2;
     T = [(ones(size(T0,1),1)*[u v] + T0) ; T1];

@@ -1,26 +1,26 @@
 %% F, drawing and saving in suite2p folder
 clear
-mouse = '056';
+mouse = '036';
 sbxdir = 'D:\TPM\JK\';
 suite2pdir = 'D:\TPM\JK\suite2p\';
 cd([sbxdir, mouse])
-
+%%
 fn = '056_997_000';
-diffim = show_C2(fn);
+diffim = show_C2_old(fn);
 %
 figure, imagesc(diffim{1}, [0 0.4]), axis image, axis off, hold on
 %%
 cd([sbxdir, mouse])
 totalDiffim = cell(8,1);
 for i = 1 : 8
-    fn = sprintf('056_6001_00%d',i);
-    totalDiffim{i} = show_C2(fn);
+    fn = sprintf('036_9998_10%d',i);
+    totalDiffim{i} = show_C2_old(fn);
 end
 
 %%
 temp = zeros(size(totalDiffim{1}{1}));
 for i = 1 : 8
-    for j = 4
+    for j = 3
         temp = temp + totalDiffim{i}{j}/8;
     end
 end
@@ -47,8 +47,8 @@ savefn = sprintf('JK%sC2.mat',mouse);
 save(savefn, 'xpoints', 'ypoints')
 
 %%
-mouse = '056';
-fn = '056_997_000';
+mouse = '054';
+fn = '054_997_000';
 loadfn = 'zstack_054_995';
 sbxdir = 'D:\TPM\JK\';
 suite2pdir = 'D:\TPM\JK\suite2p\';
@@ -66,7 +66,7 @@ figure, plot(squeeze(mean(mean(temp))))
 cd([sbxdir, mouse])
 totalDiffim = cell(8,1);
 for i = 1 : 8
-    fn = sprintf('056_6001_00%d',i);
+    fn = sprintf('054_6001_00%d',i);
     totalDiffim{i} = show_C2(fn);
 end
 
