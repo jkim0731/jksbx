@@ -18,7 +18,7 @@ ops.NimgFirstRegistration = min(min_nframes, ops.NimgFirstRegistration);
 IMG = zeros(ops.Ly, ops.Lx, nplanes, ops.NimgFirstRegistration, 'single');
 % grab frames from all files
 for iplane = 1 : nplanes
-    img_plane = permute(jksbxreadrandframes_multifile(ops.sbxfnlist, ops.NimgFirstRegistration, ops.frame_to_use{iplane}),[2 3 1 4]);
+    img_plane = permute(jksbxreadrandframes_multifile(ops.sbxfnlist, ops.NimgFirstRegistration, ops.frame_to_use{iplane}, ops.max_idx),[2 3 1 4]);
     img_plane = img_plane(ops.useY, ops.useX, :, :);
     if red_align
         IMG(:,:,iplane,:) = img_plane(:,:,rchannel,:);

@@ -1,4 +1,4 @@
-function z = jksbxreadframes_multifile(cellfn, frames, vargin)
+function z = jksbxreadframes_multifile(cellfn, frames, maxidx_list)
 
 % read desired frames (in a vector form) from sbx file
 % input should be a form of cell containing filenames (excluding
@@ -10,19 +10,10 @@ if ~iscell(cellfn) && ischar(cellfn)
     cellfn{1} = tempfn;
 end
     
-if nargin < 2
-    error('need at least 2 input arguments')
+if nargin < 3
+    error('need at least 3 input arguments')
 end
 
-if nargin == 3
-    maxidx_list = vargin{1};
-else
-    maxidx_list = 0;
-    for i = 1 : length(cellfn)        
-        maxidx_list = [maxidx_list, maxidx_list(end) + sbx_maxidx(cellfn{i}) + 1]; % each idx starts with 0
-    end
-end
-maxidx_list(1) = [];
 z = sbxread(cellfn{1},0,1);
 z = zeros([size(z,1) size(z,2) size(z,3) length(frames)],'uint16');
 
