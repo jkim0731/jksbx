@@ -2,11 +2,12 @@
 % pwd
 close all
 
-num_iter = 15;
+num_iter = 30;
 mouse_num = '070';
 layer = 1;
+redchannel = false;
 
-ref_fn_list1 = {'070_002_000'};
+ref_fn_list1 = {'070_002'};
 ref_fn_list2 = {''};
 if layer == 1
     for i = 1 : length(ref_fn_list1)
@@ -26,21 +27,31 @@ else
     error('No filename list')
 end
 cd(['d:\2p\JK\',ref_fn(1:3)])
-if ~exist([ref_fn,'.align'], 'file')
-    jksbxaligndir({ref_fn})
+if ~exist(['regops_', ref_fn, '.mat'], 'file')
+    error('Run suite2p first')
 end
-load([ref_fn,'.align'], '-mat')
+load(['regops_', ref_fn, '.mat'])
 
-ref1 = circshift(mat2gray(m1{1}),[0,0]); % all m's are cell from 2017/11/29. Every .align file now has m1 for green and m2 for red. empty if not taken. 
-% ref2 = mat2gray(m2{end});
-% figure(1), imagesc(ref1(101:end-10,101:end-10)), axis image, 
+ref1 = mat2gray(ops1{1}.mimg1); % 1 is the top FOV
+if redchannel
+    ref2 = mat2gray(ops1{1}.REDmimg1);
+end
 figure, imshow(mat2gray(ref1)), axis image
+
+ref1fov = zeros(ops1{1}.info.sz);
+ref1fov(ops1{1}.useY, ops1{1}.useX) = ref1;
+if redchannel
+    ref2fov = zeros(ops1{1}.info.sz);
+    ref2fov(ops1{1}.useY, ops1{1}.useX) = ref2;
+end
 
 mmfile = memmapfile('scanbox.mmap','Writable',true, ...
     'Format', { 'int16' [1 16] 'header' } , 'Repeat', 1);
 figure,
-% h1 = subplot(121);
-% h2 = subplot(122);
+if redchannel
+    h1 = subplot(121);
+    h2 = subplot(122);
+end
 
 while(true)
     while(mmfile.Data.header(1)<0) % wait for a new frame...
@@ -51,15 +62,22 @@ while(true)
        
     mchA = []; 
     mchB = [];
-    for i = 1 : num_iter 
-        mmfile.Format = {'int16' [1 16] 'header' ; ...
-            'uint16' double([mmfile.Data.header(2) mmfile.Data.header(3)]) 'chA';...
-            'uint16' double([mmfile.Data.header(2) mmfile.Data.header(3)]) 'chB'};
+    for i = 1 : num_iter
+        if redchannel
+            mmfile.Format = {'int16' [1 16] 'header' ; ...
+                'uint16' double([mmfile.Data.header(2) mmfile.Data.header(3)]) 'chA';...
+                'uint16' double([mmfile.Data.header(2) mmfile.Data.header(3)]) 'chB'};
+        else
+            mmfile.Format = {'int16' [1 16] 'header' ; ...
+                'uint16' double([mmfile.Data.header(2) mmfile.Data.header(3)]) 'chA'};
+        end
         if i == 1 
             mchA = double(intmax('uint16')-mmfile.Data.chA);
-            mchB = double(intmax('uint16')-mmfile.Data.chB);
             mfinalA = mchA;
-            mfinalB = mchB;
+            if redchannel
+                mchB = double(intmax('uint16')-mmfile.Data.chB);
+                mfinalB = mchB;
+            end
         else
             prev_mchA = mfinalA;
             mchA = double(intmax('uint16')-mmfile.Data.chA);
@@ -68,13 +86,14 @@ while(true)
             mchA = circshift(mchA,[u1,v1]);
             mfinalA = mfinalA + mchA/num_iter;
             
-            prev_mchB = mfinalB;
-            mchB = double(intmax('uint16')-mmfile.Data.chB);
-            
-            [u1, v1] = jkfftalign(mchB(50:end-50,50:end-50),prev_mchB(50:end-50,50:end-50));
-            mchB = circshift(mchB,[u1,v1]);
-            mfinalB = mfinalB + mchB/num_iter;
+            if redchannel
+                prev_mchB = mfinalB;
+                mchB = double(intmax('uint16')-mmfile.Data.chB);
 
+                [u1, v1] = jkfftalign(mchB(50:end-50,50:end-50),prev_mchB(50:end-50,50:end-50));
+                mchB = circshift(mchB,[u1,v1]);
+                mfinalB = mfinalB + mchB/num_iter;
+            end
         end
         
 %         mmfile.Format = {'int16' [1 16] 'header' ; ...
@@ -97,9 +116,12 @@ while(true)
         mmfile.Data.header(1) = -1; % signal Scanbox that frame has been consumed!
     end  
     
-%     imshowpair(mfinalA(101:end-10,101:end-10),ref1(101:end-10,101:end-10),'Parent', h1), axis image,
-%     imshowpair(mfinalB(101:end-10,101:end-10),ref2(101:end-10,101:end-10), 'Parent', h2), axis image,
-    imshowpair(mfinalA(101:end-10,101:end-10),ref1(101:end-10,101:end-10)), axis image,
+    if redchannel
+        imshowpair(mfinalA(101:end-10,101:end-10),ref1fov(101:end-10,101:end-10),'Parent', h1), axis image,    
+        imshowpair(mfinalB(101:end-10,101:end-10),ref2(101:end-10,101:end-10), 'Parent', h2), axis image,
+    else
+        imshowpair(mfinalA(101:end-10,101:end-10),ref1fov(101:end-10,101:end-10)), axis image,
+    end
 
     drawnow limitrate;     
 end

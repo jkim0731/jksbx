@@ -219,8 +219,8 @@ function jksbxsplittrial(fn, varargin)
                 frames_beginning = 0:num_plane:max_idx;
                 frames_ending = num_plane-1:num_plane:max_idx;
                 for trial_i = 1 : length(trials)
-                    begin_frame = frames_beginning(find(frames_beginning > trials(trial_i).frames(1), 1, 'first'));
-                    end_frame = frames_ending(find(frames_ending > trials(trial_i).frames(2), 1, 'last'));
+                    begin_frame = frames_beginning(find(frames_beginning > trials(trial_i).frames(1)+1, 1, 'first')); % +1 for udp timing buffer 11/26/2018 JK
+                    end_frame = frames_ending(find(frames_ending < trials(trial_i).frames(2), 1, 'last'));
                     if laserOffIncluded
                         currTrialFrames = intersect(onFrames, begin_frame:end_frame);
                     else
@@ -229,7 +229,7 @@ function jksbxsplittrial(fn, varargin)
                     trial_frames = [trial_frames, currTrialFrames];
                 end
                 for ind_plane = 1 : num_plane
-                    frame_to_use{plane_sorted(ind_plane)} = intersect(plane_sorted(ind_plane):num_plane:max_idx,trial_frames);             
+                    frame_to_use{plane_sorted(ind_plane)} = intersect(ind_plane-1:num_plane:max_idx,trial_frames);             
                 end        
             end
         else

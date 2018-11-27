@@ -27,7 +27,7 @@ if nargin >=3
         error('3rd input should be either ''skip'' or ''noskip''')
     end
 else
-    skip = 1;
+    skip = 'skip';
 end    
 
 % Align all *.sbx files in the list
@@ -41,11 +41,11 @@ for i = 1:length(d)
         num_plane = 1;
     end
     
-    if exist([fn,'.align'],'file') && strcmp(skip,'skip')        
+    if exist([fn,'.align'],'file') && strcmp(skip,'skip')
         sprintf('File %s is already aligned',fn);
         continue
     elseif exist([fn,'.trials'],'file') % ignore frames outside of each trial, because those are blank. If not treated, these lead to weird interference pattern during bidirectional scanning.
-        load([fn,'.trials'],'-mat', 'frame_to_use') 
+        load([fn,'.trials'],'-mat', 'frame_to_use')
     else % no trial file
         frame_to_use = cell(num_plane,1);
         for pi = 1 : num_plane
