@@ -69,23 +69,21 @@ classdef CalciumDataArray < handle
                 inds = find([dat.stat.iscell]);
                 for j = 1 : length(inds)
                     fprintf('processing cells %d/%d of plane #%d\n', j, length(inds),i)
-                    if prctile(dat.dF(j,:),95) > 0.3
-                        tempCellmap(dat.stat(inds(j)).ipix) = j + i*1000;
-                        obj.cellInd(end+1) = j + i*1000;
-                        obj.cellDepth(end+1) = round(dat.stat(inds(j)).depth);
-                        obj.isC2(end+1) = dat.isC2(j);
-                        obj.celly(end+1) = dat.ops.yrange(round(dat.stat(inds(j)).med(1)));
-                        obj.cellx(end+1) = dat.ops.xrange(round(dat.stat(inds(j)).med(2)));
-                        obj.dF{end+1} = dat.dF(j,:);
-                        obj.noise(end+1) = dat.noise(j);
-                        obj.npcoeff(end+1) = dat.npcoeffs(j);
-                        if i <= dat.ops.num_plane
-                            cellNums{1} = [cellNums{1}, j + i*1000];
-                            cellDepth{1} = [cellDepth{1}, dat.stat(inds(j)).depth];
-                        else
-                            cellNums{2} = [cellNums{2}, j + i*1000];
-                            cellDepth{2} = [cellDepth{2}, dat.stat(inds(j)).depth];
-                        end
+                    tempCellmap(dat.stat(inds(j)).ipix) = j + i*1000;
+                    obj.cellInd(end+1) = j + i*1000;
+                    obj.cellDepth(end+1) = round(dat.stat(inds(j)).depth);
+                    obj.isC2(end+1) = dat.isC2(j);
+                    obj.celly(end+1) = dat.ops.yrange(round(dat.stat(inds(j)).med(1)));
+                    obj.cellx(end+1) = dat.ops.xrange(round(dat.stat(inds(j)).med(2)));
+                    obj.dF{end+1} = dat.dF(j,:);
+                    obj.noise(end+1) = dat.noise(j);
+                    obj.npcoeff(end+1) = dat.npcoeffs(j);
+                    if i <= dat.ops.num_plane
+                        cellNums{1} = [cellNums{1}, j + i*1000];
+                        cellDepth{1} = [cellDepth{1}, dat.stat(inds(j)).depth];
+                    else
+                        cellNums{2} = [cellNums{2}, j + i*1000];
+                        cellDepth{2} = [cellDepth{2}, dat.stat(inds(j)).depth];
                     end
                 end
                 obj.cellmap{i}(dat.ops.yrange,dat.ops.xrange) = tempCellmap;
@@ -119,7 +117,7 @@ classdef CalciumDataArray < handle
                     obj.trials{i}.time{5-j} = (frames + (j-1)) / dat.ops.imageRate;
                 end
                 obj.trials{i}.dF = zeros(length(obj.trials{i}.cellNums),obj.trials{i}.frameNum);
-               for j = 1 : length(obj.trials{i}.cellNums) 
+                for j = 1 : length(obj.trials{i}.cellNums) 
                     obj.trials{i}.dF(j,:) = obj.dF{obj.cellInd == obj.trials{i}.cellNums(j)}(obj.trials{i}.inds);
                 end
             end

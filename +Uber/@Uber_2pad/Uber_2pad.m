@@ -44,6 +44,7 @@ classdef Uber_2pad < handle
         cellDepth = [];
         dF = []; % F should be (length(neuind),timepoints), calculated by Fneu - neuropilCoefficient * Fneuropil. dF/F_0.
         tpmTime = {}; % each frame has it's own time. plane from top to bottom
+        spike = [];
         
     end
     
@@ -144,6 +145,7 @@ classdef Uber_2pad < handle
             obj.neuindSession = ca.cellNums;
             obj.cellDepth = ca.cellDepth;
             obj.dF = ca.dF;
+            obj.spike = ca.spike;
             obj.tpmTime = cell(length(ca.time),1);
             for i = 1 : length(obj.tpmTime)
                 obj.tpmTime{i} = ca.time{1};
