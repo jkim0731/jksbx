@@ -6,7 +6,8 @@ if h.dat.procmap
     I = h.dat.mimg_proc(h.dat.ylim(1):h.dat.ylim(2), h.dat.xlim(1):h.dat.xlim(2), h.dat.map);
 else    
 %     I = h.dat.mimg(:,:,h.dat.map);
-    I = h.dat.mimg(h.dat.ylim(1):h.dat.ylim(2), h.dat.xlim(1):h.dat.xlim(2), h.dat.map);
+%     I = h.dat.mimg(h.dat.ylim(1):h.dat.ylim(2), h.dat.xlim(1):h.dat.xlim(2), h.dat.map);
+    I = h.dat.mimg(max(h.dat.ylim(1),1):h.dat.ylim(2), max(h.dat.xlim(1),1):h.dat.xlim(2), h.dat.map);
 end
 
 mu = median(I(:));

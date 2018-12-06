@@ -183,10 +183,16 @@ for iexp = 1:length(db0)
             db.trials = trials; % trials is a structure, containing trialnum, frames, and lines
             db.max_idx = sbx_maxidx(db.sbxfnlist{ifile}); % max_idx is a 1d array containing maximum index up to each file including previous index. Aim to help file reading with multiple files in one session
         else               
+            for i = 1 : length(trials)
+                for j = 1 : 2
+                    [trials(i).frames(j)] = [trials(i).frames(j)] + db.max_idx(end) + 1;
+                end
+            end
+            db.trials = [db.trials, trials];
+            
             for iplane = 1 : length(frame_to_use)                    
                 db.frame_to_use{iplane} = [db.frame_to_use{iplane}, db.max_idx(end) + 1 + frame_to_use{iplane}];
             end
-            db.trials = [db.trials, trials];
             db.max_idx = [db.max_idx, db.max_idx(end)+sbx_maxidx(db.sbxfnlist{ifile})+1];
         end
     end

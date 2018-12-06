@@ -18,7 +18,7 @@ classdef CalciumDataArray < handle
         sessionName = '';
         mimg = {}; 
         cellmap = {}; % cell roi of each plane. Each ROI has it's corresponding cell #, except for the first digit reserved for plane #.
-        trials = {};        
+        trials = {};
         dF = {}; % dF/F_0 with 5th percentile
         spk = {}; % inferred spikes from MLspike
         cellInd = []; % cell number as index
@@ -40,7 +40,7 @@ classdef CalciumDataArray < handle
         fovxrange = {};
         fovdepth = {};
     end
-        
+
     properties (Dependent = true)
 
     end
@@ -73,7 +73,9 @@ classdef CalciumDataArray < handle
                     fprintf('processing cells %d/%d of plane #%d\n', j, length(inds),i)
                     tempCellmap(dat.stat(inds(j)).ipix) = j + i*1000;
                     obj.cellInd(end+1) = j + i*1000;
-                    obj.cellDepth(end+1) = round(dat.stat(inds(j)).depth);
+                    if isfield(dat.stat,'depth')
+                        obj.cellDepth(end+1) = round(dat.stat(inds(j)).depth);
+                    end
                     obj.isC2(end+1) = dat.isC2(j);
                     obj.celly(end+1) = dat.ops.yrange(round(dat.stat(inds(j)).med(1)));
                     obj.cellx(end+1) = dat.ops.xrange(round(dat.stat(inds(j)).med(2)));
@@ -83,16 +85,22 @@ classdef CalciumDataArray < handle
                     obj.npcoeff(end+1) = dat.npcoeffs(j);
                     if i <= dat.ops.num_plane
                         cellNums{1} = [cellNums{1}, j + i*1000];
-                        cellDepth{1} = [cellDepth{1}, dat.stat(inds(j)).depth];
+                        if isfield(dat.stat,'depth')
+                            cellDepth{1} = [cellDepth{1}, dat.stat(inds(j)).depth];
+                        end
                     else
                         cellNums{2} = [cellNums{2}, j + i*1000];
-                        cellDepth{2} = [cellDepth{2}, dat.stat(inds(j)).depth];
+                        if isfield(dat.stat,'depth')
+                            cellDepth{2} = [cellDepth{2}, dat.stat(inds(j)).depth];
+                        end
                     end
                 end
                 obj.cellmap{i}(dat.ops.yrange,dat.ops.xrange) = tempCellmap;
                 obj.fovyrange{i} = dat.ops.useY(dat.ops.yrange);
                 obj.fovxrange{i} = dat.ops.useX(dat.ops.xrange);
-                obj.fovdepth{i} = dat.depth.FOV;
+                if isfield(dat.stat,'depth')
+                    obj.fovdepth{i} = dat.depth.FOV;
+                end
             end
             
             load(fnlist(1).name)
@@ -126,9 +134,10 @@ classdef CalciumDataArray < handle
                     obj.trials{i}.spk(j,:) = obj.spk{obj.cellInd == obj.trials{i}.cellNums(j)}(obj.trials{i}.inds);
                 end
             end
-            
-            obj.imagingDepth = dat.depth.imagingDepth;
-            obj.pixResolution = dat.depth.xyUmperpix;
+            if isfield(dat.stat,'depth')
+                obj.imagingDepth = dat.depth.imagingDepth;
+                obj.pixResolution = dat.depth.xyUmperpix;
+            end
             obj.c2ypoints = dat.c2ypoints - dat.ops.useY(1)+1;
             obj.c2xpoints = dat.c2xpoints - dat.ops.useX(1)+1;
             obj.fovsize = dat.ops.info.sz;

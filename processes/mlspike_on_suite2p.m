@@ -15,37 +15,40 @@
 stdwindow = 5;
 lowerprct = 5; % 5th percentile
 
-mice = [25,27,30,36,37,39,52,53,54,56];
+mice = [38,41];
 baseDir = 'D:\TPM\JK\suite2p\';
 for mi = 1 : length(mice)
     cd(sprintf('%s%03d',baseDir, mice(mi)))
     flist = dir('F_*_proc_final.mat');
-    for fi = 1 : length(flist)
+%     for fi = 2 : length(flist)
+    for fi = 1
         load(flist(fi).name)
 %         indCell = find([dat.stat.iscell]);
         dt = 1/dat.ops.imageRate*dat.ops.num_plane;
-        
+        savefn = flist(fi).name;
         %% test for smoothing dF 2018/11/25 JK
-        savefn = [flist(fi).name(1:end-4), '_smoothed.mat'];
-        errorDiffs = cell(size(dat.dF,1),1);
-        errorResponse = zeros(size(dat.dF,1),2);
-        for j = 1 : size(dat.dF,1)
-            tempstd = zeros(size(dat.dF,2) - (stdwindow-1), 1);
-            temp = smooth(dat.dF(j,:));
-            tempsmooth = smooth(temp,5);
-            parfor k = 1 : length(tempstd)
-                tempstd(k) = std(tempsmooth(k+2:k+(stdwindow-1)/2+2)); % chopping off flanking half-windows
-            end
-            tempstdInds = find(tempstd<=prctile(tempstd,lowerprct));
-            baseInds = zeros(length(tempstdInds),stdwindow);
-            diffs = zeros(length(tempstdInds),stdwindow);
-            parfor k = 1 : length(tempstdInds)
-                baseInds(k,:) = tempstdInds(k) : tempstdInds(k)+(stdwindow-1);
-                diffs(k,:) = temp(baseInds(k,:)) - mean(temp(baseInds(k,:)));
-            end            
-            errorDiffs{j} = diffs(:);
-        end
-        dat.noise = cellfun(@(x) sqrt(sum(x.^2)/length(x)), errorDiffs);
+%         savefn = [flist(fi).name(1:end-4), '_smoothed.mat'];
+%         savefn = flist(fi).name;
+%         errorDiffs = cell(size(dat.dF,1),1);
+%         errorResponse = zeros(size(dat.dF,1),2);
+%         for j = 1 : size(dat.dF,1)
+%             tempstd = zeros(size(dat.dF,2) - (stdwindow-1), 1);
+%             temp = smooth(dat.dF(j,:));
+%             temp = dat.dF(j,:);
+%             tempsmooth = smooth(temp,5);
+%             parfor k = 1 : length(tempstd)
+%                 tempstd(k) = std(tempsmooth(k+2:k+(stdwindow-1)/2+2)); % chopping off flanking half-windows
+%             end
+%             tempstdInds = find(tempstd<=prctile(tempstd,lowerprct));
+%             baseInds = zeros(length(tempstdInds),stdwindow);
+%             diffs = zeros(length(tempstdInds),stdwindow);
+%             parfor k = 1 : length(tempstdInds)
+%                 baseInds(k,:) = tempstdInds(k) : tempstdInds(k)+(stdwindow-1);
+%                 diffs(k,:) = temp(baseInds(k,:)) - mean(temp(baseInds(k,:)));
+%             end            
+%             errorDiffs{j} = diffs(:);
+%         end
+%         dat.noise = cellfun(@(x) sqrt(sum(x.^2)/length(x)), errorDiffs);
         %%
         
         n = zeros(size(dat.dF), 'single');
@@ -54,9 +57,9 @@ for mi = 1 : length(mice)
         
         parfor ci = 1 : size(dat.dF,1)
             par = tps_mlspikes('par');
-%             par.a = 0.3;
+            par.a = 0.3;
             %%
-            par.a = 0.16; % for smoothed data
+%             par.a = 0.16; % for smoothed data
             %%
             par.tau = 0.6;
             par.pnonlin = [0.73 -0.05];
