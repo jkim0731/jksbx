@@ -27,24 +27,24 @@ classdef Uber_2padArray < handle
     end
     
     methods (Access = public)
-        function obj = Uber_2padArray(bArray,wlArray,caArray)            
+        function obj = Uber_2padArray(bArray,w3Array,caArray)
             obj.mouseName = bArray.mouseName;
             obj.sessionName = bArray.sessionName;
-            obj.cellNums = caArray.cellInd;            
+            obj.cellNums = caArray.cellInd;
             obj.cellDepths = caArray.cellDepth;
             
             btrialNums = cellfun(@(x) x.trialNum, bArray.trials);
-            wltrialNums = cellfun(@(x) x.trialNum, wlArray.trials);
+            w3trialNums = cellfun(@(x) x.trialNum, w3Array.trials);
             catrialNums = cellfun(@(x) x.trialNum, caArray.trials);
-            obj.trialNums = intersect(btrialNums, intersect(wltrialNums, catrialNums));
+            obj.trialNums = intersect(btrialNums, intersect(w3trialNums, catrialNums));
             
             obj.trials = cell(length(obj.trialNums),1);
             for i = 1 : length(obj.trials)
                 disp(['Building trial ', num2str(i), '/', num2str(length(obj.trials))]) 
-                b = bArray.trials{cellfun(@(x) x.trialNum == obj.trialNums(i), bArray.trials)};
-                wl = wlArray.trials{cellfun(@(x) x.trialNum == obj.trialNums(i), wlArray.trials)};
+                b = bArray.trials{cellfun(@(x) x.trialNum == obj.trialNums(i), bArray.trials)};                
+                w3 = w3Array.trials{cellfun(@(x) x.trialNum == obj.trialNums(i), w3Array.trials)};
                 ca = caArray.trials{cellfun(@(x) x.trialNum == obj.trialNums(i), caArray.trials)};
-                obj.trials{i} = Uber.Uber_2pad(b,wl,ca,obj.trialNums(i));
+                obj.trials{i} = Uber.Uber_2pad(b,w3,ca,obj.trialNums(i));
             end
             
             obj.frameRate = caArray.frameRate;

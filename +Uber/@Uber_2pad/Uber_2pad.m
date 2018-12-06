@@ -6,7 +6,7 @@ classdef Uber_2pad < handle
         leftLickTime = []; % in sec
         rightLickTime = []; % in sec
         answerLickTime = []; % in sec
-        drinkingTime = []; % in sec
+        drinkingOnsetTime = []; % in sec. Actual drinking time, i.e., intersect(b.drinkingTime, b.left(or right)LickTime)
         poleUpOnsetTime = []; % in sec
         poleDownOnsetTime = []; % in sec
         response = []; % correct = 1, wrong = 0, miss = -1
@@ -21,16 +21,21 @@ classdef Uber_2pad < handle
         poleMovingTime = []; % in sec
         poleUpTime = []; % in sec
         whiskerTime = []; % in sec, all frames
-        %
-        % from thTouchFrames, for now 2018/05/01 JK. Needs to implement
-        % thresholds from kappa and theta
-        touchChunks = {}; % touch chunks, each converted into time (in sec)
-        %
-        % whisker variables, not for now. Need 3D reconstruction first
-%         kappa = cell(1,2); % filling up all frames. NaN when there is no trace at that frame. if one whisker is lost, the other is treated as lost as well. (both have same entries of NaN)
-%         theta = cell(1,2); % same as kappa
+        theta = [];
+        nof = 0;
+        frameDuration = 1/311;
         
-        % from two-photon data        
+        % from W3_2pad
+        phi = [];
+        kappaH = [];
+        kappaV = [];
+        
+        % from WL_2pad
+%         touchChunks = {}; % touch chunks, each converted into time (in sec)
+        protractionTouchChunks = {};
+        retractionTouchChunks = {};
+        
+        % from two-photon data
         planes = []; % 1:4 or 5:8 (for now, 2018/04/01)
         neuindSession = []; % index (number) of neurons observed in the current session, 
 % which means that there is a single value assigned to each neuron every session (not same across sessions, yet. Going to be dealt in _animal array)
@@ -43,8 +48,8 @@ classdef Uber_2pad < handle
 
         cellDepth = [];
         dF = []; % F should be (length(neuind),timepoints), calculated by Fneu - neuropilCoefficient * Fneuropil. dF/F_0.
-        tpmTime = {}; % each frame has it's own time. plane from top to bottom
-        spike = [];
+        tpmTime = []; % each frame has it's own time. plane from top to bottom
+        spk = [];
         
     end
     
@@ -52,34 +57,24 @@ classdef Uber_2pad < handle
     end
     
     methods (Access = public)
-        function obj = Uber_2pad(b,wl,ca,trialNum)        
-                    %
-                    %
-                    %
-                    %
-                    %
-                    %
-                    %
-                    
-                    if wl.framePeriodInSec > 1
-                        wl.framePeriodInSec = wl.framePeriodInSec/wl.framePeriodInSec/wl.framePeriodInSec;
-                    end
-                    %
-                    %
-                    %
-                    %
-                    %
-                    %
-                    % Temporary solution for mistake in framePeriodInSec
-                    % with JK05X 2018/10/04
-                    %
-                    %
-            
+        function obj = Uber_2pad(b,w3,ca,trialNum)
             obj.trialNum = trialNum;
             obj.leftLickTime = b.beamBreakTimesLeft;
             obj.rightLickTime = b.beamBreakTimesRight;
             obj.answerLickTime = b.answerLickTime;
-            obj.drinkingTime = b.drinkingTime;
+            if ~isempty(b.drinkingTime)
+                if b.trialType(1) == 'r'
+                    drinkingInd = find(b.beamBreakTimesRight > b.drinkingTime(1) & b.beamBreakTimesRight < b.drinkingTime(end));
+                    if ~isempty(drinkingInd)
+                        obj.drinkingOnsetTime = b.beamBreakTimesRight(drinkingInd(1));
+                    end
+                elseif b.trialType(1) == 'l'
+                    drinkingInd = find(b.beamBreakTimesLeft > b.drinkingTime(1) & b.beamBreakTimesLeft < b.drinkingTime(end));
+                    if ~isempty(drinkingInd)
+                        obj.drinkingOnsetTime = b.beamBreakTimesLeft(drinkingInd(1));
+                    end
+                end
+            end
             obj.poleUpOnsetTime = b.poleUpOnsetTime;
             obj.poleDownOnsetTime = b.poleDownOnsetTime;
             obj.response = b.trialCorrect; % 1 hit, 0 wrong, -1 miss
@@ -90,68 +85,36 @@ classdef Uber_2pad < handle
             obj.distractor = b.distractor;
             obj.trialType = b.trialType;
             
-            obj.poleMovingTime = (wl.poleMovingFrames-1)*wl.framePeriodInSec;
-            obj.poleUpTime = (wl.poleUpFrames-1)*wl.framePeriodInSec;
-            obj.whiskerTime = (0:wl.nof-1)*wl.framePeriodInSec;
-            if ~isempty(wl.protractionTouchFrames) % only for protraction, for now 2018/10/02 JK
-                tf = wl.protractionTouchFrames;
-                
-                % single frame correction. Just for now. It should correct
-                % 101->111 first, and then 010->000
-                binaryFrames = zeros(max(tf),1);
-                binaryFrames(tf) = 1;
-                flipInds = find( diff(diff(binaryFrames)) > 1) + 1;
-                binaryFrames(flipInds) = 1 - binaryFrames(flipInds);                
-                tf = find(binaryFrames);
-                % 010->000
-                binaryFrames = zeros(max(tf),1);
-                binaryFrames(tf) = 1;
-                flipInds = find( diff(diff(binaryFrames)) < -1) + 1;
-                binaryFrames(flipInds) = 1 - binaryFrames(flipInds);                
-                tf = find(binaryFrames);
-                
-                % making chunks. It worked in wl function, but just in
-                % case...
-                if size(tf,1) > size(tf,2)
-                    tf = tf';
-                end
-                chunkPoints = [1, find(diff(tf)>1) + 1, length(tf)+1]; % +1 because of diff. first 1 for the first chunk. So this is actually start points of each chunk.
-                chunks = cell(1,length(chunkPoints)-1); % 
-                for i = 1 : length(chunks)
-                    chunks{i} = [tf(chunkPoints(i) : chunkPoints(i+1)-1)]';
-                end
-                
-                obj.touchChunks = cell(length(chunks),1);
-                for i = 1 : length(chunks)
-                    obj.touchChunks{i} = (chunks{i}-1) * wl.framePeriodInSec;
-                end
-            else
-                obj.touchChunks = {};
+            obj.poleMovingTime = (w3.poleMovingFrames-1)*w3.framePeriodInSec;
+            obj.poleUpTime = (w3.poleUpFrames-1)*w3.framePeriodInSec;
+            obj.whiskerTime = w3.time;
+            obj.theta = w3.theta;
+            obj.phi = w3.phi;
+            obj.kappaH = w3.kappaH;
+            obj.kappaV = w3.kappaV;
+            obj.nof = w3.nof;
+            obj.frameDuration = w3.framePeriodInSec;
+            
+            if ~isempty(w3.protractionTouchChunks)
+                obj.protractionTouchChunks = cellfun(@(x) (x-1) * w3.framePeriodInSec, w3.protractionTouchChunks, 'uniformoutput', false);
             end
-%             topind = round(wl.time{1}*wl.framePeriodInSec) + 1;
-%             frontind = round(wl.time{2}*wl.framePeriodInSec) + 1;
-%             nonanind = intersect(topind, frontind);
-%             indfin{1} = find(ismember(topind, nonanind));
-%             indfin{2} = find(ismember(frontind, nonanind));
-            % whisker variables, not for now. Need 3D reconstruction first
-%             for i = 1 : 2 % 2pad, 2 views only (top and front)
-%                 obj.kappa{i} = nan(wl.nof,1);
-%                 obj.theta{i} = nan(wl.nof,1);
-%                 obj.kappa{i}(nonanind) = wl.kappa{i}(indfin{i});
-%                 obj.theta{i}(nonanind) = wl.theta{i}(indfin{i});
-%             end
+            if ~isempty(w3.retractionTouchChunks)
+                obj.retractionTouchChunks = cellfun(@(x) (x-1) * w3.framePeriodInSec, w3.retractionTouchChunks, 'uniformoutput', false);
+            end
             
             obj.planes = ca.planes;
             obj.neuindSession = ca.cellNums;
             obj.cellDepth = ca.cellDepth;
             obj.dF = ca.dF;
-            obj.spike = ca.spike;
-            obj.tpmTime = cell(length(ca.time),1);
-            for i = 1 : length(obj.tpmTime)
-                obj.tpmTime{i} = ca.time{1};
-            end
+            obj.spk = ca.spk;
+%             obj.tpmTime = cell(length(ca.time),1);
+%             for i = 1 : length(obj.tpmTime)
+%                 obj.tpmTime{i} = ca.time{1};
+%             end
+            obj.tpmTime = ca.time{1};
             
         end
+
     end
     
     methods % Dependent property methods; cannot have attributes.

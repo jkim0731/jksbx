@@ -20,6 +20,7 @@ classdef CalciumDataArray < handle
         cellmap = {}; % cell roi of each plane. Each ROI has it's corresponding cell #, except for the first digit reserved for plane #.
         trials = {};        
         dF = {}; % dF/F_0 with 5th percentile
+        spk = {}; % inferred spikes from MLspike
         cellInd = []; % cell number as index
         cellDepth = [];
         isC2 = []; % 0 or 1
@@ -37,7 +38,7 @@ classdef CalciumDataArray < handle
         fovsize = [];
         fovyrange = {};
         fovxrange = {};
-        fovdepth = {};        
+        fovdepth = {};
     end
         
     properties (Dependent = true)
@@ -62,6 +63,7 @@ classdef CalciumDataArray < handle
             fnlist = dir(['F_', mouseName, '_', sessionName, '_plane*_proc_final.mat']);
             for i = 1 : length(fnlist)
                 load(fnlist(i).name);
+               
                 obj.mimg{i} = dat.ops.mimg1;
                 obj.cellmap{i} = zeros(size(dat.ops.mimg1),'single');
                 tempCellmap = zeros([length(dat.ops.yrange), length(dat.ops.xrange)],'single');
@@ -76,6 +78,7 @@ classdef CalciumDataArray < handle
                     obj.celly(end+1) = dat.ops.yrange(round(dat.stat(inds(j)).med(1)));
                     obj.cellx(end+1) = dat.ops.xrange(round(dat.stat(inds(j)).med(2)));
                     obj.dF{end+1} = dat.dF(j,:);
+                    obj.spk{end+1} = spk.n(j,:);
                     obj.noise(end+1) = dat.noise(j);
                     obj.npcoeff(end+1) = dat.npcoeffs(j);
                     if i <= dat.ops.num_plane
@@ -117,8 +120,10 @@ classdef CalciumDataArray < handle
                     obj.trials{i}.time{5-j} = (frames + (j-1)) / dat.ops.imageRate;
                 end
                 obj.trials{i}.dF = zeros(length(obj.trials{i}.cellNums),obj.trials{i}.frameNum);
+                obj.trials{i}.spk = zeros(length(obj.trials{i}.cellNums),obj.trials{i}.frameNum);
                 for j = 1 : length(obj.trials{i}.cellNums) 
                     obj.trials{i}.dF(j,:) = obj.dF{obj.cellInd == obj.trials{i}.cellNums(j)}(obj.trials{i}.inds);
+                    obj.trials{i}.spk(j,:) = obj.spk{obj.cellInd == obj.trials{i}.cellNums(j)}(obj.trials{i}.inds);
                 end
             end
             
