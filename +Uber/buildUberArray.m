@@ -6,19 +6,22 @@ caSessionName = sprintf('%03d',session);
 
 savefn = sprintf('Uber%s%s.mat',mouseName, sessionName); 
 
-bDirBase = 'Y:\Whiskernas\JK\SoloData\';
+% bDirBase = 'Y:\Whiskernas\JK\SoloData\';
+bDirBase = 'C:\Data\SoloData\';
 bDir = [bDirBase, mouseName];
 
-wDirBase = 'Y:\Whiskernas\JK\whisker\tracked\';
+% wDirBase = 'Y:\Whiskernas\JK\whisker\tracked\';
+wDirBase = 'C:\Data\WhiskerVideo\';
 wDir = [wDirBase, mouseName, sessionName];
 
-caDirBase = 'Y:\Whiskernas\JK\suite2p\';
+% caDirBase = 'Y:\Whiskernas\JK\suite2p\';
+caDirBase = 'C:\Data\suite2p\';
 caDir = sprintf('%s%03d\\',caDirBase, mouse);
 
 cd(caDir)
-% if exist(savefn, 'file')
-%     load(savefn)
-% else
+if exist(savefn, 'file')
+    load(savefn)
+else
     if exist('b','var') && iscell(b)
         if isprop(b{1}, 'mouseName') && strcmp(b{1}.mouseName, mouseName)
             if exist('bSession','var')
@@ -71,4 +74,4 @@ cd(caDir)
     end
 
     save(savefn, 'u')
-% end
+end

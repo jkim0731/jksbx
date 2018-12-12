@@ -110,6 +110,7 @@ classdef CalciumDataArray < handle
             for i = 1 : length(obj.trials)
                 obj.trials{i}.trialNum = dat.ops.trials(i).trialnum;
                 obj.trials{i}.frames = dat.ops.trials(i).frames(1):dat.ops.trials(i).frames(2);
+                obj.trials{i}.startLine = dat.ops.trials(i).lines(1);
                 if ~isempty(find(ismember(dat.ops.frame_to_use{4},obj.trials{i}.frames),1,'first'))
                     obj.trials{i}.planes = 1:4;
                     basePlane = 4;
@@ -125,7 +126,7 @@ classdef CalciumDataArray < handle
                 obj.trials{i}.frameNum = length(obj.trials{i}.inds);
                 frames = dat.ops.frame_to_use{basePlane}(obj.trials{i}.inds) - obj.trials{i}.frames(1);
                 for j = 1 : 4
-                    obj.trials{i}.time{5-j} = (frames + (j-1)) / dat.ops.imageRate;
+                    obj.trials{i}.time{5-j} = (frames + (j-1)) / dat.ops.imageRate - (obj.trials{i}.startLine - 1) / dat.ops.imageRate / dat.ops.info.sz(1); % adjusting for start line. offset can be as large as 30 ms. 
                 end
                 obj.trials{i}.dF = zeros(length(obj.trials{i}.cellNums),obj.trials{i}.frameNum);
                 obj.trials{i}.spk = zeros(length(obj.trials{i}.cellNums),obj.trials{i}.frameNum);

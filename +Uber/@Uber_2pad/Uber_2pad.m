@@ -107,11 +107,11 @@ classdef Uber_2pad < handle
             obj.cellDepth = ca.cellDepth;
             obj.dF = ca.dF;
             obj.spk = ca.spk;
-%             obj.tpmTime = cell(length(ca.time),1);
-%             for i = 1 : length(obj.tpmTime)
-%                 obj.tpmTime{i} = ca.time{1};
-%             end
-            obj.tpmTime = ca.time{1};
+            obj.tpmTime = cell(length(ca.time),1);
+            for i = 1 : length(obj.tpmTime)
+                obj.tpmTime{i} = ca.time{i};
+            end
+%             obj.tpmTime = ca.time{1};
             
         end
 
