@@ -3,11 +3,11 @@
 close all
 
 num_iter = 30;
-mouse_num = '070';
+mouse_num = '076';
 layer = 1;
 redchannel = false;
 
-ref_fn_list1 = {'070_002'};
+ref_fn_list1 = {'074_001', '075_001', '076_001'};
 ref_fn_list2 = {''};
 if layer == 1
     for i = 1 : length(ref_fn_list1)

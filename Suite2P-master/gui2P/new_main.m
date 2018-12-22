@@ -972,14 +972,18 @@ end
 
 % --- threshold setting for classifier
 function edit50_Callback(hObject, eventdata, h)
-h.dat.cl.threshold = str2double(get(h.edit50,'String'));
-if ~isnan(h.dat.cl.threshold)
-    for j = 1:length(h.dat.stat)
-        h.dat.stat(j).iscell = h.dat.stat(j).cellProb > h.dat.cl.threshold;
-    end    
-    redraw_figure(h);
+thresholdStr = get(h.edit50,'String');
+if ~isnan(str2double(thresholdStr))
 
-    guidata(hObject,h);
+    h.dat.cl.threshold = str2double(thresholdStr);
+    if ~isnan(h.dat.cl.threshold)
+        for j = 1:length(h.dat.stat)
+            h.dat.stat(j).iscell = h.dat.stat(j).cellProb > h.dat.cl.threshold;
+        end    
+        redraw_figure(h);
+
+        guidata(hObject,h);
+    end
 end
 
 function edit50_CreateFcn(hObject, eventdata, handles)
@@ -1167,16 +1171,17 @@ function edit52_Callback(hObject, eventdata, h)
 % hObject    handle to edit52 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+if ~isnan(str2double(get(hObject,'String')))
+    h.statmins(h.statnum) = str2double(get(hObject,'String'));
 
-h.statmins(h.statnum) = str2double(get(hObject,'String'));
+    goodcells = set_thres(h.dat.stat, h.statstrs, h.statmins, h.statmaxs);
+    [h.dat.stat(~goodcells).iscell] = deal(0);
+    % [h.dat.stat(goodcells).iscell]  = deal(1);
 
-goodcells = set_thres(h.dat.stat, h.statstrs, h.statmins, h.statmaxs);
-[h.dat.stat(~goodcells).iscell] = deal(0);
-% [h.dat.stat(goodcells).iscell]  = deal(1);
+    redraw_figure(h);
 
-redraw_figure(h);
-
-guidata(hObject,h);
+    guidata(hObject,h);
+end
 % Hints: get(hObject,'String') returns contents of edit52 as text
 %        str2double(get(hObject,'String')) returns contents of edit52 as a double
 
@@ -1199,16 +1204,18 @@ function edit54_Callback(hObject, eventdata, h)
 % hObject    handle to edit54 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-h.statmaxs(h.statnum) = str2double(get(hObject,'String'));
 
-goodcells = set_thres(h.dat.stat, h.statstrs, h.statmins, h.statmaxs);
-[h.dat.stat(~goodcells).iscell] = deal(0);
-[h.dat.stat(goodcells).iscell]  = deal(1);
+if ~isnan(get(hObject,'String'))
+    h.statmaxs(h.statnum) = str2double(get(hObject,'String'));
 
-redraw_figure(h);
+    goodcells = set_thres(h.dat.stat, h.statstrs, h.statmins, h.statmaxs);
+    [h.dat.stat(~goodcells).iscell] = deal(0);
+    [h.dat.stat(goodcells).iscell]  = deal(1);
 
-guidata(hObject,h);
+    redraw_figure(h);
 
+    guidata(hObject,h);
+end
 % Hints: get(hObject,'String') returns contents of edit54 as text
 %        str2double(get(hObject,'String')) returns contents of edit54 as a double
 

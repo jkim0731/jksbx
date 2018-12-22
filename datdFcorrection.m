@@ -1,7 +1,7 @@
 clear
 % mice = [25,27,30,36,37,39,52,53,54,56];
 % sessions = {[4,19],[3,16],[3,21],[1,17],[7],[1,22],[3,21],[3],[3],[3]};
-mice = [38,41];
+mice = [74,75,76];
 % sessions = {[6]};
 rollingWindowForBaseF = 100; % in s
 baseFprctile = 5;
@@ -13,7 +13,7 @@ stdwindow = 5;
 lowerprct = 5; % 5th percentile
 iteration = 10000;
 
-baseDir = 'D:\TPM\JK\suite2p\';
+baseDir = 'D:\2p\JK\';
 for mi = 1 : length(mice)
 % for mi = 1
     cd([baseDir, sprintf('%03d',mice(mi))])
@@ -29,6 +29,7 @@ for mi = 1 : length(mice)
         
         inds = find([dat.stat.iscell]);
         npcoeffs = min(min(dat.Fcell{1}(inds,:) ./ dat.FcellNeu{1}(inds,:), [], 2), ones(length(inds),1)*0.7);
+        npcoeffs = repmat(npcoeffs, 1, size(dat.Fcell{1},2));
                             
         len = size(dat.Fcell{1},2);
         window = round(rollingWindowForBaseF*(dat.ops.imageRate/dat.ops.num_plane));
