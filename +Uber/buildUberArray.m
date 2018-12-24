@@ -6,16 +6,16 @@ caSessionName = sprintf('%03d',session);
 
 savefn = sprintf('Uber%s%s.mat',mouseName, sessionName); 
 
-% bDirBase = 'Y:\Whiskernas\JK\SoloData\';
-bDirBase = 'C:\Data\SoloData\';
+bDirBase = 'Y:\Whiskernas\JK\SoloData\';
+% bDirBase = 'C:\Data\SoloData\';
 bDir = [bDirBase, mouseName];
 
-% wDirBase = 'Y:\Whiskernas\JK\whisker\tracked\';
-wDirBase = 'C:\Data\WhiskerVideo\';
+wDirBase = 'Y:\Whiskernas\JK\whisker\tracked\';
+% wDirBase = 'C:\Data\WhiskerVideo\';
 wDir = [wDirBase, mouseName, sessionName];
 
-% caDirBase = 'Y:\Whiskernas\JK\suite2p\';
-caDirBase = 'C:\Data\suite2p\';
+caDirBase = 'Y:\Whiskernas\JK\suite2p\';
+% caDirBase = 'C:\Data\suite2p\';
 caDir = sprintf('%s%03d\\',caDirBase, mouse);
 
 cd(caDir)
@@ -63,7 +63,7 @@ cd(caDir)
     else
         disp('building new whisker trial lite array')
         cd(wDir)
-        wlArray = Whisker.WhiskerTrialLite_2padArray(wDir,mouseName, sessionName);
+        wlArray = Whisker.WhiskerTrialLite_2padArray(wDir);
     end
     
     
