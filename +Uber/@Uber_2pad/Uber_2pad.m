@@ -57,7 +57,7 @@ classdef Uber_2pad < handle
     end
     
     methods (Access = public)
-        function obj = Uber_2pad(b,wl,ca,trialNum)
+        function obj = Uber_2pad(b,wl,w3,ca,trialNum)
 %         function obj = Uber_2pad(b,w3,ca,trialNum)
             obj.trialNum = trialNum;
             obj.leftLickTime = b.beamBreakTimesLeft;
@@ -86,13 +86,6 @@ classdef Uber_2pad < handle
             obj.distractor = b.distractor;
             obj.trialType = b.trialType;
             
-            obj.poleMovingTime = (wl.poleMovingFrames-1)*wl.framePeriodInSec;
-            obj.poleUpTime = (wl.poleUpFrames-1)*wl.framePeriodInSec;
-            obj.whiskerTime = wl.time;
-            obj.theta = wl.theta{1};
-            obj.nof = wl.nof;
-            obj.frameDuration = wl.framePeriodInSec;
-            
             if ~isempty(wl.protractionTFchunks)
                 obj.protractionTouchChunks = cellfun(@(x) (x-1) * wl.framePeriodInSec, wl.protractionTFchunks, 'uniformoutput', false);
             end
@@ -100,23 +93,15 @@ classdef Uber_2pad < handle
                 obj.retractionTouchChunks = cellfun(@(x) (x-1) * wl.framePeriodInSec, wl.retractionTFchunks, 'uniformoutput', false);
             end
             
-            
-%             obj.poleMovingTime = (w3.poleMovingFrames-1)*w3.framePeriodInSec;
-%             obj.poleUpTime = (w3.poleUpFrames-1)*w3.framePeriodInSec;
-%             obj.whiskerTime = w3.time;
-%             obj.theta = w3.theta;
-%             obj.phi = w3.phi;
-%             obj.kappaH = w3.kappaH;
-%             obj.kappaV = w3.kappaV;
-%             obj.nof = w3.nof;
-%             obj.frameDuration = w3.framePeriodInSec;
-            
-%             if ~isempty(w3.protractionTouchChunks)
-%                 obj.protractionTouchChunks = cellfun(@(x) (x-1) * w3.framePeriodInSec, w3.protractionTouchChunks, 'uniformoutput', false);
-%             end
-%             if ~isempty(w3.retractionTouchChunks)
-%                 obj.retractionTouchChunks = cellfun(@(x) (x-1) * w3.framePeriodInSec, w3.retractionTouchChunks, 'uniformoutput', false);
-%             end
+            obj.poleMovingTime = (w3.poleMovingFrames-1)*w3.framePeriodInSec;
+            obj.poleUpTime = (w3.poleUpFrames-1)*w3.framePeriodInSec;
+            obj.whiskerTime = w3.time;
+            obj.theta = w3.theta;
+            obj.phi = w3.phi;
+            obj.kappaH = w3.kappaH;
+            obj.kappaV = w3.kappaV;
+            obj.nof = w3.nof;
+            obj.frameDuration = w3.framePeriodInSec;
             
             obj.planes = ca.planes;
             obj.neuindSession = ca.cellNums;

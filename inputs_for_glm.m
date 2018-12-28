@@ -57,8 +57,8 @@ nShift = 3;
 dn = sprintf('%s%03d',baseDir,mouse);
 ufn = sprintf('UberJK%03dS%02d.mat', mouse, session);
 cd(dn)
-% load(ufn)
-u = Uber.buildUberArray(mouse, session);
+load(ufn)
+% u = Uber.buildUberArray(mouse, session);
 
 cID = u.cellNums(cellnum);
 frameRate = u.frameRate;
@@ -68,18 +68,18 @@ frameRate = u.frameRate;
 tind = find(cellfun(@(x) ismember(cID, x.neuindSession), u.trials));
 % find out row number of this cell
 cind = find(u.trials{tind(1)}.neuindSession == cID);
-
-
+plane = mod(floor(cID/1000),4);
+if plane == 0, plane = 4; end
 
 spk = cell2mat(cellfun(@(x) [nan(1,nShift), x.spk(cind,:), nan(1,nShift)], u.trials(tind)','uniformoutput',false));
-pTouchOnset = cell2mat(cellfun(@(x) [nan(1,nShift), histcounts(cellfun(@(y) y(1), x.protractionTouchChunks), [0, x.tpmTime]), nan(1,nShift)], u.trials(tind)','uniformoutput',false));
-rTouchOnset = cell2mat(cellfun(@(x) [nan(1,nShift), histcounts(cellfun(@(y) y(1), x.retractionTouchChunks), [0, x.tpmTime]), nan(1,nShift)], u.trials(tind)','uniformoutput',false));
+pTouchOnset = cell2mat(cellfun(@(x) [nan(1,nShift), histcounts(cellfun(@(y) y(1), x.protractionTouchChunks), [0, x.tpmTime{plane}]), nan(1,nShift)], u.trials(tind)','uniformoutput',false));
+rTouchOnset = cell2mat(cellfun(@(x) [nan(1,nShift), histcounts(cellfun(@(y) y(1), x.retractionTouchChunks), [0, x.tpmTime{plane}]), nan(1,nShift)], u.trials(tind)','uniformoutput',false));
 tTouchOnset = pTouchOnset + rTouchOnset;
 
-whiskerVideoFrameDuration = mean(diff(u.trials{tind(1)}.whiskerTime)) * 1000; % in ms
-pTouchDuration = cell2mat(cellfun(@(x) [nan(1,nShift), histcounts(cell2mat(cellfun(@(y) y', x.protractionTouchChunks, 'uniformoutput', false)) * whiskerVideoFrameDuration, [0, x.tpmTime]), nan(1,nShift)], ...
+whiskerVideoFrameDuration = u.trials{tind(1)}.frameDuration * 1000; % in ms
+pTouchDuration = cell2mat(cellfun(@(x) [nan(1,nShift), histcounts(cell2mat(cellfun(@(y) y', x.protractionTouchChunks, 'uniformoutput', false)) * whiskerVideoFrameDuration, [0, x.tpmTime{plane}]), nan(1,nShift)], ...
     u.trials(tind)','uniformoutput',false));
-rTouchDuration = cell2mat(cellfun(@(x) [nan(1,nShift), histcounts(cell2mat(cellfun(@(y) y', x.retractionTouchChunks, 'uniformoutput', false)) * whiskerVideoFrameDuration, [0, x.tpmTime]), nan(1,nShift)], ...
+rTouchDuration = cell2mat(cellfun(@(x) [nan(1,nShift), histcounts(cell2mat(cellfun(@(y) y', x.retractionTouchChunks, 'uniformoutput', false)) * whiskerVideoFrameDuration, [0, x.tpmTime{plane}]), nan(1,nShift)], ...
     u.trials(tind)','uniformoutput',false));
 tTouchDuration = pTouchDuration + rTouchDuration;
 
@@ -90,13 +90,13 @@ rTouchFrames(rTouchDuration > 0) = 1;
 tTouchFrames = tTouchDuration;
 tTouchFrames(tTouchDuration > 0) = 1;
 
-scPiezo = cell2mat(cellfun(@(x) [nan(1,nShift), 1, zeros(1,length(x.tpmTime)-1), nan(1,nShift)], u.trials(tind)','uniformoutput',false));
-scPoleup = cell2mat(cellfun(@(x) [nan(1,nShift), histcounts(x.poleUpOnsetTime, [0, x.tpmTime]), nan(1,nShift)], u.trials(tind)','uniformoutput',false));
-scPoledown = cell2mat(cellfun(@(x) [nan(1,nShift), histcounts(x.poleDownOnsetTime, [0, x.tpmTime]), nan(1,nShift)], u.trials(tind)','uniformoutput',false));
-drinkOnset = cell2mat(cellfun(@(x) [nan(1,nShift), histcounts(x.drinkingOnsetTime, [0, x.tpmTime]), nan(1,nShift)], u.trials(tind)','uniformoutput',false));
+scPiezo = cell2mat(cellfun(@(x) [nan(1,nShift), 1, zeros(1,length(x.tpmTime{plane})-1), nan(1,nShift)], u.trials(tind)','uniformoutput',false));
+scPoleup = cell2mat(cellfun(@(x) [nan(1,nShift), histcounts(x.poleUpOnsetTime, [0, x.tpmTime{plane}]), nan(1,nShift)], u.trials(tind)','uniformoutput',false));
+scPoledown = cell2mat(cellfun(@(x) [nan(1,nShift), histcounts(x.poleDownOnsetTime, [0, x.tpmTime{plane}]), nan(1,nShift)], u.trials(tind)','uniformoutput',false));
+drinkOnset = cell2mat(cellfun(@(x) [nan(1,nShift), histcounts(x.drinkingOnsetTime, [0, x.tpmTime{plane}]), nan(1,nShift)], u.trials(tind)','uniformoutput',false));
 
-lLick = cell2mat(cellfun(@(x) [nan(1,nShift), histcounts(x.leftLickTime, [0, x.tpmTime]), nan(1,nShift)], u.trials(tind)','uniformoutput',false));
-rLick = cell2mat(cellfun(@(x) [nan(1,nShift), histcounts(x.rightLickTime, [0, x.tpmTime]), nan(1,nShift)], u.trials(tind)','uniformoutput',false));
+lLick = cell2mat(cellfun(@(x) [nan(1,nShift), histcounts(x.leftLickTime, [0, x.tpmTime{plane}]), nan(1,nShift)], u.trials(tind)','uniformoutput',false));
+rLick = cell2mat(cellfun(@(x) [nan(1,nShift), histcounts(x.rightLickTime, [0, x.tpmTime{plane}]), nan(1,nShift)], u.trials(tind)','uniformoutput',false));
 tLick = lLick + rLick;
 tLick(tLick>0) = 1;
 %%
@@ -106,12 +106,9 @@ whiskingMidpointCell = cell(1,length(tind));
 
 for ti = 1 : length(tind)
     currTrial = u.trials{tind(ti)};
-    time = [0, currTrial.tpmTime];
-    theta = nan(currTrial.nof,1);
+    time = [0, currTrial.tpmTime{plane}];
     wtimes = [0:currTrial.nof-1] * currTrial.frameDuration;
-    wInds = round(currTrial.whiskerTime/currTrial.frameDuration)+1;
-    theta(wInds) = currTrial.theta;
-    [onsetFrame, amplitude, midpoint] = jkWhiskerOnsetNAmplitude(theta, 5);
+    [onsetFrame, amplitude, midpoint] = jkWhiskerOnsetNAmplitude(currTrial.theta, 5);
     onsetTimes = onsetFrame*whiskerVideoFrameDuration/1000; % back to s
     whiskingOnsetCell{ti} = [nan(1,nShift), histcounts(onsetTimes, time), nan(1,nShift)];
     
@@ -152,3 +149,11 @@ corr(spk(isfinite(spk))', lLick(isfinite(lLick))')
 corr(spk(isfinite(spk))', rLick(isfinite(rLick))')
 
 %%
+[b, dev, stat] = glmfit([tTouchOnset', pTouchOnset', rTouchOnset', tTouchFrames', pTouchFrames', rTouchFrames', ...
+    tTouchDuration', pTouchDuration', rTouchDuration', scPiezo', scPoleup', scPoledown', drinkOnset', ...
+    whiskingOnset', whiskingAmp', whiskingMidpoint', tLick', lLick', rLick'], spk', 'poisson');
+
+%%
+[b, FitInfo] = lassoglm([tTouchOnset', pTouchOnset', rTouchOnset', tTouchFrames', pTouchFrames', rTouchFrames', ...
+    tTouchDuration', pTouchDuration', rTouchDuration', scPiezo', scPoleup', scPoledown', drinkOnset', ...
+    whiskingOnset', whiskingAmp', whiskingMidpoint', tLick', lLick', rLick'], spk', 'poisson', 'Lambda', logspace(-4,2));

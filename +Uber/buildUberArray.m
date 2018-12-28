@@ -50,13 +50,6 @@ cd(caDir)
         bSession = b{cellfun(@(x) strcmp(x.sessionName,sessionName), b)};
     end
 
-%     if exist('w3Array', 'var') && strcmp(w3Array.mouseName, mouseName) && strcmp(w3Array.sessionName, sessionName)
-%         disp('using existing w3Array')
-%     else
-%         disp('building new whisker trial lite array')
-%         cd(wDir)
-%         w3Array = Whisker.Whisker3D_2padArray(wDir,mouseName, sessionName);
-%     end
 
     if exist('wlArray', 'var') && strcmp(wlArray.mouseName, mouseName) && strcmp(wlArray.sessionName, sessionName)
         disp('using existing wlArray')
@@ -64,6 +57,15 @@ cd(caDir)
         disp('building new whisker trial lite array')
         cd(wDir)
         wlArray = Whisker.WhiskerTrialLite_2padArray(wDir);
+    end
+    
+    
+    if exist('w3Array', 'var') && strcmp(w3Array.mouseName, mouseName) && strcmp(w3Array.sessionName, sessionName)
+        disp('using existing w3Array')
+    else
+        disp('building new whisker trial lite array')
+        cd(wDir)
+        w3Array = Whisker.Whisker3D_2padArray(wDir);
     end
     
     
@@ -75,9 +77,10 @@ cd(caDir)
         caArray = Calcium.CalciumDataArray(mouse,session);
     end
     
+    
     if strcmp(bSession.mouseName, wlArray.mouseName) && strcmp(bSession.mouseName, wlArray.mouseName) ...            
             && strcmp(bSession.sessionName, wlArray.sessionName) && strcmp(bSession.sessionName, ['S', caArray.sessionName(2:3)])
-        u = Uber.Uber_2padArray(bSession, wlArray, caArray);
+        u = Uber.Uber_2padArray(bSession, wlArray, w3Array, caArray);
     else
         disp('mouseName or sessionName mismatch')
     end
