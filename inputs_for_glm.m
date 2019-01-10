@@ -52,12 +52,15 @@ baseDir = 'Y:\Whiskernas\JK\suite2p\';
 mouse = 25;
 session = 4;
 
+
+lambdaCV = 3; % cross-validation fold number
 posShift = 4;
 negShift = 2;
 testPortion = 0.3; % 30 % test set
 pThresholdNull = 0.05;
 pThresholdPartial = 0.05;
 lickBoutInterval = 1; % licks separated by 1 s regarded as different licking bouts
+opt = statset('UseParallel', true);
 
 dn = sprintf('%s%03d',baseDir,mouse);
 ufn = sprintf('UberJK%03dS%02d.mat', mouse, session);
@@ -71,64 +74,67 @@ savefn = sprintf('glmResponseType_JK%03dS%02d',mouse, session);
 %% pre-processing for lick onset and offset
 % regardless of licking alternating, each l and r has it's own lick onset and offset. both licking, just take the union
 
-bothLickOnset = cell(length(u.trials),1);
-bothLickOffset = cell(length(u.trials),1);
-leftLickOnset = cell(length(u.trials),1);
-leftLickOffset = cell(length(u.trials),1);
-rightLickOnset = cell(length(u.trials),1);
-rightLickOffset = cell(length(u.trials),1);
+v = cell(length(u.trials),1);
+% v.bothLickOnset = cell(length(u.trials),1);
+% v.bothLickOffset = cell(length(u.trials),1);
+% v.leftLickOnset = cell(length(u.trials),1);
+% v.leftLickOffset = cell(length(u.trials),1);
+% v.rightLickOnset = cell(length(u.trials),1);
+% v.rightLickOffset = cell(length(u.trials),1);
+
 for ui = 1 : length(u.trials)
     bothLickTime = union(u.trials{ui}.leftLickTime, u.trials{ui}.rightLickTime);
     if length(bothLickTime) == 1
-        bothLickOnset{ui} = bothLickTime;
-        bothLickOffset{ui} = bothLickTime;
+        v{ui}.bothLickOnset = bothLickTime;
+        v{ui}.bothLickOffset = bothLickTime;
     elseif length(bothLickTime) > 1        
         onsets = find(diff(bothLickTime) > lickBoutInterval);
         if isempty(onsets)
-            bothLickOnset{ui} = bothLickTime(1);
-            bothLickOffset{ui} = bothLickTime(end);
+            v{ui}.bothLickOnset = bothLickTime(1);
+            v{ui}.bothLickOffset = bothLickTime(end);
         else
-            bothLickOnset{ui} = bothLickTime([1; onsets+1]);
-            bothLickOffset{ui} = bothLickTime([onsets; end]);
+            v{ui}.bothLickOnset = bothLickTime([1; onsets+1]);
+            v{ui}.bothLickOffset = bothLickTime([onsets; end]);
         end
     else
-        bothLickOnset{ui} = [];
-        bothLickOffset{ui} = [];
+        v{ui}.bothLickOnset = [];
+        v{ui}.bothLickOffset = [];
     end
 
     if length(u.trials{ui}.leftLickTime) == 1
-        leftLickOnset{ui} = u.trials{ui}.leftLickTime;
-        leftLickOffset{ui} = u.trials{ui}.leftLickTime;
+        v{ui}.leftLickOnset = u.trials{ui}.leftLickTime;
+        v{ui}.leftLickOffset = u.trials{ui}.leftLickTime;
     elseif length(u.trials{ui}.leftLickTime) > 1        
         onsets = find(diff(u.trials{ui}.leftLickTime) > lickBoutInterval);
         if isempty(onsets)
-            leftLickOnset{ui} = u.trials{ui}.leftLickTime(1);
-            leftLickOffset{ui} = u.trials{ui}.leftLickTime(end);
+            v{ui}.leftLickOnset = u.trials{ui}.leftLickTime(1);
+            v{ui}.leftLickOffset = u.trials{ui}.leftLickTime(end);
         else
-            leftLickOnset{ui} = u.trials{ui}.leftLickTime([1; onsets+1]);
-            leftLickOffset{ui} = u.trials{ui}.leftLickTime([onsets; end]);
+            v{ui}.leftLickOnset = u.trials{ui}.leftLickTime([1; onsets+1]);
+            v{ui}.leftLickOffset = u.trials{ui}.leftLickTime([onsets; end]);
         end
     else
-        leftLickOnset{ui} = [];
-        leftLickOffset{ui} = [];
+        v{ui}.leftLickOnset = [];
+        v{ui}.leftLickOffset = [];
     end
 
     if length(u.trials{ui}.rightLickTime) == 1
-        rightLickOnset{ui} = u.trials{ui}.rightLickTime;
-        rightLickOffset{ui} = u.trials{ui}.rightLickTime;
+        v{ui}.rightLickOnset = u.trials{ui}.rightLickTime;
+        v{ui}.rightLickOffset = u.trials{ui}.rightLickTime;
     elseif length(u.trials{ui}.rightLickTime) > 1        
         onsets = find(diff(u.trials{ui}.rightLickTime) > lickBoutInterval);
         if isempty(onsets)
-            rightLickOnset{ui} = u.trials{ui}.rightLickTime(1);
-            rightLickOffset{ui} = u.trials{ui}.rightLickTime(end);
+            v{ui}.rightLickOnset = u.trials{ui}.rightLickTime(1);
+            v{ui}.rightLickOffset = u.trials{ui}.rightLickTime(end);
         else
-            rightLickOnset{ui} = u.trials{ui}.rightLickTime([1; onsets+1]);
-            rightLickOffset{ui} = u.trials{ui}.rightLickTime([onsets; end]);
+            v{ui}.rightLickOnset = u.trials{ui}.rightLickTime([1; onsets+1]);
+            v{ui}.rightLickOffset = u.trials{ui}.rightLickTime([onsets; end]);
         end
     else
-        rightLickOnset{ui} = [];
-        rightLickOffset{ui} = [];
+        v{ui}.rightLickOnset = [];
+        v{ui}.rightLickOffset = [];
     end
+    v{ui}.tpmTime = u.trials{ui}.tpmTime;
 end
 
 
@@ -146,8 +152,12 @@ angleGroup = cell(length(angles),1);
 distanceGroup = cell(length(distances),1);
 
 
-touchGroup{1} = cellfun(@(x) x.trialNum, u.trials(find(cellfun(@(x) length(x.protractionTouchChunks) + length(x.retractionTouchChunks), u.trials))));
-touchGroup{2} = setdiff(u.trialNums, touchGroup{1});
+ptouchGroup{1} = cellfun(@(x) x.trialNum, u.trials(find(cellfun(@(x) length(x.protractionTouchChunks), u.trials))));
+ptouchGroup{2} = setdiff(u.trialNums, ptouchGroup{1});
+
+
+rtouchGroup{1} = cellfun(@(x) x.trialNum, u.trials(find(cellfun(@(x) length(x.retractionTouchChunks), u.trials))));
+rtouchGroup{2} = setdiff(u.trialNums, rtouchGroup{1});
 
 choiceGroup{1} = cellfun(@(x) x.trialNum, u.trials(find(cellfun(@(x) x.response == 1, u.trials))));
 choiceGroup{2} = cellfun(@(x) x.trialNum, u.trials(find(cellfun(@(x) x.response == 0, u.trials))));
@@ -162,14 +172,16 @@ for i = 1 : length(distances)
 end
 %%
 testTn = [];
-for ti = 1 : length(touchGroup)
-    for ci = 1 : length(choiceGroup)
-        for ai = 1 : length(angleGroup)
-            for di = 1 : length(distanceGroup)
-                tempTn = intersect(touchGroup{ti}, intersect(choiceGroup{ci}, intersect(angleGroup{ai}, distanceGroup{di})));
-                if ~isempty(tempTn)
-                    tempTn = tempTn(randperm(length(tempTn)));
-                    testTn = [testTn; tempTn(1:round(length(tempTn)*0.3))];
+for pti = 1 : length(ptouchGroup)
+    for rti = 1 : length(rtouchGroup)
+        for ci = 1 : length(choiceGroup)
+            for ai = 1 : length(angleGroup)
+                for di = 1 : length(distanceGroup)
+                    tempTn = intersect(ptouchGroup{pti}, intersect(rtouchGroup{rti}, intersect(choiceGroup{ci}, intersect(angleGroup{ai}, distanceGroup{di}))));
+                    if ~isempty(tempTn)
+                        tempTn = tempTn(randperm(length(tempTn)));
+                        testTn = [testTn; tempTn(1:round(length(tempTn)*0.3))];
+                    end
                 end
             end
         end
@@ -183,10 +195,12 @@ trainingTn = setdiff(u.trialNums, testTn);
 %% design matrix for training lambda
 trainingInputMat = cell(8,1);
 for ci = 1:2
+% for ci = 1
     tindcell = find(cellfun(@(x) ismember(1001+(ci-1)*4000, x.neuindSession), u.trials));
     
     tind = intersect(tindcell, trainingInd);
     for plane = 1 : 4    
+%     for plane = 1
         pTouchOnset = cell2mat(cellfun(@(x) [zeros(1,posShift), histcounts(cellfun(@(y) y(1), x.protractionTouchChunks), [0, x.tpmTime{plane}]), zeros(1,posShift)], u.trials(tind)','uniformoutput',false));
         rTouchOnset = cell2mat(cellfun(@(x) [zeros(1,posShift), histcounts(cellfun(@(y) y(1), x.retractionTouchChunks), [0, x.tpmTime{plane}]), zeros(1,posShift)], u.trials(tind)','uniformoutput',false));
         tTouchOnset = pTouchOnset + rTouchOnset;
@@ -215,13 +229,13 @@ for ci = 1:2
         tLick = lLick + rLick;
         tLick(tLick>0) = 1;
         
-        lLickOnset = cell2mat(cellfun(@(x) [zeros(1,posShift), histcounts(x.leftLickTime, [0, x.tpmTime{plane}]), zeros(1,posShift)], leftLickOnset(tind)','uniformoutput',false));        
-        rLickOnset = cell2mat(cellfun(@(x) [zeros(1,posShift), histcounts(x.leftLickTime, [0, x.tpmTime{plane}]), zeros(1,posShift)], rightLickOnset(tind)','uniformoutput',false));
-        tLickOnset = cell2mat(cellfun(@(x) [zeros(1,posShift), histcounts(x.leftLickTime, [0, x.tpmTime{plane}]), zeros(1,posShift)], bothLickOnset(tind)','uniformoutput',false));
+        lLickOnset = cell2mat(cellfun(@(x) [zeros(1,posShift), histcounts(x.leftLickOnset, [0, x.tpmTime{plane}]), zeros(1,posShift)], v(tind)','uniformoutput',false));
+        rLickOnset = cell2mat(cellfun(@(x) [zeros(1,posShift), histcounts(x.rightLickOnset, [0, x.tpmTime{plane}]), zeros(1,posShift)], v(tind)','uniformoutput',false));
+        tLickOnset = cell2mat(cellfun(@(x) [zeros(1,posShift), histcounts(x.bothLickOnset, [0, x.tpmTime{plane}]), zeros(1,posShift)], v(tind)','uniformoutput',false));
         
-        lLickOffset = cell2mat(cellfun(@(x) [zeros(1,posShift), histcounts(x.leftLickTime, [0, x.tpmTime{plane}]), zeros(1,posShift)], leftLickOffset(tind)','uniformoutput',false));
-        rLickOffset = cell2mat(cellfun(@(x) [zeros(1,posShift), histcounts(x.leftLickTime, [0, x.tpmTime{plane}]), zeros(1,posShift)], rightLickOffset(tind)','uniformoutput',false));
-        tLickOffset = cell2mat(cellfun(@(x) [zeros(1,posShift), histcounts(x.leftLickTime, [0, x.tpmTime{plane}]), zeros(1,posShift)], bothLickOffset(tind)','uniformoutput',false));
+        lLickOffset = cell2mat(cellfun(@(x) [zeros(1,posShift), histcounts(x.leftLickOffset, [0, x.tpmTime{plane}]), zeros(1,posShift)], v(tind)','uniformoutput',false));
+        rLickOffset = cell2mat(cellfun(@(x) [zeros(1,posShift), histcounts(x.rightLickOffset, [0, x.tpmTime{plane}]), zeros(1,posShift)], v(tind)','uniformoutput',false));
+        tLickOffset = cell2mat(cellfun(@(x) [zeros(1,posShift), histcounts(x.bothLickOffset, [0, x.tpmTime{plane}]), zeros(1,posShift)], v(tind)','uniformoutput',false));
 
         %%
         whiskingOnsetCell = cell(1,length(tind));
@@ -344,25 +358,36 @@ for ci = 1:2
             whiskingOnsetMat, whiskingAmpMat, whiskingOAMat, whiskingMidpointMat, ...
             tLickMat, lLickMat, rLickMat, tLickOnsetMat, lLickOnsetMat, rLickOnsetMat, tLickOffsetMat, lLickOffsetMat, rLickOffsetMat];
         trainingInputMat{(ci-1)*4 + plane} = (tempIM - min(tempIM)) ./ (max(tempIM) - min(tempIM));
+        trainingInputMat{(ci-1)*4 + plane}(isnan(trainingInputMat{(ci-1)*4 + plane})) = deal(0); % the ones with NaN, from all of the entries being 0
+        
     end
 end
 
 %% design matrix for test 
 testInputMat = cell(8,1);
 for ci = 1:2
+% for ci = 1
     tindcell = find(cellfun(@(x) ismember(1001+(ci-1)*4000, x.neuindSession), u.trials));
     
     tind = intersect(tindcell, testInd);
     for plane = 1 : 4    
+%     for plane = 1
         pTouchOnset = cell2mat(cellfun(@(x) [zeros(1,posShift), histcounts(cellfun(@(y) y(1), x.protractionTouchChunks), [0, x.tpmTime{plane}]), zeros(1,posShift)], u.trials(tind)','uniformoutput',false));
         rTouchOnset = cell2mat(cellfun(@(x) [zeros(1,posShift), histcounts(cellfun(@(y) y(1), x.retractionTouchChunks), [0, x.tpmTime{plane}]), zeros(1,posShift)], u.trials(tind)','uniformoutput',false));
         tTouchOnset = pTouchOnset + rTouchOnset;
 
         whiskerVideoFrameDuration = u.trials{tind(1)}.frameDuration * 1000; % in ms
+        
         pTouchDuration = cell2mat(cellfun(@(x) [zeros(1,posShift), histcounts(cell2mat(cellfun(@(y) y', x.protractionTouchChunks, 'uniformoutput', false)) * whiskerVideoFrameDuration, [0, x.tpmTime{plane}]), zeros(1,posShift)], ...
             u.trials(tind)','uniformoutput',false));
+        if ~isempty(find(isnan(pTouchDuration)))
+                error('nan pTouchDruation')
+        end
         rTouchDuration = cell2mat(cellfun(@(x) [zeros(1,posShift), histcounts(cell2mat(cellfun(@(y) y', x.retractionTouchChunks, 'uniformoutput', false)) * whiskerVideoFrameDuration, [0, x.tpmTime{plane}]), zeros(1,posShift)], ...
             u.trials(tind)','uniformoutput',false));
+        if ~isempty(find(isnan(pTouchDuration)))
+            error('nan rTouchDruation')
+        end
         tTouchDuration = pTouchDuration + rTouchDuration;
 
         pTouchFrames = pTouchDuration;
@@ -382,13 +407,13 @@ for ci = 1:2
         tLick = lLick + rLick;
         tLick(tLick>0) = 1;        
         
-        lLickOnset = cell2mat(cellfun(@(x) [zeros(1,posShift), histcounts(x.leftLickTime, [0, x.tpmTime{plane}]), zeros(1,posShift)], leftLickOnset(tind)','uniformoutput',false));        
-        rLickOnset = cell2mat(cellfun(@(x) [zeros(1,posShift), histcounts(x.leftLickTime, [0, x.tpmTime{plane}]), zeros(1,posShift)], rightLickOnset(tind)','uniformoutput',false));
-        tLickOnset = cell2mat(cellfun(@(x) [zeros(1,posShift), histcounts(x.leftLickTime, [0, x.tpmTime{plane}]), zeros(1,posShift)], bothLickOnset(tind)','uniformoutput',false));
+        lLickOnset = cell2mat(cellfun(@(x) [zeros(1,posShift), histcounts(x.leftLickOnset, [0, x.tpmTime{plane}]), zeros(1,posShift)], v(tind)','uniformoutput',false));
+        rLickOnset = cell2mat(cellfun(@(x) [zeros(1,posShift), histcounts(x.rightLickOnset, [0, x.tpmTime{plane}]), zeros(1,posShift)], v(tind)','uniformoutput',false));
+        tLickOnset = cell2mat(cellfun(@(x) [zeros(1,posShift), histcounts(x.bothLickOnset, [0, x.tpmTime{plane}]), zeros(1,posShift)], v(tind)','uniformoutput',false));
         
-        lLickOffset = cell2mat(cellfun(@(x) [zeros(1,posShift), histcounts(x.leftLickTime, [0, x.tpmTime{plane}]), zeros(1,posShift)], leftLickOffset(tind)','uniformoutput',false));
-        rLickOffset = cell2mat(cellfun(@(x) [zeros(1,posShift), histcounts(x.leftLickTime, [0, x.tpmTime{plane}]), zeros(1,posShift)], rightLickOffset(tind)','uniformoutput',false));
-        tLickOffset = cell2mat(cellfun(@(x) [zeros(1,posShift), histcounts(x.leftLickTime, [0, x.tpmTime{plane}]), zeros(1,posShift)], bothLickOffset(tind)','uniformoutput',false));
+        lLickOffset = cell2mat(cellfun(@(x) [zeros(1,posShift), histcounts(x.leftLickOffset, [0, x.tpmTime{plane}]), zeros(1,posShift)], v(tind)','uniformoutput',false));
+        rLickOffset = cell2mat(cellfun(@(x) [zeros(1,posShift), histcounts(x.rightLickOffset, [0, x.tpmTime{plane}]), zeros(1,posShift)], v(tind)','uniformoutput',false));
+        tLickOffset = cell2mat(cellfun(@(x) [zeros(1,posShift), histcounts(x.bothLickOffset, [0, x.tpmTime{plane}]), zeros(1,posShift)], v(tind)','uniformoutput',false));
         %%
         whiskingOnsetCell = cell(1,length(tind));
         whiskingAmpCell = cell(1,length(tind));
@@ -454,9 +479,9 @@ for ci = 1:2
         whiskingAmpMat = zeros(length(whiskingAmp), negShift + posShift + 1);
         whiskingOAMat = zeros(length(whiskingOA), negShift + posShift + 1);
         whiskingMidpointMat = zeros(length(whiskingMidpoint), negShift + posShift + 1);
-        tLickMat = zeros(length(tLickMat), negShift + posShift + 1);
-        lLickMat = zeros(length(lLickMat), negShift + posShift + 1);
-        rLickMat = zeros(length(rLickMat), negShift + posShift + 1);
+        tLickMat = zeros(length(tLick), negShift + posShift + 1);
+        lLickMat = zeros(length(lLick), negShift + posShift + 1);
+        rLickMat = zeros(length(rLick), negShift + posShift + 1);
         tLickOnsetMat = zeros(length(tLickOnset), negShift + posShift + 1);
         lLickOnsetMat = zeros(length(lLickOnset), negShift + posShift + 1);
         rLickOnsetMat = zeros(length(rLickOnset), negShift + posShift + 1);
@@ -484,6 +509,7 @@ for ci = 1:2
             whiskingOnsetMat, whiskingAmpMat, whiskingOAMat, whiskingMidpointMat, ...
             tLickMat, lLickMat, rLickMat, tLickOnsetMat, lLickOnsetMat, rLickOnsetMat, tLickOffsetMat, lLickOffsetMat, rLickOffsetMat];
         testInputMat{(ci-1)*4 + plane} = (tempIM - min(tempIM)) ./ (max(tempIM) - min(tempIM));
+        testInputMat{(ci-1)*4 + plane}(isnan(testInputMat{(ci-1)*4 + plane})) = deal(0); % the ones with NaN, from all of the entries being 0
     end
 end
 
@@ -505,10 +531,10 @@ fitInd = cell(length(u.cellNums),1);
 
 % parameters surviving lasso in training set
 
-parfor cellnum = 1 : length(u.cellNums)
+for cellnum = 23 : length(u.cellNums)
 % for cellnum = 1
 %     cellnum = 1;    
-
+    fprintf('Running cell %d/%d \n', cellnum, length(u.cellNums));
     cID = u.cellNums(cellnum);
     
     % find out trial indices for this specific cell
@@ -521,7 +547,7 @@ parfor cellnum = 1 : length(u.cellNums)
 
     spkTrain = cell2mat(cellfun(@(x) [nan(1,posShift), x.spk(cind,:), nan(1,posShift)], u.trials(tind)','uniformoutput',false));
     %%
-    [BFull, FitInfoFull] = lassoglm(trainingInputMat{planeInd}, spkTrain, 'poisson', 'Lambda', logspace(-4,2), 'CV', 10);
+    [BFull, FitInfoFull] = lassoglm(trainingInputMat{planeInd}, spkTrain, 'poisson', 'Lambda', logspace(-4,2), 'CV', lambdaCV, 'Options', opt);
     %% survived coefficients
 %     lassoPlot(B,FitInfoFull,'plottype','CV'); 
 %     legend('show') % Show legend
@@ -554,52 +580,57 @@ parfor cellnum = 1 : length(u.cellNums)
     
     mu = nanmean(spkTest); % null poisson parameter
     nullLogLikelihood = nansum(log(poisspdf(spkTest,mu)));
-    fullLogLikelihood = nansum(log(poisspdf(spkTest',exp([ones(size(trainingInputMat{planeInd},1),1),trainingInputMat{planeInd}]*[FitInfoFull.Intercept(idxLambda1SE); BFull(:,idxLambda1SE)]))));
+    fullLogLikelihood = nansum(log(poisspdf(spkTest',exp([ones(size(testInputMat{planeInd},1),1),testInputMat{planeInd}]*[FitInfoFull.Intercept(idxLambda1SE); BFull(:,idxLambda1SE)]))));
     saturatedLogLikelihood = nansum(log(poisspdf(spkTest,spkTest)));
     devianceFullNull = 2*(fullLogLikelihood - nullLogLikelihood);
     dfFullNull = length(mincoefs);
     if devianceFullNull > chi2inv(1-pThresholdNull, dfFullNull)
         fitResult(1) = 1;
         %% (2) test without each parameter (as a group)
-        tempInput = testInputMat{planeInd}(:,setdiff(1:size(testInputMat{planeInd},2),touchInd));
-        [BPartialTouch, FitInfoPartialTouch] = lassoglm(tempInput, spkTrain, 'poisson', 'Lambda', logspace(-4,2), 'CV', 10);        
-        partialTouchLL = nansum(log(poisspdf(spkTest', exp([ones(size(tempInput,1),1), tempInput] * [FitInfoPartialTouch.Intercept(FitInfoPartialTouch.Index1SE); BPartialTouch(:,FitInfoPartialTouch.Index1SE)]))));
+        tempTrainInput = trainingInputMat{planeInd}(:,setdiff(1:size(trainingInputMat{planeInd},2),touchInd));
+        tempTestInput = testInputMat{planeInd}(:,setdiff(1:size(testInputMat{planeInd},2),touchInd));
+        [BPartialTouch, FitInfoPartialTouch] = lassoglm(tempTrainInput, spkTrain, 'poisson', 'Lambda', logspace(-4,2), 'CV', lambdaCV, 'Options', opt);        
+        partialTouchLL = nansum(log(poisspdf(spkTest', exp([ones(size(tempTestInput,1),1), tempTestInput] * [FitInfoPartialTouch.Intercept(FitInfoPartialTouch.Index1SE); BPartialTouch(:,FitInfoPartialTouch.Index1SE)]))));
         devianceFullTouch = 2*(fullLogLikelihood - partialTouchLL);
-        dfFullTouch = dfFullNull - FitInfoPartialTouch.DF(FitInforPartialTouch.Index1SE);
+        dfFullTouch = dfFullNull - FitInfoPartialTouch.DF(FitInfoPartialTouch.Index1SE);
         if devianceFullTouch > chi2inv(1-pThresholdPartial, dfFullTouch)
             fitResult(2) = 1;
         end
         
-        tempInput = testInputMat{planeInd}(:,setdiff(1:size(testInputMat{planeInd},2),soundInd));
-        [BPartialSound, FitInfoPartialSound] = lassoglm(tempInput, spkTrain, 'poisson', 'Lambda', logspace(-4,2), 'CV', 10);        
-        partialSoundLL = nansum(log(poisspdf(spkTest', exp([ones(size(tempInput,1),1), tempInput] * [FitInfoPartialSound.Intercept(FitInfoPartialSound.Index1SE); BPartialSound(:,FitInfoPartialSound.Index1SE)]))));
+        tempTrainInput = trainingInputMat{planeInd}(:,setdiff(1:size(trainingInputMat{planeInd},2),soundInd));
+        tempTestInput = testInputMat{planeInd}(:,setdiff(1:size(testInputMat{planeInd},2),soundInd));
+        [BPartialSound, FitInfoPartialSound] = lassoglm(tempTrainInput, spkTrain, 'poisson', 'Lambda', logspace(-4,2), 'CV', lambdaCV, 'Options', opt);        
+        partialSoundLL = nansum(log(poisspdf(spkTest', exp([ones(size(tempTestInput,1),1), tempTestInput] * [FitInfoPartialSound.Intercept(FitInfoPartialSound.Index1SE); BPartialSound(:,FitInfoPartialSound.Index1SE)]))));
         devianceFullSound = 2*(fullLogLikelihood - partialSoundLL);
         dfFullSound = dfFullNull - FitInfoPartialSound.DF(FitInfoPartialSound.Index1SE);
         if devianceFullSound > chi2inv(1-pThresholdPartial, dfFullSound)
             fitResult(3) = 1;
         end
         
-        tempInput = testInputMat{planeInd}(:,setdiff(1:size(testInputMat{planeInd},2),rewardInd));
-        [BPartialReward, FitInfoPartialReward] = lassoglm(tempInput, spkTrain, 'poisson', 'Lambda', logspace(-4,2), 'CV', 10);        
-        partialRewardLL = nansum(log(poisspdf(spkTest', exp([ones(size(tempInput,1),1), tempInput] * [FitInfoPartialReward.Intercept(FitInfoPartialReward.Index1SE); BPartialReward(:,FitInfoPartialReward.Index1SE)]))));
+        tempTrainInput = trainingInputMat{planeInd}(:,setdiff(1:size(trainingInputMat{planeInd},2),rewardInd));
+        tempTestInput = testInputMat{planeInd}(:,setdiff(1:size(testInputMat{planeInd},2),rewardInd));
+        [BPartialReward, FitInfoPartialReward] = lassoglm(tempTrainInput, spkTrain, 'poisson', 'Lambda', logspace(-4,2), 'CV', lambdaCV, 'Options', opt);        
+        partialRewardLL = nansum(log(poisspdf(spkTest', exp([ones(size(tempTestInput,1),1), tempTestInput] * [FitInfoPartialReward.Intercept(FitInfoPartialReward.Index1SE); BPartialReward(:,FitInfoPartialReward.Index1SE)]))));
         devianceFullReward = 2*(fullLogLikelihood - partialRewardLL);
         dfFullReward = dfFullNull - FitInfoPartialReward.DF(FitInfoPartialReward.Index1SE);
         if devianceFullReward > chi2inv(1-pThresholdPartial, dfFullReward)
             fitResult(4) = 1;
         end
         
-        tempInput = testInputMat{planeInd}(:,setdiff(1:size(testInputMat{planeInd},2),whiskingInd));
-        [BPartialWhisking, FitInfoPartialWhisking] = lassoglm(tempInput, spkTrain, 'poisson', 'Lambda', logspace(-4,2), 'CV', 10);        
-        partialWhiskingLL = nansum(log(poisspdf(spkTest', exp([ones(size(tempInput,1),1), tempInput] * [FitInfoPartialWhisking.Intercept(FitInfoPartialWhisking.Index1SE); BPartialWhisking(:,FitInfoPartialWhisking.Index1SE)]))));
+        tempTrainInput = trainingInputMat{planeInd}(:,setdiff(1:size(trainingInputMat{planeInd},2),whiskingInd));
+        tempTestInput = testInputMat{planeInd}(:,setdiff(1:size(testInputMat{planeInd},2),whiskingInd));
+        [BPartialWhisking, FitInfoPartialWhisking] = lassoglm(tempTrainInput, spkTrain, 'poisson', 'Lambda', logspace(-4,2), 'CV', lambdaCV, 'Options', opt);        
+        partialWhiskingLL = nansum(log(poisspdf(spkTest', exp([ones(size(tempTestInput,1),1), tempTestInput] * [FitInfoPartialWhisking.Intercept(FitInfoPartialWhisking.Index1SE); BPartialWhisking(:,FitInfoPartialWhisking.Index1SE)]))));
         devianceFullWhisking = 2*(fullLogLikelihood - partialWhiskingLL);
         dfFullWhisking = dfFullNull - FitInfoPartialWhisking.DF(FitInfoPartialWhisking.Index1SE);
         if devianceFullWhisking > chi2inv(1-pThresholdPartial, dfFullWhisking)
             fitResult(5) = 1;
         end
         
-        tempInput = testInputMat{planeInd}(:,setdiff(1:size(testInputMat{planeInd},2),lickInd));
-        [BPartialLick, FitInfoPartialLick] = lassoglm(tempInput, spkTrain, 'poisson', 'Lambda', logspace(-4,2), 'CV', 10);        
-        partialLickLL = nansum(log(poisspdf(spkTest', exp([ones(size(tempInput,1),1), tempInput] * [FitInfoPartialLick.Intercept(FitInfoPartialLick.Index1SE); BPartialLick(:,FitInfoPartialLick.Index1SE)]))));
+        tempTrainInput = trainingInputMat{planeInd}(:,setdiff(1:size(trainingInputMat{planeInd},2),lickInd));
+        tempTestInput = testInputMat{planeInd}(:,setdiff(1:size(testInputMat{planeInd},2),lickInd));
+        [BPartialLick, FitInfoPartialLick] = lassoglm(tempTrainInput, spkTrain, 'poisson', 'Lambda', logspace(-4,2), 'CV', lambdaCV, 'Options', opt);        
+        partialLickLL = nansum(log(poisspdf(spkTest', exp([ones(size(tempTestInput,1),1), tempTestInput] * [FitInfoPartialLick.Intercept(FitInfoPartialLick.Index1SE); BPartialLick(:,FitInfoPartialLick.Index1SE)]))));
         devianceFullLick = 2*(fullLogLikelihood - partialLickLL);
         dfFullLick = dfFullNull - FitInfoPartialLick.DF(FitInfoPartialLick.Index1SE);
         if devianceFullLick > chi2inv(1-pThresholdPartial, dfFullLick)
@@ -609,6 +640,8 @@ parfor cellnum = 1 : length(u.cellNums)
     fitResults(cellnum,:) = fitResult;
 end
 
+
+save(savefn, 'fitResults', 'fitInd');
 %%
 % nanmean(spk)
 
