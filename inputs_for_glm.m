@@ -363,6 +363,33 @@ for ci = 1:2
     end
 end
 
+
+
+%% correlation between predictors, and with spike
+
+
+cellnum = 400
+
+cID = u.cellNums(cellnum);
+
+% find out trial indices for this specific cell
+tindcell = find(cellfun(@(x) ismember(cID, x.neuindSession), u.trials));
+
+tind = intersect(tindcell, trainingInd);
+% find out row number of this cell
+cind = find(u.trials{tind(1)}.neuindSession == cID);
+planeInd = floor(cID/1000);
+
+spkTrain = cell2mat(cellfun(@(x) [nan(1,posShift), x.spk(cind,:), nan(1,posShift)], u.trials(tind)','uniformoutput',false));
+input = trainingInputMat{planeInd};
+
+corrIn = [input, spkTrain'];
+corrIn = corrIn(isfinite(sum(corrIn,2)),:);
+
+corrMat = corrcoef(corrIn);
+figure, imagesc(corrMat)
+
+
 %% design matrix for test 
 testInputMat = cell(8,1);
 for ci = 1:2
@@ -531,7 +558,7 @@ fitInd = cell(length(u.cellNums),1);
 
 % parameters surviving lasso in training set
 
-for cellnum = 23 : length(u.cellNums)
+for cellnum = 1 : length(u.cellNums)
 % for cellnum = 1
 %     cellnum = 1;    
     fprintf('Running cell %d/%d \n', cellnum, length(u.cellNums));
@@ -644,7 +671,3 @@ end
 save(savefn, 'fitResults', 'fitInd');
 %%
 % nanmean(spk)
-
-
-
-
