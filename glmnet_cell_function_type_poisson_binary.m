@@ -59,17 +59,19 @@ baseDir = 'Y:\Whiskernas\JK\suite2p\';
 mice = [25,27,30,36,37,38,39,41,52,53,54,56];
 sessions = {[4,19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]}; 
 
+% mice = [36,37,38,39,41,52,53,54,56];
+% sessions = {[17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]}; 
 
 % for mi = 6:8
-for mi = 1
-%     for si = 1:length(sessions{mi})
-    for si = 1
+for mi = 1:length(mice)
+    for si = 1:length(sessions{mi})
+%     for si = 1
 
         mouse = mice(mi);
         session = sessions{mi}(si);
 
-        posShift = 4;
-        negShift = 2;
+        posShift = 0;
+        negShift = 0;
         testPortion = 0.3; % 30 % test set
         pThresholdNull = 0.05;
         pThresholdPartial = 0.05;
@@ -95,12 +97,12 @@ for mi = 1
         end
         frameRate = u.frameRate;
 
-%         savefn = sprintf('glmResponseType_JK%03dS%02d_glmnet',mouse, session);
+        savefn = sprintf('glmResponseType_JK%03dS%02d_glmnet_m5',mouse, session); % m(n) meaining method(n)
 
         %% repetition test
 
-        division = 20;
-        repetition = 10;
+%         division = 20;
+        repetition = 1;
         rtest = struct;
         for ri = 1 : repetition
         
@@ -317,25 +319,33 @@ for mi = 1
         indPartial{5} = lickInd;
 
         %%
-        rtest(ri).fitInd = cell(length(u.cellNums),1); % parameters surviving lasso in training set
-        rtest(ri).fitCoeffs = nan(length(u.cellNums),6); % first column is dummy
+%         rtest(ri).fitInd = cell(length(u.cellNums),1); % parameters surviving lasso in training set
+%         rtest(ri).fitCoeffs = nan(length(u.cellNums),6); % first column is dummy
+%         
+%         rtest(ri).fitResults = zeros(length(u.cellNums), 6);        
+%         % fitResult(:,1) if full fitting is significant (compared to null model), 0 if not
+%         % fitResult(:,2) for touchInd, compared to full fitting. if excluding touch
+%         % is significantly less fit, then 1, 0 otherwise
+%         % fitResult(:,3) for sound, (:,4) for reward, (:,5) for whisking, and (:,6) for licking
+% 
+%         rtest(ri).devExplained = zeros(length(u.cellNums),1);
+
         
-        rtest(ri).fitResults = zeros(length(u.cellNums), 6);        
-        % fitResult(:,1) if full fitting is significant (compared to null model), 0 if not
-        % fitResult(:,2) for touchInd, compared to full fitting. if excluding touch
-        % is significantly less fit, then 1, 0 otherwise
-        % fitResult(:,3) for sound, (:,4) for reward, (:,5) for whisking, and (:,6) for licking
-
-        rtest(ri).devExplained = zeros(length(u.cellNums),1);
-
-%         for cellnum = 1 : length(u.cellNums)
-        for cellnum = 24
+        fitInd = cell(length(u.cellNums),1); % parameters surviving lasso in training set
+        fitCoeffs = nan(length(u.cellNums),6); % first column is dummy
+        
+        fitResults = zeros(length(u.cellNums), 6);        
+        devExplained = zeros(length(u.cellNums),1);
+                
+        parfor cellnum = 1 : length(u.cellNums)
+%         for cellnum = 24
 %         ci = 0;
 %         for cellnum = 1:division:length(u.cellNums)
 %             ci = ci + 1;
 %         for cellnum = 1
-        %     cellnum = 1;    
-            fprintf('Running cell %d/%d \n', cellnum, length(u.cellNums));
+        %     cellnum = 1;
+            fitCoeff = zeros(1,6);
+            fprintf('Loop %d: Running cell %d/%d \n', ri,cellnum, length(u.cellNums));
             cID = u.cellNums(cellnum);
 
             % find out trial indices for this specific cell
@@ -357,12 +367,13 @@ for mi = 1
             %% survived coefficients
             iLambda = find(cv.lambda == cv.lambda_1se);
             coeffs = find(cv.glmnet_fit.beta(:,iLambda));
-            rtest(ri).fitInd{cellnum} = coeffs;
+%             rtest(ri).fitInd{cellnum} = coeffs;
+            fitInd{cellnum} = coeffs;
             for i = 1 : length(indPartial)
-                if ismember(indPartial{i},coeffs)
-                    rtest(ri).fitCoeffs(i + 1) = 1;
+                if sum(ismember(indPartial{i},coeffs)>0)
+                    fitCoeff(i + 1) = 1;
                 else
-                    rtest(ri).fitCoeffs(i + 1) = 0;
+                    fitCoeff(i + 1) = 0;
                 end
             end
                 
@@ -396,12 +407,10 @@ for mi = 1
             saturatedLogLikelihood = nansum(log(poisspdf(spkTest,spkTest)));
             devianceFullNull = 2*(fullLogLikelihood - nullLogLikelihood);
             dfFullNull = length(coeffs);
-            rtest(ri).devExplained(cellnum) = 1 - fullLogLikelihood/nullLogLikelihood;
+            devExplained(cellnum) = 1 - fullLogLikelihood/nullLogLikelihood;
             if devianceFullNull > chi2inv(1-pThresholdNull, dfFullNull)
-                rtest(ri).fit(ci) = 1;
                 fitResult(1) = 1;
-                %% (2) test without each parameter (as a group)
-                
+                %% (2) test without each parameter (as a group)                
                 for pi = 1 : 5
                     if find(ismember(coeffs, indPartial{pi}))
                         if all(ismember(coeffs, indPartial{pi}))
@@ -421,11 +430,23 @@ for mi = 1
                     end
                 end
             end
-            rtest(ri).fitResults(cellnum,:) = fitResult;            
-        end
+            fitResults(cellnum,:) = fitResult;
+            fitCoeffs(cellnum,:) = fitCoeff;
+        end % end of parfor cellnum
+        
+        rtest(ri).fitInd = fitInd; % parameters surviving lasso in training set
+        rtest(ri).fitCoeffs = fitCoeffs; % first column is dummy
+        
+        rtest(ri).fitResults = fitResults;        
+        % fitResult(:,1) if full fitting is significant (compared to null model), 0 if not
+        % fitResult(:,2) for touchInd, compared to full fitting. if excluding touch
+        % is significantly less fit, then 1, 0 otherwise
+        % fitResult(:,3) for sound, (:,4) for reward, (:,5) for whisking, and (:,6) for licking
 
-%         save(savefn, 'fitResults', 'fitInd');
-        save('poisson_binary_rtest.m', 'rtest')
+        rtest(ri).devExplained = devExplained;
+        
+        save(savefn, 'rtest');
+%         save('poisson_binary_rtest.m', 'rtest')
         end % of ri. random group selection index
     end
 end
