@@ -57,8 +57,7 @@ classdef Uber_2pad < handle
     end
     
     methods (Access = public)
-        function obj = Uber_2pad(b,wl,w3,ca,trialNum)
-%         function obj = Uber_2pad(b,w3,ca,trialNum)
+        function obj = Uber_2pad(b,wf,ca,trialNum)
             obj.trialNum = trialNum;
             obj.leftLickTime = b.beamBreakTimesLeft;
             obj.rightLickTime = b.beamBreakTimesRight;
@@ -86,22 +85,22 @@ classdef Uber_2pad < handle
             obj.distractor = b.distractor;
             obj.trialType = b.trialType;
             
-            if ~isempty(wl.protractionTFchunks)
-                obj.protractionTouchChunks = cellfun(@(x) (x-1) * wl.framePeriodInSec, wl.protractionTFchunks, 'uniformoutput', false);
+            if ~isempty(wf.protractionTFchunks)
+                obj.protractionTouchChunks = cellfun(@(x) (x-1) * wf.framePeriodInSec, wf.protractionTFchunks, 'uniformoutput', false);
             end
-            if ~isempty(wl.retractionTFchunks)
-                obj.retractionTouchChunks = cellfun(@(x) (x-1) * wl.framePeriodInSec, wl.retractionTFchunks, 'uniformoutput', false);
+            if ~isempty(wf.retractionTFchunks)
+                obj.retractionTouchChunks = cellfun(@(x) (x-1) * wf.framePeriodInSec, wf.retractionTFchunks, 'uniformoutput', false);
             end
             
-            obj.poleMovingTime = (w3.poleMovingFrames-1)*w3.framePeriodInSec;
-            obj.poleUpTime = (w3.poleUpFrames-1)*w3.framePeriodInSec;
-            obj.whiskerTime = w3.time;
-            obj.theta = w3.theta;
-            obj.phi = w3.phi;
-            obj.kappaH = w3.kappaH;
-            obj.kappaV = w3.kappaV;
-            obj.nof = w3.nof;
-            obj.frameDuration = w3.framePeriodInSec;
+            obj.poleMovingTime = (wf.poleMovingFrames-1)*wf.framePeriodInSec;
+            obj.poleUpTime = (wf.poleUpFrames-1)*wf.framePeriodInSec;
+            obj.whiskerTime = wf.time;
+            obj.theta = wf.theta;
+            obj.phi = wf.phi;
+            obj.kappaH = wf.kappaH;
+            obj.kappaV = wf.kappaV;
+            obj.nof = wf.nof;
+            obj.frameDuration = wf.framePeriodInSec;
             
             obj.planes = ca.planes;
             obj.neuindSession = ca.cellNums;

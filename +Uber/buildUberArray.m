@@ -51,21 +51,12 @@ cd(caDir)
     end
 
 
-    if exist('wlArray', 'var') && strcmp(wlArray.mouseName, mouseName) && strcmp(wlArray.sessionName, sessionName)
-        disp('using existing wlArray')
-    else
-        disp('building new whisker trial lite array')
-        cd(wDir)
-        wlArray = Whisker.WhiskerTrialLite_2padArray(wDir);
-    end
-    
-    
-    if exist('w3Array', 'var') && strcmp(w3Array.mouseName, mouseName) && strcmp(w3Array.sessionName, sessionName)
+    if exist('wfArray', 'var') && strcmp(wfArray.mouseName, mouseName) && strcmp(wfArray.sessionName, sessionName)
         disp('using existing w3Array')
     else
         disp('building new whisker trial lite array')
         cd(wDir)
-        w3Array = Whisker.Whisker3D_2padArray(wDir);
+        wfArray = Whisker.WhiskerFinal_2padArray(wDir);
     end
     
     
@@ -78,9 +69,9 @@ cd(caDir)
     end
     
     
-    if strcmp(bSession.mouseName, wlArray.mouseName) && strcmp(bSession.mouseName, wlArray.mouseName) ...            
-            && strcmp(bSession.sessionName, wlArray.sessionName) && strcmp(bSession.sessionName, ['S', caArray.sessionName(2:3)])
-        u = Uber.Uber_2padArray(bSession, wlArray, w3Array, caArray);
+    if strcmp(bSession.mouseName, wfArray.mouseName) && strcmp(bSession.mouseName, wfArray.mouseName) ...            
+            && strcmp(bSession.sessionName, wfArray.sessionName) && strcmp(bSession.sessionName, ['S', caArray.sessionName(2:3)])
+        u = Uber.Uber_2padArray(bSession, wfArray, caArray);
     else
         disp('mouseName or sessionName mismatch')
     end

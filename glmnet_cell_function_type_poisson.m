@@ -59,21 +59,25 @@ baseDir = 'Y:\Whiskernas\JK\suite2p\';
 mice = [25,27,30,36,37,38,39,41,52,53,54,56];
 sessions = {[4,19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]}; 
 
-parpool('SpmdEnabled', false);
+poolobj = gcp('nocreate'); % If no pool, do not create new one.
+if isempty(poolobj)    
+    parpool('SpmdEnabled', false);
+end
 
 % mice = [36,37,38,39,41,52,53,54,56];
 % sessions = {[17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]}; 
 
-% for mi = 6:8
+
 for mi = 1:length(mice)
+% for mi = 1
     for si = 1:length(sessions{mi})
 %     for si = 1
 
         mouse = mice(mi);
         session = sessions{mi}(si);
 
-        posShift = 4;
-        negShift = 2;
+        posShift = 1;
+        negShift = 1;
         testPortion = 0.3; % 30 % test set
         pThresholdNull = 0.05;
         pThresholdPartial = 0.05;
@@ -101,6 +105,75 @@ for mi = 1:length(mice)
 
         savefn = sprintf('glmResponseType_JK%03dS%02d_glmnet_m6',mouse, session); % m(n) meaining method(n)
 
+        
+        
+        %% pre-processing for lick onset and offset
+        % regardless of licking alternating, each l and r has it's own lick onset and offset. both licking, just take the union
+
+        v = cell(length(u.trials),1);
+        % v.bothLickOnset = cell(length(u.trials),1);
+        % v.bothLickOffset = cell(length(u.trials),1);
+        % v.leftLickOnset = cell(length(u.trials),1);
+        % v.leftLickOffset = cell(length(u.trials),1);
+        % v.rightLickOnset = cell(length(u.trials),1);
+        % v.rightLickOffset = cell(length(u.trials),1);
+
+        for ui = 1 : length(u.trials)
+            bothLickTime = union(u.trials{ui}.leftLickTime, u.trials{ui}.rightLickTime);
+            if length(bothLickTime) == 1
+                v{ui}.bothLickOnset = bothLickTime;
+                v{ui}.bothLickOffset = bothLickTime;
+            elseif length(bothLickTime) > 1        
+                onsets = find(diff(bothLickTime) > lickBoutInterval);
+                if isempty(onsets)
+                    v{ui}.bothLickOnset = bothLickTime(1);
+                    v{ui}.bothLickOffset = bothLickTime(end);
+                else
+                    v{ui}.bothLickOnset = bothLickTime([1; onsets+1]);
+                    v{ui}.bothLickOffset = bothLickTime([onsets; end]);
+                end
+            else
+                v{ui}.bothLickOnset = [];
+                v{ui}.bothLickOffset = [];
+            end
+
+            if length(u.trials{ui}.leftLickTime) == 1
+                v{ui}.leftLickOnset = u.trials{ui}.leftLickTime;
+                v{ui}.leftLickOffset = u.trials{ui}.leftLickTime;
+            elseif length(u.trials{ui}.leftLickTime) > 1        
+                onsets = find(diff(u.trials{ui}.leftLickTime) > lickBoutInterval);
+                if isempty(onsets)
+                    v{ui}.leftLickOnset = u.trials{ui}.leftLickTime(1);
+                    v{ui}.leftLickOffset = u.trials{ui}.leftLickTime(end);
+                else
+                    v{ui}.leftLickOnset = u.trials{ui}.leftLickTime([1; onsets+1]);
+                    v{ui}.leftLickOffset = u.trials{ui}.leftLickTime([onsets; end]);
+                end
+            else
+                v{ui}.leftLickOnset = [];
+                v{ui}.leftLickOffset = [];
+            end
+
+            if length(u.trials{ui}.rightLickTime) == 1
+                v{ui}.rightLickOnset = u.trials{ui}.rightLickTime;
+                v{ui}.rightLickOffset = u.trials{ui}.rightLickTime;
+            elseif length(u.trials{ui}.rightLickTime) > 1        
+                onsets = find(diff(u.trials{ui}.rightLickTime) > lickBoutInterval);
+                if isempty(onsets)
+                    v{ui}.rightLickOnset = u.trials{ui}.rightLickTime(1);
+                    v{ui}.rightLickOffset = u.trials{ui}.rightLickTime(end);
+                else
+                    v{ui}.rightLickOnset = u.trials{ui}.rightLickTime([1; onsets+1]);
+                    v{ui}.rightLickOffset = u.trials{ui}.rightLickTime([onsets; end]);
+                end
+            else
+                v{ui}.rightLickOnset = [];
+                v{ui}.rightLickOffset = [];
+            end
+            v{ui}.tpmTime = u.trials{ui}.tpmTime;
+        end
+        
+        
         %% repetition test
 
 %         division = 20;
@@ -132,8 +205,8 @@ for mi = 1:length(mice)
         rtouchGroup{1} = cellfun(@(x) x.trialNum, u.trials(find(cellfun(@(x) length(x.retractionTouchChunks), u.trials))));
         rtouchGroup{2} = setdiff(u.trialNums, rtouchGroup{1});
 
-        choiceGroup{1} = cellfun(@(x) x.trialNum, u.trials(find(cellfun(@(x) x.response ==  1, u.trials))));
-        choiceGroup{2} = cellfun(@(x) x.trialNum, u.trials(find(cellfun(@(x) x.response ==  0, u.trials))));
+        choiceGroup{1} = cellfun(@(x) x.trialNum, u.trials(find(cellfun(@(x) x.response == 1, u.trials))));
+        choiceGroup{2} = cellfun(@(x) x.trialNum, u.trials(find(cellfun(@(x) x.response == 0, u.trials))));
         choiceGroup{3} = cellfun(@(x) x.trialNum, u.trials(find(cellfun(@(x) x.response == -1, u.trials))));
 
         for i = 1 : length(angles)
@@ -175,116 +248,138 @@ for mi = 1:length(mice)
             for plane = 1 : 4    
         %     for plane = 1
                 pTouchOnset = cell2mat(cellfun(@(x) [zeros(1,posShift), histcounts(cellfun(@(y) y(1), x.protractionTouchChunks), [0, x.tpmTime{plane}]), zeros(1,posShift)], u.trials(tind)','uniformoutput',false));
-                pTouchOnset(pTouchOnset > 0) = 1;
                 rTouchOnset = cell2mat(cellfun(@(x) [zeros(1,posShift), histcounts(cellfun(@(y) y(1), x.retractionTouchChunks), [0, x.tpmTime{plane}]), zeros(1,posShift)], u.trials(tind)','uniformoutput',false));
-                rTouchOnset(rTouchOnset > 0) = 1;
+                
+                whiskerVideoFrameDuration = u.trials{tind(1)}.frameDuration * 1000; % in ms
+                
+                pTouchDuration = cell2mat(cellfun(@(x) [zeros(1,posShift), histcounts(cell2mat(cellfun(@(y) y', x.protractionTouchChunks, 'uniformoutput', false)) * whiskerVideoFrameDuration, [0, x.tpmTime{plane}]), zeros(1,posShift)], ...
+                    u.trials(tind)','uniformoutput',false));
+                rTouchDuration = cell2mat(cellfun(@(x) [zeros(1,posShift), histcounts(cell2mat(cellfun(@(y) y', x.retractionTouchChunks, 'uniformoutput', false)) * whiskerVideoFrameDuration, [0, x.tpmTime{plane}]), zeros(1,posShift)], ...
+                    u.trials(tind)','uniformoutput',false));
+
+                pTouchFrames = pTouchDuration;
+                pTouchFrames(pTouchDuration > 0) = 1;
+                rTouchFrames = rTouchDuration;
+                rTouchFrames(rTouchDuration > 0) = 1;
                 
                 pTouchOnsetAngles = cell(length(angles),1);
                 rTouchOnsetAngles = cell(length(angles),1);
+                pTouchDurationAngles = cell(length(angles),1);
+                rTouchDurationAngles = cell(length(angles),1);
+                pTouchFramesAngles = cell(length(angles),1);
+                rTouchFramesAngles = cell(length(angles),1);                
                 for ai = 1 : length(angles)
                     tempAngleBinary = cell2mat(cellfun(@(x) ones(length(x.tpmTime{plane}) + 2 * posShift, 1) * (x.angle == angles(ai)), u.trials(tind), 'uniformoutput', false));
                     pTouchOnsetAngles{ai} = pTouchOnset .* tempAngleBinary';
                     rTouchOnsetAngles{ai} = rTouchOnset .* tempAngleBinary';
+                    pTouchDurationAngles{ai} = pTouchDuration .* tempAngleBinary';
+                    rTouchDurationAngles{ai} = rTouchDuration .* tempAngleBinary';
+                    pTouchFramesAngles{ai} = pTouchFrames .* tempAngleBinary';
+                    rTouchFramesAngles{ai} = rTouchFrames .* tempAngleBinary';                    
                 end
-%                 pTouchOnset045 = cell2mat(cellfun(@(x) [zeros(1,posShift), histcounts(cellfun(@(y) y(1), x.protractionTouchChunks), [0, x.tpmTime{plane}]), zeros(1,posShift)], u.trials(tind)','uniformoutput',false));
-%                 pTouchOnset045(pTouchOnset045 > 0) = 1;
-%                 rTouchOnset045 = cell2mat(cellfun(@(x) [zeros(1,posShift), histcounts(cellfun(@(y) y(1), x.retractionTouchChunks), [0, x.tpmTime{plane}]), zeros(1,posShift)], u.trials(tind)','uniformoutput',false));
-%                 rTouchOnset045(rTouchOnset045 > 0) = 1;
-%                 
-%                 pTouchOnset = cell2mat(cellfun(@(x) [zeros(1,posShift), histcounts(cellfun(@(y) y(1), x.protractionTouchChunks), [0, x.tpmTime{plane}]), zeros(1,posShift)], u.trials(tind)','uniformoutput',false));
-%                 pTouchOnset(pTouchOnset > 0) = 1;
-%                 rTouchOnset = cell2mat(cellfun(@(x) [zeros(1,posShift), histcounts(cellfun(@(y) y(1), x.retractionTouchChunks), [0, x.tpmTime{plane}]), zeros(1,posShift)], u.trials(tind)','uniformoutput',false));
-%                 rTouchOnset(rTouchOnset > 0) = 1;
-%                 
-%                 pTouchOnset = cell2mat(cellfun(@(x) [zeros(1,posShift), histcounts(cellfun(@(y) y(1), x.protractionTouchChunks), [0, x.tpmTime{plane}]), zeros(1,posShift)], u.trials(tind)','uniformoutput',false));
-%                 pTouchOnset(pTouchOnset > 0) = 1;
-%                 rTouchOnset = cell2mat(cellfun(@(x) [zeros(1,posShift), histcounts(cellfun(@(y) y(1), x.retractionTouchChunks), [0, x.tpmTime{plane}]), zeros(1,posShift)], u.trials(tind)','uniformoutput',false));
-%                 rTouchOnset(rTouchOnset > 0) = 1;
-%                 
-%                 pTouchOnset = cell2mat(cellfun(@(x) [zeros(1,posShift), histcounts(cellfun(@(y) y(1), x.protractionTouchChunks), [0, x.tpmTime{plane}]), zeros(1,posShift)], u.trials(tind)','uniformoutput',false));
-%                 pTouchOnset(pTouchOnset > 0) = 1;
-%                 rTouchOnset = cell2mat(cellfun(@(x) [zeros(1,posShift), histcounts(cellfun(@(y) y(1), x.retractionTouchChunks), [0, x.tpmTime{plane}]), zeros(1,posShift)], u.trials(tind)','uniformoutput',false));
-%                 rTouchOnset(rTouchOnset > 0) = 1;
-%                 
-%                 pTouchOnset = cell2mat(cellfun(@(x) [zeros(1,posShift), histcounts(cellfun(@(y) y(1), x.protractionTouchChunks), [0, x.tpmTime{plane}]), zeros(1,posShift)], u.trials(tind)','uniformoutput',false));
-%                 pTouchOnset(pTouchOnset > 0) = 1;
-%                 rTouchOnset = cell2mat(cellfun(@(x) [zeros(1,posShift), histcounts(cellfun(@(y) y(1), x.retractionTouchChunks), [0, x.tpmTime{plane}]), zeros(1,posShift)], u.trials(tind)','uniformoutput',false));
-%                 rTouchOnset(rTouchOnset > 0) = 1;
-%                 
-%                 pTouchOnset = cell2mat(cellfun(@(x) [zeros(1,posShift), histcounts(cellfun(@(y) y(1), x.protractionTouchChunks), [0, x.tpmTime{plane}]), zeros(1,posShift)], u.trials(tind)','uniformoutput',false));
-%                 pTouchOnset(pTouchOnset > 0) = 1;
-%                 rTouchOnset = cell2mat(cellfun(@(x) [zeros(1,posShift), histcounts(cellfun(@(y) y(1), x.retractionTouchChunks), [0, x.tpmTime{plane}]), zeros(1,posShift)], u.trials(tind)','uniformoutput',false));
-%                 rTouchOnset(rTouchOnset > 0) = 1;
-%                 
-%                 pTouchOnset = cell2mat(cellfun(@(x) [zeros(1,posShift), histcounts(cellfun(@(y) y(1), x.protractionTouchChunks), [0, x.tpmTime{plane}]), zeros(1,posShift)], u.trials(tind)','uniformoutput',false));
-%                 pTouchOnset(pTouchOnset > 0) = 1;
-%                 rTouchOnset = cell2mat(cellfun(@(x) [zeros(1,posShift), histcounts(cellfun(@(y) y(1), x.retractionTouchChunks), [0, x.tpmTime{plane}]), zeros(1,posShift)], u.trials(tind)','uniformoutput',false));
-%                 rTouchOnset(rTouchOnset > 0) = 1;
-                
-                
-                
+                                
                 scPiezo = cell2mat(cellfun(@(x) [zeros(1,posShift), 1, zeros(1,length(x.tpmTime{plane})-1), zeros(1,posShift)], u.trials(tind)','uniformoutput',false));
-                scPiezo(scPiezo > 0) = 1;
                 scPoleup = cell2mat(cellfun(@(x) [zeros(1,posShift), histcounts(x.poleUpOnsetTime, [0, x.tpmTime{plane}]), zeros(1,posShift)], u.trials(tind)','uniformoutput',false));
-                scPoleup(scPoleup > 0) = 1;
                 scPoledown = cell2mat(cellfun(@(x) [zeros(1,posShift), histcounts(x.poleDownOnsetTime, [0, x.tpmTime{plane}]), zeros(1,posShift)], u.trials(tind)','uniformoutput',false));
-                scPoledown(scPoledown > 0) = 1;
                 drinkOnset = cell2mat(cellfun(@(x) [zeros(1,posShift), histcounts(x.drinkingOnsetTime, [0, x.tpmTime{plane}]), zeros(1,posShift)], u.trials(tind)','uniformoutput',false));
-                drinkOnset(drinkOnset > 0) = 1;
 
                 lLick = cell2mat(cellfun(@(x) [zeros(1,posShift), histcounts(x.leftLickTime, [0, x.tpmTime{plane}]), zeros(1,posShift)], u.trials(tind)','uniformoutput',false));
-                lLick(lLick > 0) = 1;
                 rLick = cell2mat(cellfun(@(x) [zeros(1,posShift), histcounts(x.rightLickTime, [0, x.tpmTime{plane}]), zeros(1,posShift)], u.trials(tind)','uniformoutput',false));
-                rLick(rLick > 0) = 1;
-                
+
+                lLickOnset = cell2mat(cellfun(@(x) [zeros(1,posShift), histcounts(x.leftLickOnset, [0, x.tpmTime{plane}]), zeros(1,posShift)], v(tind)','uniformoutput',false));
+                rLickOnset = cell2mat(cellfun(@(x) [zeros(1,posShift), histcounts(x.rightLickOnset, [0, x.tpmTime{plane}]), zeros(1,posShift)], v(tind)','uniformoutput',false));
+
+                lLickOffset = cell2mat(cellfun(@(x) [zeros(1,posShift), histcounts(x.leftLickOffset, [0, x.tpmTime{plane}]), zeros(1,posShift)], v(tind)','uniformoutput',false));
+                rLickOffset = cell2mat(cellfun(@(x) [zeros(1,posShift), histcounts(x.rightLickOffset, [0, x.tpmTime{plane}]), zeros(1,posShift)], v(tind)','uniformoutput',false));
+
                 %%
                 whiskingOnsetCell = cell(1,length(tind));
+                whiskingAmpCell = cell(1,length(tind));
+                whiskingMaxAmpCell = cell(1,length(tind));
+                whiskingMidpointCell = cell(1,length(tind));
 
                 for ti = 1 : length(tind)
                     currTrial = u.trials{tind(ti)};
                     time = [0, currTrial.tpmTime{plane}];
-                    onsetFrame = jkWhiskerOnsetNAmplitude(currTrial.theta, 5);
-                    whiskerVideoFrameDuration = u.trials{tind(1)}.frameDuration * 1000; % in ms
+                    wtimes = currTrial.whiskerTime;
+                    [onsetFrame, amplitude, midpoint] = jkWhiskerOnsetNAmplitude(currTrial.theta, 5);
                     onsetTimes = onsetFrame*whiskerVideoFrameDuration/1000; % back to s
                     whiskingOnsetCell{ti} = [zeros(1,posShift), histcounts(onsetTimes, time), zeros(1,posShift)];
+
+                    tempAmp = zeros(1,length(time)-1);        
+                    tempMid = zeros(1,length(time)-1);
+                    for i = 1 : length(tempAmp)
+                        startInd = find(wtimes >= time(i), 1, 'first');
+                        endInd = find(wtimes < time(i+1), 1, 'last');
+                        tempAmp(i) = max(amplitude(startInd:endInd));
+                        tempMid(i) = mean(midpoint(startInd:endInd));
+                    end
+                    whiskingAmpCell{ti} = [zeros(1,posShift), tempAmp, zeros(1,posShift)];        
+                    whiskingMidpointCell{ti} = [nan(1,posShift), tempMid, nan(1,posShift)];    
                 end
                 whiskingOnset = cell2mat(whiskingOnsetCell);
-                whiskingOnset(whiskingOnset > 0) = 1;
-                
+                whiskingAmp = cell2mat(whiskingAmpCell);
+                whiskingOA = (whiskingOnset > 0).*whiskingAmp;
+                whiskingMidpoint = cell2mat(whiskingMidpointCell);    
+                whiskingMidpoint(isnan(whiskingMidpoint)) = deal(mode(whiskingMidpoint(isfinite(whiskingMidpoint))));
+                                
                 %%
-                pTouchOnsetMat = zeros(length(pTouchOnset), posShift + 1);
-                rTouchOnsetMat = zeros(length(rTouchOnset), posShift + 1);
-                pTouchOnsetAnglesMat = zeros(length(pTouchOnset), (posShift + 1) * length(angles));
-                rTouchOnsetAnglesMat = zeros(length(rTouchOnset), (posShift + 1) * length(angles));
+                pTouchOnsetMat = zeros(length(pTouchOnset), (posShift + 1) * length(angles));
+                rTouchOnsetMat = zeros(length(rTouchOnset), (posShift + 1) * length(angles));
+                pTouchFramesMat = zeros(length(pTouchFrames),(posShift + 1) * length(angles));
+                rTouchFramesMat = zeros(length(rTouchFrames), (posShift + 1) * length(angles));
+                pTouchDurationMat = zeros(length(pTouchDuration), (posShift + 1) * length(angles));
+                rTouchDurationMat = zeros(length(rTouchDuration), (posShift + 1) * length(angles));
+                
                 scPiezoMat = zeros(length(scPiezo), posShift + 1);
                 scPoleUpMat = zeros(length(scPoleup), posShift + 1);
                 scPoleDownMat = zeros(length(scPoledown), posShift + 1);
                 drinkOnsetMat = zeros(length(drinkOnset), posShift + 1);
                 for i = 1 : posShift + 1
-                    pTouchOnsetMat(:,i) = circshift(pTouchOnset, [0 i-1])';
-                    rTouchOnsetMat(:,i) = circshift(rTouchOnset, [0 i-1])';
+                    for ai = 1 : length(angles)                        
+                        pTouchOnsetMat(:,(i-1)*length(angles) + ai) = circshift(pTouchOnsetAngles{ai}, [0 i-1])';
+                        rTouchOnsetMat(:,(i-1)*length(angles) + ai) = circshift(rTouchOnsetAngles{ai}, [0 i-1])';
+                        pTouchFramesMat(:,(i-1)*length(angles) + ai) = circshift(pTouchFramesAngles{ai}, [0 i-1])';
+                        rTouchFramesMat(:,(i-1)*length(angles) + ai) = circshift(rTouchFramesAngles{ai}, [0 i-1])';                        
+                        pTouchDurationMat(:,(i-1)*length(angles) + ai) = circshift(pTouchDurationAngles{ai}, [0 i-1])';
+                        rTouchDurationMat(:,(i-1)*length(angles) + ai) = circshift(rTouchDurationAngles{ai}, [0 i-1])';
+                    end
                     scPiezoMat(:,i) = circshift(scPiezo, [0 i-1])';
                     scPoleUpMat(:,i) = circshift(scPoleup, [0 i-1])';
                     scPoleDownMat(:,i) = circshift(scPoledown, [0 i-1])';
                     drinkOnsetMat(:,i) = circshift(drinkOnset, [0 i-1])';
                 end
-                for ai = 1 : length(angles)
-                    for i = 1 : posShift + 1
-                        pTouchOnsetAnglesMat(:,(ai-1) * (posShift + 1) + i) = circshift(pTouchOnsetAngles{ai}, [0 i-1])';
-                        rTouchOnsetAnglesMat(:,(ai-1) * (posShift + 1) + i) = circshift(rTouchOnsetAngles{ai}, [0 i-1])';
-                    end
-                end
 
                 whiskingOnsetMat = zeros(length(whiskingOnset), negShift + posShift + 1);
+                whiskingAmpMat = zeros(length(whiskingAmp), negShift + posShift + 1);
+                whiskingOAMat = zeros(length(whiskingOA), negShift + posShift + 1);
+                whiskingMidpointMat = zeros(length(whiskingMidpoint), negShift + posShift + 1);
                 lLickMat = zeros(length(lLick), negShift + posShift + 1);
                 rLickMat = zeros(length(rLick), negShift + posShift + 1);
+                lLickOnsetMat = zeros(length(lLickOnset), negShift + posShift + 1);
+                rLickOnsetMat = zeros(length(rLickOnset), negShift + posShift + 1);
+                lLickOffsetMat = zeros(length(lLickOffset), negShift + posShift + 1);
+                rLickOffsetMat = zeros(length(rLickOffset), negShift + posShift + 1);
                 for i = 1 : negShift + posShift + 1
                     whiskingOnsetMat(:,i) = circshift(whiskingOnset, [0 -negShift + i - 1])';
+                    whiskingAmpMat(:,i) = circshift(whiskingAmp, [0 -negShift + i - 1])';
+                    whiskingOAMat(:,i) = circshift(whiskingOA, [0 -negShift + i - 1])';
+                    whiskingMidpointMat(:,i) = circshift(whiskingMidpoint, [0 -negShift + i - 1])';
                     lLickMat(:,i) = circshift(lLick, [0 -negShift + i - 1])';
                     rLickMat(:,i) = circshift(rLick, [0 -negShift + i - 1])';
+                    lLickOnsetMat(:,i) = circshift(lLickOnset, [0 -negShift + i - 1])';
+                    rLickOnsetMat(:,i) = circshift(rLickOnset, [0 -negShift + i - 1])';
+                    lLickOffsetMat(:,i) = circshift(lLickOffset, [0 -negShift + i - 1])';
+                    rLickOffsetMat(:,i) = circshift(rLickOffset, [0 -negShift + i - 1])';
                 end
-                trainingInputMat{(ci-1)*4 + plane} = [pTouchOnsetMat, pTouchOnsetAnglesMat, rTouchOnsetMat, rTouchOnsetAnglesMat, scPiezoMat, scPoleUpMat, scPoleDownMat, drinkOnsetMat, ...
-                    whiskingOnsetMat, lLickMat, rLickMat];                
+                tempIM = [pTouchOnsetMat, rTouchOnsetMat, pTouchFramesMat, rTouchFramesMat, pTouchDurationMat, rTouchDurationMat, ...
+                    scPiezoMat, scPoleUpMat, scPoleDownMat, ...
+                    drinkOnsetMat, ...
+                    whiskingOnsetMat, whiskingAmpMat, whiskingOAMat, whiskingMidpointMat, ...
+                    lLickMat, rLickMat, lLickOnsetMat, rLickOnsetMat, lLickOffsetMat, rLickOffsetMat];
+                trainingInputMat{(ci-1)*4 + plane} = (tempIM - ones(size(tempIM,1),1)*min(tempIM)) ./ (ones(size(tempIM,1),1)*(max(tempIM) - min(tempIM)));
+                trainingInputMat{(ci-1)*4 + plane}(isnan(trainingInputMat{(ci-1)*4 + plane})) = deal(0); % the ones with NaN, from all of the entries being 0
+                                
             end
         end
 
@@ -298,81 +393,137 @@ for mi = 1:length(mice)
             for plane = 1 : 4    
         %     for plane = 1
                 pTouchOnset = cell2mat(cellfun(@(x) [zeros(1,posShift), histcounts(cellfun(@(y) y(1), x.protractionTouchChunks), [0, x.tpmTime{plane}]), zeros(1,posShift)], u.trials(tind)','uniformoutput',false));
-                pTouchOnset(pTouchOnset > 0) = 1;
                 rTouchOnset = cell2mat(cellfun(@(x) [zeros(1,posShift), histcounts(cellfun(@(y) y(1), x.retractionTouchChunks), [0, x.tpmTime{plane}]), zeros(1,posShift)], u.trials(tind)','uniformoutput',false));
-                rTouchOnset(rTouchOnset > 0) = 1;
+                
+                whiskerVideoFrameDuration = u.trials{tind(1)}.frameDuration * 1000; % in ms
+                
+                pTouchDuration = cell2mat(cellfun(@(x) [zeros(1,posShift), histcounts(cell2mat(cellfun(@(y) y', x.protractionTouchChunks, 'uniformoutput', false)) * whiskerVideoFrameDuration, [0, x.tpmTime{plane}]), zeros(1,posShift)], ...
+                    u.trials(tind)','uniformoutput',false));
+                rTouchDuration = cell2mat(cellfun(@(x) [zeros(1,posShift), histcounts(cell2mat(cellfun(@(y) y', x.retractionTouchChunks, 'uniformoutput', false)) * whiskerVideoFrameDuration, [0, x.tpmTime{plane}]), zeros(1,posShift)], ...
+                    u.trials(tind)','uniformoutput',false));
+
+                pTouchFrames = pTouchDuration;
+                pTouchFrames(pTouchDuration > 0) = 1;
+                rTouchFrames = rTouchDuration;
+                rTouchFrames(rTouchDuration > 0) = 1;
                 
                 pTouchOnsetAngles = cell(length(angles),1);
                 rTouchOnsetAngles = cell(length(angles),1);
+                pTouchDurationAngles = cell(length(angles),1);
+                rTouchDurationAngles = cell(length(angles),1);
+                pTouchFramesAngles = cell(length(angles),1);
+                rTouchFramesAngles = cell(length(angles),1);                
                 for ai = 1 : length(angles)
                     tempAngleBinary = cell2mat(cellfun(@(x) ones(length(x.tpmTime{plane}) + 2 * posShift, 1) * (x.angle == angles(ai)), u.trials(tind), 'uniformoutput', false));
                     pTouchOnsetAngles{ai} = pTouchOnset .* tempAngleBinary';
                     rTouchOnsetAngles{ai} = rTouchOnset .* tempAngleBinary';
+                    pTouchDurationAngles{ai} = pTouchDuration .* tempAngleBinary';
+                    rTouchDurationAngles{ai} = rTouchDuration .* tempAngleBinary';
+                    pTouchFramesAngles{ai} = pTouchFrames .* tempAngleBinary';
+                    rTouchFramesAngles{ai} = rTouchFrames .* tempAngleBinary';                    
                 end
-                
+                                
                 scPiezo = cell2mat(cellfun(@(x) [zeros(1,posShift), 1, zeros(1,length(x.tpmTime{plane})-1), zeros(1,posShift)], u.trials(tind)','uniformoutput',false));
-                scPiezo(scPiezo > 0) = 1;
                 scPoleup = cell2mat(cellfun(@(x) [zeros(1,posShift), histcounts(x.poleUpOnsetTime, [0, x.tpmTime{plane}]), zeros(1,posShift)], u.trials(tind)','uniformoutput',false));
-                scPoleup(scPoleup > 0) = 1;
                 scPoledown = cell2mat(cellfun(@(x) [zeros(1,posShift), histcounts(x.poleDownOnsetTime, [0, x.tpmTime{plane}]), zeros(1,posShift)], u.trials(tind)','uniformoutput',false));
-                scPoledown(scPoledown > 0) = 1;
                 drinkOnset = cell2mat(cellfun(@(x) [zeros(1,posShift), histcounts(x.drinkingOnsetTime, [0, x.tpmTime{plane}]), zeros(1,posShift)], u.trials(tind)','uniformoutput',false));
-                drinkOnset(drinkOnset > 0) = 1;
 
                 lLick = cell2mat(cellfun(@(x) [zeros(1,posShift), histcounts(x.leftLickTime, [0, x.tpmTime{plane}]), zeros(1,posShift)], u.trials(tind)','uniformoutput',false));
-                lLick(lLick > 0) = 1;
                 rLick = cell2mat(cellfun(@(x) [zeros(1,posShift), histcounts(x.rightLickTime, [0, x.tpmTime{plane}]), zeros(1,posShift)], u.trials(tind)','uniformoutput',false));
-                rLick(rLick > 0) = 1;
-                
+
+                lLickOnset = cell2mat(cellfun(@(x) [zeros(1,posShift), histcounts(x.leftLickOnset, [0, x.tpmTime{plane}]), zeros(1,posShift)], v(tind)','uniformoutput',false));
+                rLickOnset = cell2mat(cellfun(@(x) [zeros(1,posShift), histcounts(x.rightLickOnset, [0, x.tpmTime{plane}]), zeros(1,posShift)], v(tind)','uniformoutput',false));
+
+                lLickOffset = cell2mat(cellfun(@(x) [zeros(1,posShift), histcounts(x.leftLickOffset, [0, x.tpmTime{plane}]), zeros(1,posShift)], v(tind)','uniformoutput',false));
+                rLickOffset = cell2mat(cellfun(@(x) [zeros(1,posShift), histcounts(x.rightLickOffset, [0, x.tpmTime{plane}]), zeros(1,posShift)], v(tind)','uniformoutput',false));
+
                 %%
                 whiskingOnsetCell = cell(1,length(tind));
+                whiskingAmpCell = cell(1,length(tind));
+                whiskingMaxAmpCell = cell(1,length(tind));
+                whiskingMidpointCell = cell(1,length(tind));
 
                 for ti = 1 : length(tind)
                     currTrial = u.trials{tind(ti)};
                     time = [0, currTrial.tpmTime{plane}];
-                    onsetFrame = jkWhiskerOnsetNAmplitude(currTrial.theta, 5);
-                    whiskerVideoFrameDuration = u.trials{tind(1)}.frameDuration * 1000; % in ms
+                    wtimes = currTrial.whiskerTime;
+                    [onsetFrame, amplitude, midpoint] = jkWhiskerOnsetNAmplitude(currTrial.theta, 5);
                     onsetTimes = onsetFrame*whiskerVideoFrameDuration/1000; % back to s
                     whiskingOnsetCell{ti} = [zeros(1,posShift), histcounts(onsetTimes, time), zeros(1,posShift)];
+
+                    tempAmp = zeros(1,length(time)-1);        
+                    tempMid = zeros(1,length(time)-1);
+                    for i = 1 : length(tempAmp)
+                        startInd = find(wtimes >= time(i), 1, 'first');
+                        endInd = find(wtimes < time(i+1), 1, 'last');
+                        tempAmp(i) = max(amplitude(startInd:endInd));            
+                        tempMid(i) = mean(midpoint(startInd:endInd));
+                    end
+                    whiskingAmpCell{ti} = [zeros(1,posShift), tempAmp, zeros(1,posShift)];        
+                    whiskingMidpointCell{ti} = [nan(1,posShift), tempMid, nan(1,posShift)];    
                 end
                 whiskingOnset = cell2mat(whiskingOnsetCell);
-                whiskingOnset(whiskingOnset > 0) = 1;
-
+                whiskingAmp = cell2mat(whiskingAmpCell);
+                whiskingOA = (whiskingOnset > 0).*whiskingAmp;
+                whiskingMidpoint = cell2mat(whiskingMidpointCell);    
+                whiskingMidpoint(isnan(whiskingMidpoint)) = deal(mode(whiskingMidpoint(isfinite(whiskingMidpoint))));
+                                
                 %%
-                pTouchOnsetMat = zeros(length(pTouchOnset), posShift + 1);
-                rTouchOnsetMat = zeros(length(rTouchOnset), posShift + 1);
-                pTouchOnsetAnglesMat = zeros(length(pTouchOnset), (posShift + 1) * length(angles));
-                rTouchOnsetAnglesMat = zeros(length(rTouchOnset), (posShift + 1) * length(angles));
+                pTouchOnsetMat = zeros(length(pTouchOnset), (posShift + 1) * length(angles));
+                rTouchOnsetMat = zeros(length(rTouchOnset), (posShift + 1) * length(angles));
+                pTouchFramesMat = zeros(length(pTouchFrames),(posShift + 1) * length(angles));
+                rTouchFramesMat = zeros(length(rTouchFrames), (posShift + 1) * length(angles));
+                pTouchDurationMat = zeros(length(pTouchDuration), (posShift + 1) * length(angles));
+                rTouchDurationMat = zeros(length(rTouchDuration), (posShift + 1) * length(angles));
                 
                 scPiezoMat = zeros(length(scPiezo), posShift + 1);
                 scPoleUpMat = zeros(length(scPoleup), posShift + 1);
                 scPoleDownMat = zeros(length(scPoledown), posShift + 1);
                 drinkOnsetMat = zeros(length(drinkOnset), posShift + 1);
                 for i = 1 : posShift + 1
-                    pTouchOnsetMat(:,i) = circshift(pTouchOnset, [0 i-1])';
-                    rTouchOnsetMat(:,i) = circshift(rTouchOnset, [0 i-1])';
+                    for ai = 1 : length(angles)                        
+                        pTouchOnsetMat(:,(i-1)*length(angles) + ai) = circshift(pTouchOnsetAngles{ai}, [0 i-1])';
+                        rTouchOnsetMat(:,(i-1)*length(angles) + ai) = circshift(rTouchOnsetAngles{ai}, [0 i-1])';
+                        pTouchFramesMat(:,(i-1)*length(angles) + ai) = circshift(pTouchFramesAngles{ai}, [0 i-1])';
+                        rTouchFramesMat(:,(i-1)*length(angles) + ai) = circshift(rTouchFramesAngles{ai}, [0 i-1])';                        
+                        pTouchDurationMat(:,(i-1)*length(angles) + ai) = circshift(pTouchDurationAngles{ai}, [0 i-1])';
+                        rTouchDurationMat(:,(i-1)*length(angles) + ai) = circshift(rTouchDurationAngles{ai}, [0 i-1])';
+                    end
                     scPiezoMat(:,i) = circshift(scPiezo, [0 i-1])';
                     scPoleUpMat(:,i) = circshift(scPoleup, [0 i-1])';
                     scPoleDownMat(:,i) = circshift(scPoledown, [0 i-1])';
                     drinkOnsetMat(:,i) = circshift(drinkOnset, [0 i-1])';
                 end
-                for ai = 1 : length(angles)
-                    for i = 1 : posShift + 1
-                        pTouchOnsetAnglesMat(:,(ai-1) * (posShift + 1) + i) = circshift(pTouchOnsetAngles{ai}, [0 i-1])';
-                        rTouchOnsetAnglesMat(:,(ai-1) * (posShift + 1) + i) = circshift(rTouchOnsetAngles{ai}, [0 i-1])';
-                    end
-                end
 
                 whiskingOnsetMat = zeros(length(whiskingOnset), negShift + posShift + 1);
+                whiskingAmpMat = zeros(length(whiskingAmp), negShift + posShift + 1);
+                whiskingOAMat = zeros(length(whiskingOA), negShift + posShift + 1);
+                whiskingMidpointMat = zeros(length(whiskingMidpoint), negShift + posShift + 1);
                 lLickMat = zeros(length(lLick), negShift + posShift + 1);
                 rLickMat = zeros(length(rLick), negShift + posShift + 1);
+                lLickOnsetMat = zeros(length(lLickOnset), negShift + posShift + 1);
+                rLickOnsetMat = zeros(length(rLickOnset), negShift + posShift + 1);
+                lLickOffsetMat = zeros(length(lLickOffset), negShift + posShift + 1);
+                rLickOffsetMat = zeros(length(rLickOffset), negShift + posShift + 1);
                 for i = 1 : negShift + posShift + 1
                     whiskingOnsetMat(:,i) = circshift(whiskingOnset, [0 -negShift + i - 1])';
+                    whiskingAmpMat(:,i) = circshift(whiskingAmp, [0 -negShift + i - 1])';
+                    whiskingOAMat(:,i) = circshift(whiskingOA, [0 -negShift + i - 1])';
+                    whiskingMidpointMat(:,i) = circshift(whiskingMidpoint, [0 -negShift + i - 1])';
                     lLickMat(:,i) = circshift(lLick, [0 -negShift + i - 1])';
                     rLickMat(:,i) = circshift(rLick, [0 -negShift + i - 1])';
+                    lLickOnsetMat(:,i) = circshift(lLickOnset, [0 -negShift + i - 1])';
+                    rLickOnsetMat(:,i) = circshift(rLickOnset, [0 -negShift + i - 1])';
+                    lLickOffsetMat(:,i) = circshift(lLickOffset, [0 -negShift + i - 1])';
+                    rLickOffsetMat(:,i) = circshift(rLickOffset, [0 -negShift + i - 1])';
                 end
-                testInputMat{(ci-1)*4 + plane} = [pTouchOnsetMat, pTouchOnsetAnglesMat, rTouchOnsetMat, rTouchOnsetAnglesMat, scPiezoMat, scPoleUpMat, scPoleDownMat, drinkOnsetMat, ...
-                    whiskingOnsetMat, lLickMat, rLickMat];               
+                tempIM = [pTouchOnsetMat, rTouchOnsetMat, pTouchFramesMat, rTouchFramesMat, pTouchDurationMat, rTouchDurationMat, ...
+                    scPiezoMat, scPoleUpMat, scPoleDownMat, ...
+                    drinkOnsetMat, ...
+                    whiskingOnsetMat, whiskingAmpMat, whiskingOAMat, whiskingMidpointMat, ...
+                    lLickMat, rLickMat, lLickOnsetMat, rLickOnsetMat, lLickOffsetMat, rLickOffsetMat];
+                testInputMat{(ci-1)*4 + plane} = (tempIM - ones(size(tempIM,1),1)*min(tempIM)) ./ (ones(size(tempIM,1),1)*(max(tempIM) - min(tempIM)));
+                testInputMat{(ci-1)*4 + plane}(isnan(testInputMat{(ci-1)*4 + plane})) = deal(0); % the ones with NaN, from all of the entries being 0
             end
         end
 
@@ -380,8 +531,8 @@ for mi = 1:length(mice)
         touchInd = 1 : 2 * (posShift + 1) * (1 + length(angles));
         soundInd = max(touchInd) + 1 : max(touchInd) + 3 * (posShift + 1);
         rewardInd = max(soundInd) + 1 : max(soundInd) + posShift + 1;
-        whiskingInd = max(rewardInd) + 1 : max(rewardInd) + 1 * (negShift + posShift + 1);
-        lickInd = max(whiskingInd) + 1 : max(whiskingInd) + 2 * (negShift + posShift + 1);
+        whiskingInd = max(rewardInd) + 1 : max(rewardInd) + 4 * (negShift + posShift + 1);
+        lickInd = max(whiskingInd) + 1 : max(whiskingInd) + 2 * 3 * (negShift + posShift + 1);
 
         indPartial{1} = touchInd;
         indPartial{2} = soundInd;
@@ -403,13 +554,13 @@ for mi = 1:length(mice)
 
         
         fitInd = cell(length(u.cellNums),1); % parameters surviving lasso in training set
-        fitCoeffs = nan(length(u.cellNums),6); % first column is dummy
+        fitCoeffs = nan(length(u.cellNums),6); % first column is a dummy
         
         fitResults = zeros(length(u.cellNums), 6);        
         devExplained = zeros(length(u.cellNums),1);
                 
         parfor cellnum = 1 : length(u.cellNums)
-%         for cellnum = 24
+%         for cellnum = 1
 %         ci = 0;
 %         for cellnum = 1:division:length(u.cellNums)
 %             ci = ci + 1;
