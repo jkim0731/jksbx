@@ -751,6 +751,8 @@ for mi = 1:length(mice)
             fitResults = zeros(length(u.cellNums), 6); % fitting result from test set
             devExplained = zeros(length(u.cellNums),1); % deviance explained from test set
             cvDev = zeros(length(u.cellNums),1); % deviance explained from training set
+            lambda = zeros(length(u.cellNums),1);
+            effectiveDF = zeros(length(u.cellNums),1);
                     
             parfor cellnum = 1 : length(u.cellNums)
     %         for cellnum = 1
@@ -785,6 +787,7 @@ for mi = 1:length(mice)
                 cv = cvglmnet(input, spk, 'poisson', glmnetOpt);
             %     [BFull, FitInfoFull] = lassoglm(trainingInputMat{planeInd}, spkTrain, 'poisson', 'Lambda', logspace(-4,2), 'CV', lambdaCV, 'Options', opt);
                 %% survived coefficients
+                lambda(cellnum) = cv.lambda_1se;
                 iLambda = find(cv.lambda == cv.lambda_1se);
                 fitCoeffs{cellnum} = [cv.glmnet_fit.a0(iLambda);cv.glmnet_fit.beta(:,iLambda)];
                 coeffInds = find(cv.glmnet_fit.beta(:,iLambda));                
@@ -829,7 +832,9 @@ for mi = 1:length(mice)
                 fullLogLikelihood = sum(log(poisspdf(spkTest',exp(model))));
                 saturatedLogLikelihood = sum(log(poisspdf(spkTest,spkTest)));
                 devianceFullNull = 2*(fullLogLikelihood - nullLogLikelihood);
-                dfFullNull = length(coeffInds);
+%                 dfFullNull = length(coeffInds);
+                dfFullNull = sum(cv.glmnet_fit.beta(:,iLambda).^2./(cv.glmnet_fit.beta(:,iLambda).^2 + cv.lambda_1se));
+                effectiveDF(cellnum) = dfFullNull;
                 devExplained(cellnum) = 1 - (saturatedLogLikelihood - fullLogLikelihood)/(saturatedLogLikelihood - nullLogLikelihood);
                 cvDev(cellnum) = cv.glmnet_fit.dev(iLambda);
                 if devianceFullNull > chi2inv(1-pThresholdNull, dfFullNull)
@@ -885,7 +890,7 @@ for mi = 1:length(mice)
 %             rtest(ri).devExplained = devExplained;
 %             rtest(ri).cvDev = cvDev;
             
-            save(savefnResult, 'fitInd', 'fitCoeffs', 'fitCoeffInds', 'fitResults', 'devExplained', 'cvDev', '*InputMat', 'indPartial', '*Group', '*Tn');
+            save(savefnResult, 'fitInd', 'fitCoeffs', 'fitCoeffInds', 'fitResults', 'devExplained', 'cvDev', '*InputMat', 'indPartial', '*Group', '*Tn', 'effectiveDF', 'lambda');
 
 %         end % of ri. random group selection index
         push_myphone(sprintf('GLM done for JK%03d S%02d', mouse, session))
