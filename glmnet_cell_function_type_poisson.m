@@ -86,10 +86,10 @@ sessions = {[4,19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]};
 % sessions = {[17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]}; 
 
 
-for mi = 1:length(mice)
-    % for mi = 1
+for mi = 1 : length(mice)
+%     for mi = 1
     for si = 1:length(sessions{mi})
-%     for si = 2
+%     for si = 1
 
         mouse = mice(mi);
         session = sessions{mi}(si);
@@ -100,7 +100,7 @@ for mi = 1:length(mice)
         pThresholdNull = 0.05;
         pThresholdPartial = 0.05;
         lickBoutInterval = 1; % licks separated by 1 s regarded as different licking bouts
-        numShuffle = 1000; % number of shuffling for testing r for ridge regression
+        numShuffle = 5000; % number of shuffling for testing r for ridge regression
 
         glmnetOpt = glmnetSet;
         glmnetOpt.standardize = 0;
@@ -753,7 +753,7 @@ for mi = 1:length(mice)
             cvDev = zeros(length(u.cellNums),1); % deviance explained from training set
             lambda = zeros(length(u.cellNums),1);
             effectiveDF = zeros(length(u.cellNums),1);
-                    
+
             parfor cellnum = 1 : length(u.cellNums)
     %         for cellnum = 1
     %         ci = 0;
@@ -829,7 +829,7 @@ for mi = 1:length(mice)
                 model = exp([ones(length(finiteInd),1),testInputMat{planeInd}(finiteInd,:)]*[cv.glmnet_fit.a0(iLambda); cv.glmnet_fit.beta(:,iLambda)]);
                 mu = mean(spkTest); % null poisson parameter
                 nullLogLikelihood = sum(log(poisspdf(spkTest,mu)));
-                fullLogLikelihood = sum(log(poisspdf(spkTest',exp(model))));
+                fullLogLikelihood = sum(log(poisspdf(spkTest',model)));
                 saturatedLogLikelihood = sum(log(poisspdf(spkTest,spkTest)));
                 devianceFullNull = 2*(fullLogLikelihood - nullLogLikelihood);
 %                 dfFullNull = length(coeffInds);
@@ -837,27 +837,29 @@ for mi = 1:length(mice)
                 effectiveDF(cellnum) = dfFullNull;
                 devExplained(cellnum) = 1 - (saturatedLogLikelihood - fullLogLikelihood)/(saturatedLogLikelihood - nullLogLikelihood);
                 cvDev(cellnum) = cv.glmnet_fit.dev(iLambda);
-                if devianceFullNull > chi2inv(1-pThresholdNull, dfFullNull)
-                    fitResult(1) = 1;
-%                     %% (2) test without each parameter (as a group)                
-%                     for pi = 1 : 5
-%                         if find(ismember(coeffInds, indPartial{pi}))
-%                             if all(ismember(coeffInds, indPartial{pi}))
-%                                 fitResult(pi+1) = 1;
-%                             else
-%                                 tempTrainInput = trainingInputMat{planeInd}(:,setdiff(coeffInds,indPartial{pi}));
-%                                 tempTestInput = testInputMat{planeInd}(finiteInd,setdiff(coeffInds,indPartial{pi}));
-%                                 cvPartial = cvglmnet(tempTrainInput(finiteInd,:), spk, 'poisson', partialGlmOpt);
-%                                 iLambda = find(cvPartial.lambda == cvPartial.lambda_1se);
-%                                 partialLogLikelihood = sum(log(poisspdf(spkTest', exp([ones(length(finiteInd),1), tempTestInput] * [cvPartial.glmnet_fit.a0(iLambda); cvPartial.glmnet_fit.beta(:,iLambda)]))));
-%                                 devianceFullPartial = 2*(fullLogLikelihood - partialLogLikelihood);
-%                                 dfFullPartial = dfFullNull - cvPartial.glmnet_fit.df(iLambda);
-%                                 if devianceFullPartial > chi2inv(1-pThresholdPartial, dfFullPartial)
-%                                     fitResult(pi+1) = 1;
-%                                 end
-%                             end
-%                         end
-%                     end
+                if dfFullNull > 0.001
+                    if devianceFullNull > chi2inv(1-pThresholdNull, dfFullNull)
+                        fitResult(1) = 1;
+    %                     %% (2) test without each parameter (as a group)                
+    %                     for pi = 1 : 5
+    %                         if find(ismember(coeffInds, indPartial{pi}))
+    %                             if all(ismember(coeffInds, indPartial{pi}))
+    %                                 fitResult(pi+1) = 1;
+    %                             else
+    %                                 tempTrainInput = trainingInputMat{planeInd}(:,setdiff(coeffInds,indPartial{pi}));
+    %                                 tempTestInput = testInputMat{planeInd}(finiteInd,setdiff(coeffInds,indPartial{pi}));
+    %                                 cvPartial = cvglmnet(tempTrainInput(finiteInd,:), spk, 'poisson', partialGlmOpt);
+    %                                 iLambda = find(cvPartial.lambda == cvPartial.lambda_1se);
+    %                                 partialLogLikelihood = sum(log(poisspdf(spkTest', exp([ones(length(finiteInd),1), tempTestInput] * [cvPartial.glmnet_fit.a0(iLambda); cvPartial.glmnet_fit.beta(:,iLambda)]))));
+    %                                 devianceFullPartial = 2*(fullLogLikelihood - partialLogLikelihood);
+    %                                 dfFullPartial = dfFullNull - cvPartial.glmnet_fit.df(iLambda);
+    %                                 if devianceFullPartial > chi2inv(1-pThresholdPartial, dfFullPartial)
+    %                                     fitResult(pi+1) = 1;
+    %                                 end
+    %                             end
+    %                         end
+    %                     end
+                    end
                 end
                 
                 
@@ -865,7 +867,9 @@ for mi = 1:length(mice)
                 
                 shuffleCorVals = zeros(numShuffle,1);
                 for iShuffle = 1 : numShuffle
-                    spkTestShuffled = spkTest(randperm(length(spkTest)));
+%                     spkTestShuffled = spkTest(randperm(length(spkTest)));
+                    spkTestShuffled = cell2mat(cellfun(@(x) [nan(1,posShift), x.spk(cind,randperm(size(x.spk,2))), nan(1,posShift)], u.trials(tind)','uniformoutput',false));
+                    spkTestShuffled = spkTestShuffled(finiteInd);                    
                     shuffleCorVals(iShuffle) = corr(model,spkTestShuffled');
                 end
                 
