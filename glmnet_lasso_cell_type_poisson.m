@@ -19,23 +19,18 @@
 %     
 %     % sensory variables: shift backward only
 %     % Same length as spk. 
-%     - tTouchCount: # of total touches within the frame (parameter)
-%     - pTouchCount: # of protraction touches within the frame (parameter)
-%     - rTouchCount: # of retraction touches within the frame (parameter)
+%     - pTouchCount: # of protraction touches within the frame (parameter).
+%     Retraction touches removed due to limited number of trials (most times none).
 %     
-%     - tTouchFrames: total touch frames (binary)
 %     - pTouchFrames: protraction touch frames (binary)
-%     - rTouchFrames: retraction touch frames (binary)
 %
-%     - tTouchDuration: total touch duration within each tpm frame (parameter, in ms)
 %     - pTouchDuration: protraction touch duration within each tpm frame (parameter, in ms)
-%     - rTouchDuration: retraction touch duration within each tpm frame (parameter, in ms)     
 
 %       Up to here, have one as all angles and add each angles (total number of predictors: 1 + length(angles)
 %
-%     - scPiezo: piezo sound cue onset (binary)
 %     - scPoleup: pole up sound cue onset (binary)
 %     - scPoledown: pole down sound cue onset (binary)
+%     Piezo sound cue removed because it is always at the first frame, and cannot be dealt with NaN paddings
 %     
 %
 %     - drinkOnset: drinking onset (binary)
@@ -71,20 +66,9 @@ baseDir = 'Y:\Whiskernas\JK\suite2p\';
 mice = [25,27,30,36,37,38,39,41,52,53,54,56];
 sessions = {[4,19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]}; 
 
-% myCluster = parcluster('local');
-% delete(myCluster.Jobs)
-% poolobj = gcp('nocreate'); % If no pool, do not create new one.
-% if isempty(poolobj)    
-%     parpool(34, 'SpmdEnabled', false);
-% elseif poolobj.NumWorkers < poolobj.Cluster.NumWorkers - 2
-%     nw = poolobj.Cluster.NumWorkers-2;
-%     delete(poolobj)
-%     parpool(nw, 'SpmdEnabled', false);
-% end
 %%
 % mice = [36,37,38,39,41,52,53,54,56];
 % sessions = {[17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]}; 
-
 
 for mi = 1 : length(mice)
 %     for mi = 1
@@ -100,15 +84,15 @@ for mi = 1 : length(mice)
         pThresholdNull = 0.05;
         pThresholdPartial = 0.05;
         lickBoutInterval = 1; % licks separated by 1 s regarded as different licking bouts
-        numShuffle = 5000; % number of shuffling for testing r for ridge regression
+        numShuffle = 1000; % number of shuffling for testing r for ridge regression
 
         glmnetOpt = glmnetSet;
         glmnetOpt.standardize = 1;
-        glmnetOpt.alpha = 0;
+        glmnetOpt.alpha = 0.95;
         
         partialGlmOpt = glmnetOpt;
         partialGlmOpt.alpha = 0;
-        % lambdaCV = 3; % cross-validation fold number
+        lambdaCV = 5; % cross-validation fold number
 
         dn = sprintf('%s%03d',baseDir,mouse);
         ufn = sprintf('UberJK%03dS%02d.mat', mouse, session);
@@ -120,12 +104,8 @@ for mi = 1 : length(mice)
         end
         frameRate = u.frameRate;
 
-        savefnResult = sprintf('glmResponseType_JK%03dS%02d_glmnet_m12',mouse, session); % m(n) meaining method(n)
-%         savefnPredictors = sprintf('glmResponseType_JK%03dS%02d_predictors_m7',mouse, session); % just for the input. Run once and use them for test
+        savefnResult = sprintf('glmResponseType_JK%03dS%02d_glmnet_m13',mouse, session); % m(n) meaining method(n)
 
-%         if exist(savefnPredictors, 'file')
-%             load(savefnPredictors)
-%         else
             %% pre-processing for lick onset and offset
             % regardless of licking alternating, each l and r has it's own lick onset and offset. both licking, just take the union
 
@@ -321,56 +301,27 @@ for mi = 1 : length(mice)
                     for plane = 1 : 4    
                 %     for plane = 1
                         pTouchCount = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(cellfun(@(y) y(1), x.protractionTouchChunks), [0, x.tpmTime{plane}]), nan(1,posShift)], u.trials(tind)','uniformoutput',false));
-%                         rTouchCount = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(cellfun(@(y) y(1), x.retractionTouchChunks), [0, x.tpmTime{plane}]), nan(1,posShift)], u.trials(tind)','uniformoutput',false));
-%                         tTouchCount = pTouchCount + rTouchCount;
-%                         pTouchCount(pTouchCount>0) = deal(1);
-% 
+
                         whiskerVideoFrameDuration = u.trials{tind(1)}.frameDuration * 1000; % in ms
-% 
-%                         pTouchDuration = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(cell2mat(cellfun(@(y) y', x.protractionTouchChunks, 'uniformoutput', false)) * whiskerVideoFrameDuration, [0, x.tpmTime{plane}]), nan(1,posShift)], ...
-%                             u.trials(tind)','uniformoutput',false));
-%                         rTouchDuration = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(cell2mat(cellfun(@(y) y', x.retractionTouchChunks, 'uniformoutput', false)) * whiskerVideoFrameDuration, [0, x.tpmTime{plane}]), nan(1,posShift)], ...
-%                             u.trials(tind)','uniformoutput',false));
-%                         tTouchDuration = pTouchDuration + rTouchDuration;
-% 
-%                         pTouchFrames = pTouchDuration;
-%                         pTouchFrames(pTouchDuration > 0) = 1;
-%                         rTouchFrames = rTouchDuration;
-%                         rTouchFrames(rTouchDuration > 0) = 1;
-%                         tTouchFrames = pTouchFrames + rTouchFrames;
+
+                        pTouchDuration = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(cell2mat(cellfun(@(y) y', x.protractionTouchChunks, 'uniformoutput', false)) * whiskerVideoFrameDuration, [0, x.tpmTime{plane}]), nan(1,posShift)], ...
+                            u.trials(tind)','uniformoutput',false));
+                        pTouchFrames = pTouchDuration;
+                        pTouchFrames(pTouchDuration > 0) = 1;
 
                         pTouchCountAngles = cell(length(angles)+1,1);
-%                         rTouchCountAngles = cell(length(angles)+1,1);
-%                         tTouchCountAngles = cell(length(angles)+1,1);
-%                         pTouchDurationAngles = cell(length(angles)+1,1);
-%                         rTouchDurationAngles = cell(length(angles)+1,1);
-%                         tTouchDurationAngles = cell(length(angles)+1,1);
-%                         pTouchFramesAngles = cell(length(angles)+1,1);
-%                         rTouchFramesAngles = cell(length(angles)+1,1);
-%                         tTouchFramesAngles = cell(length(angles)+1,1);
+                        pTouchDurationAngles = cell(length(angles)+1,1);
+                        pTouchFramesAngles = cell(length(angles)+1,1);
                         for ai = 1 : length(angles)
                             tempAngleBinary = cell2mat(cellfun(@(x) ones(length(x.tpmTime{plane}) + 2 * posShift, 1) * (x.angle == angles(ai)), u.trials(tind), 'uniformoutput', false));
                             pTouchCountAngles{ai} = pTouchCount .* tempAngleBinary';
-%                             rTouchCountAngles{ai} = rTouchCount .* tempAngleBinary';
-%                             tTouchCountAngles{ai} = tTouchCount .* tempAngleBinary';
-%                             pTouchDurationAngles{ai} = pTouchDuration .* tempAngleBinary';
-%                             rTouchDurationAngles{ai} = rTouchDuration .* tempAngleBinary';
-%                             tTouchDurationAngles{ai} = tTouchDuration .* tempAngleBinary';
-%                             pTouchFramesAngles{ai} = pTouchFrames .* tempAngleBinary';
-%                             rTouchFramesAngles{ai} = rTouchFrames .* tempAngleBinary';
-%                             tTouchFramesAngles{ai} = tTouchFrames .* tempAngleBinary';
+                            pTouchDurationAngles{ai} = pTouchDuration .* tempAngleBinary';
+                            pTouchFramesAngles{ai} = pTouchFrames .* tempAngleBinary';
                         end
                         pTouchCountAngles{end} = pTouchCount;
-%                         rTouchCountAngles{end} = rTouchCount;
-%                         tTouchCountAngles{end} = tTouchCount;
-%                         pTouchDurationAngles{end} = pTouchDuration;
-%                         rTouchDurationAngles{end} = rTouchDuration;
-%                         tTouchDurationAngles{end} = tTouchDuration;
-%                         pTouchFramesAngles{end} = pTouchFrames;
-%                         rTouchFramesAngles{end} = rTouchFrames;
-%                         tTouchFramesAngles{end} = tTouchFrames;
+                        pTouchDurationAngles{end} = pTouchDuration;
+                        pTouchFramesAngles{end} = pTouchFrames;
 
-%                         scPiezo = cell2mat(cellfun(@(x) [nan(1,posShift), 1, zeros(1,length(x.tpmTime{plane})-1), nan(1,posShift)], u.trials(tind)','uniformoutput',false));
                         scPoleup = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.poleUpOnsetTime, [0, x.tpmTime{plane}]), nan(1,posShift)], u.trials(tind)','uniformoutput',false));
                         scPoledown = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.poleDownOnsetTime, [0, x.tpmTime{plane}]), nan(1,posShift)], u.trials(tind)','uniformoutput',false));
                         drinkOnset = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.drinkingOnsetTime, [0, x.tpmTime{plane}]), nan(1,posShift)], u.trials(tind)','uniformoutput',false));
@@ -425,33 +376,19 @@ for mi = 1 : length(mice)
                         whiskingMidpoint = cell2mat(whiskingMidpointCell);    
 
                         %%
-%                         tTouchCountMat = zeros(length(tTouchCount), (posShift + 1) * (length(angles)+1));
                         pTouchCountMat = zeros(length(pTouchCount), (posShift + 1) * (length(angles)+1));
-%                         rTouchCountMat = zeros(length(rTouchCount), (posShift + 1) * (length(angles)+1));
-%                         tTouchFramesMat = zeros(length(tTouchFrames),(posShift + 1) * (length(angles)+1));
-%                         pTouchFramesMat = zeros(length(pTouchFrames),(posShift + 1) * (length(angles)+1));
-%                         rTouchFramesMat = zeros(length(rTouchFrames), (posShift + 1) * (length(angles)+1));
-%                         tTouchDurationMat = zeros(length(tTouchDuration), (posShift + 1) * (length(angles)+1));
-%                         pTouchDurationMat = zeros(length(pTouchDuration), (posShift + 1) * (length(angles)+1));
-%                         rTouchDurationMat = zeros(length(rTouchDuration), (posShift + 1) * (length(angles)+1));
-% 
-%                         scPiezoMat = zeros(length(scPiezo), posShift + 1);
+                        pTouchFramesMat = zeros(length(pTouchFrames),(posShift + 1) * (length(angles)+1));
+                        pTouchDurationMat = zeros(length(pTouchDuration), (posShift + 1) * (length(angles)+1));
+
                         scPoleUpMat = zeros(length(scPoleup), posShift + 1);
                         scPoleDownMat = zeros(length(scPoledown), posShift + 1);
                         drinkOnsetMat = zeros(length(drinkOnset), posShift + 1);
                         for i = 1 : posShift + 1
                             for ai = 1 : length(angles) + 1
-%                                 tTouchCountMat(:,(i-1)*(length(angles)+1) + ai) = circshift(tTouchCountAngles{ai}, [0 i-1])';
                                 pTouchCountMat(:,(i-1)*(length(angles)+1) + ai) = circshift(pTouchCountAngles{ai}, [0 i-1])';
-%                                 rTouchCountMat(:,(i-1)*(length(angles)+1) + ai) = circshift(rTouchCountAngles{ai}, [0 i-1])';
-%                                 tTouchFramesMat(:,(i-1)*(length(angles)+1) + ai) = circshift(tTouchFramesAngles{ai}, [0 i-1])';
-%                                 pTouchFramesMat(:,(i-1)*(length(angles)+1) + ai) = circshift(pTouchFramesAngles{ai}, [0 i-1])';
-%                                 rTouchFramesMat(:,(i-1)*(length(angles)+1) + ai) = circshift(rTouchFramesAngles{ai}, [0 i-1])';
-%                                 tTouchDurationMat(:,(i-1)*(length(angles)+1) + ai) = circshift(tTouchDurationAngles{ai}, [0 i-1])';
-%                                 pTouchDurationMat(:,(i-1)*(length(angles)+1) + ai) = circshift(pTouchDurationAngles{ai}, [0 i-1])';
-%                                 rTouchDurationMat(:,(i-1)*(length(angles)+1) + ai) = circshift(rTouchDurationAngles{ai}, [0 i-1])';
+                                pTouchFramesMat(:,(i-1)*(length(angles)+1) + ai) = circshift(pTouchFramesAngles{ai}, [0 i-1])';
+                                pTouchDurationMat(:,(i-1)*(length(angles)+1) + ai) = circshift(pTouchDurationAngles{ai}, [0 i-1])';
                             end
-%                             scPiezoMat(:,i) = circshift(scPiezo, [0 i-1])';
                             scPoleUpMat(:,i) = circshift(scPoleup, [0 i-1])';
                             scPoleDownMat(:,i) = circshift(scPoledown, [0 i-1])';
                             drinkOnsetMat(:,i) = circshift(drinkOnset, [0 i-1])';
@@ -499,17 +436,16 @@ for mi = 1 : length(mice)
                             firstRightLickMat(:,i) = circshift(firstRightLick, [0 -negShift + i - 1])';
                             lastRightLickMat(:,i) = circshift(lastRightLick, [0 -negShift + i - 1])';
                         end
-%                         touchMat = [tTouchCountMat, pTouchCountMat, rTouchCountMat, tTouchFramesMat, pTouchFramesMat, rTouchFramesMat, tTouchDurationMat, pTouchDurationMat, rTouchDurationMat];
-                        touchMat = [pTouchCountMat];                        
+                        touchMat = [pTouchCountMat, pTouchFramesMat, pTouchDurationMat];                        
                         soundMat = [scPoleUpMat, scPoleDownMat];
                         drinkMat = drinkOnsetMat;
                         whiskingMat = [whiskingOnsetMat, whiskingAmpMat, whiskingOAMat, whiskingMidpointMat];
                         lickingMat = [bLickMat, lLickMat, rLickMat, bLickOnsetMat, lLickOnsetMat, rLickOnsetMat, bLickOffsetMat, lLickOffsetMat, rLickOffsetMat, ...
                                 firstLickMat, lastLickMat, firstLeftLickMat, lastLeftLickMat, firstRightLickMat, lastRightLickMat];
+                        trainingInputMat{(cgi-1)*4 + plane} = [touchMat, soundMat, drinkMat, whiskingMat, lickingMat];
 %                         tempIM = [touchMat, soundMat, drinkMat, whiskingMat, lickingMat];
-                        tempIM = touchMat;
-                        trainingInputMat{(cgi-1)*4 + plane} = (tempIM - ones(size(tempIM,1),1)*min(tempIM)) ./ (ones(size(tempIM,1),1)*(max(tempIM) - min(tempIM)));
-                        
+%                         tempIM = touchMat;
+%                         trainingInputMat{(cgi-1)*4 + plane} = (tempIM - ones(size(tempIM,1),1)*min(tempIM)) ./ (ones(size(tempIM,1),1)*(max(tempIM) - min(tempIM)));                        
                     end
                 end
 
@@ -523,56 +459,24 @@ for mi = 1 : length(mice)
                     for plane = 1 : 4    
                 %     for plane = 1
                         pTouchCount = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(cellfun(@(y) y(1), x.protractionTouchChunks), [0, x.tpmTime{plane}]), nan(1,posShift)], u.trials(tind)','uniformoutput',false));
-%                         rTouchCount = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(cellfun(@(y) y(1), x.retractionTouchChunks), [0, x.tpmTime{plane}]), nan(1,posShift)], u.trials(tind)','uniformoutput',false));
-%                         tTouchCount = pTouchCount + rTouchCount;
-%                         pTouchCount(pTouchCount>0) = deal(1);
-% 
-%                         whiskerVideoFrameDuration = u.trials{tind(1)}.frameDuration * 1000; % in ms
-% 
-%                         pTouchDuration = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(cell2mat(cellfun(@(y) y', x.protractionTouchChunks, 'uniformoutput', false)) * whiskerVideoFrameDuration, [0, x.tpmTime{plane}]), nan(1,posShift)], ...
-%                             u.trials(tind)','uniformoutput',false));
-%                         rTouchDuration = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(cell2mat(cellfun(@(y) y', x.retractionTouchChunks, 'uniformoutput', false)) * whiskerVideoFrameDuration, [0, x.tpmTime{plane}]), nan(1,posShift)], ...
-%                             u.trials(tind)','uniformoutput',false));
-%                         tTouchDuration = pTouchDuration + rTouchDuration;
-% 
-%                         pTouchFrames = pTouchDuration;
-%                         pTouchFrames(pTouchDuration > 0) = 1;
-%                         rTouchFrames = rTouchDuration;
-%                         rTouchFrames(rTouchDuration > 0) = 1;
-%                         tTouchFrames = pTouchFrames + rTouchFrames;
-% 
-%                         pTouchCountAngles = cell(length(angles)+1,1);
-%                         rTouchCountAngles = cell(length(angles)+1,1);
-%                         tTouchCountAngles = cell(length(angles)+1,1);
-%                         pTouchDurationAngles = cell(length(angles)+1,1);
-%                         rTouchDurationAngles = cell(length(angles)+1,1);
-%                         tTouchDurationAngles = cell(length(angles)+1,1);
-%                         pTouchFramesAngles = cell(length(angles)+1,1);
-%                         rTouchFramesAngles = cell(length(angles)+1,1);
-%                         tTouchFramesAngles = cell(length(angles)+1,1);
+                        pTouchDuration = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(cell2mat(cellfun(@(y) y', x.protractionTouchChunks, 'uniformoutput', false)) * whiskerVideoFrameDuration, [0, x.tpmTime{plane}]), nan(1,posShift)], ...
+                            u.trials(tind)','uniformoutput',false));
+                        pTouchFrames = pTouchDuration;
+                        pTouchFrames(pTouchDuration > 0) = 1;
+
+                        pTouchCountAngles = cell(length(angles)+1,1);
+                        pTouchDurationAngles = cell(length(angles)+1,1);
+                        pTouchFramesAngles = cell(length(angles)+1,1);
                         for ai = 1 : length(angles)
                             tempAngleBinary = cell2mat(cellfun(@(x) ones(length(x.tpmTime{plane}) + 2 * posShift, 1) * (x.angle == angles(ai)), u.trials(tind), 'uniformoutput', false));
                             pTouchCountAngles{ai} = pTouchCount .* tempAngleBinary';
-%                             rTouchCountAngles{ai} = rTouchCount .* tempAngleBinary';
-%                             tTouchCountAngles{ai} = tTouchCount .* tempAngleBinary';
-%                             pTouchDurationAngles{ai} = pTouchDuration .* tempAngleBinary';
-%                             rTouchDurationAngles{ai} = rTouchDuration .* tempAngleBinary';
-%                             tTouchDurationAngles{ai} = tTouchDuration .* tempAngleBinary';
-%                             pTouchFramesAngles{ai} = pTouchFrames .* tempAngleBinary';
-%                             rTouchFramesAngles{ai} = rTouchFrames .* tempAngleBinary';
-%                             tTouchFramesAngles{ai} = tTouchFrames .* tempAngleBinary';
+                            pTouchDurationAngles{ai} = pTouchDuration .* tempAngleBinary';
+                            pTouchFramesAngles{ai} = pTouchFrames .* tempAngleBinary';
                         end
                         pTouchCountAngles{end} = pTouchCount;
-%                         rTouchCountAngles{end} = rTouchCount;
-%                         tTouchCountAngles{end} = tTouchCount;
-%                         pTouchDurationAngles{end} = pTouchDuration;
-%                         rTouchDurationAngles{end} = rTouchDuration;
-%                         tTouchDurationAngles{end} = tTouchDuration;
-%                         pTouchFramesAngles{end} = pTouchFrames;
-%                         rTouchFramesAngles{end} = rTouchFrames;
-%                         tTouchFramesAngles{end} = tTouchFrames;
+                        pTouchDurationAngles{end} = pTouchDuration;
+                        pTouchFramesAngles{end} = pTouchFrames;
 
-%                         scPiezo = cell2mat(cellfun(@(x) [nan(1,posShift), 1, zeros(1,length(x.tpmTime{plane})-1), nan(1,posShift)], u.trials(tind)','uniformoutput',false));
                         scPoleup = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.poleUpOnsetTime, [0, x.tpmTime{plane}]), nan(1,posShift)], u.trials(tind)','uniformoutput',false));
                         scPoledown = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.poleDownOnsetTime, [0, x.tpmTime{plane}]), nan(1,posShift)], u.trials(tind)','uniformoutput',false));
                         drinkOnset = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.drinkingOnsetTime, [0, x.tpmTime{plane}]), nan(1,posShift)], u.trials(tind)','uniformoutput',false));
@@ -627,33 +531,19 @@ for mi = 1 : length(mice)
                         whiskingMidpoint = cell2mat(whiskingMidpointCell);
 
                         %%
-%                         tTouchCountMat = zeros(length(tTouchCount), (posShift + 1) * (length(angles)+1));
                         pTouchCountMat = zeros(length(pTouchCount), (posShift + 1) * (length(angles)+1));
-%                         rTouchCountMat = zeros(length(rTouchCount), (posShift + 1) * (length(angles)+1));
-%                         tTouchFramesMat = zeros(length(tTouchFrames),(posShift + 1) * (length(angles)+1));
-%                         pTouchFramesMat = zeros(length(pTouchFrames),(posShift + 1) * (length(angles)+1));
-%                         rTouchFramesMat = zeros(length(rTouchFrames), (posShift + 1) * (length(angles)+1));
-%                         tTouchDurationMat = zeros(length(tTouchDuration), (posShift + 1) * (length(angles)+1));
-%                         pTouchDurationMat = zeros(length(pTouchDuration), (posShift + 1) * (length(angles)+1));
-%                         rTouchDurationMat = zeros(length(rTouchDuration), (posShift + 1) * (length(angles)+1));
+                        pTouchFramesMat = zeros(length(pTouchFrames),(posShift + 1) * (length(angles)+1));
+                        pTouchDurationMat = zeros(length(pTouchDuration), (posShift + 1) * (length(angles)+1));
 
-%                         scPiezoMat = zeros(length(scPiezo), posShift + 1);
                         scPoleUpMat = zeros(length(scPoleup), posShift + 1);
                         scPoleDownMat = zeros(length(scPoledown), posShift + 1);
                         drinkOnsetMat = zeros(length(drinkOnset), posShift + 1);
                         for i = 1 : posShift + 1
                             for ai = 1 : length(angles) + 1
-%                                 tTouchCountMat(:,(i-1)*(length(angles)+1) + ai) = circshift(tTouchCountAngles{ai}, [0 i-1])';
                                 pTouchCountMat(:,(i-1)*(length(angles)+1) + ai) = circshift(pTouchCountAngles{ai}, [0 i-1])';
-%                                 rTouchCountMat(:,(i-1)*(length(angles)+1) + ai) = circshift(rTouchCountAngles{ai}, [0 i-1])';
-%                                 tTouchFramesMat(:,(i-1)*(length(angles)+1) + ai) = circshift(tTouchFramesAngles{ai}, [0 i-1])';
-%                                 pTouchFramesMat(:,(i-1)*(length(angles)+1) + ai) = circshift(pTouchFramesAngles{ai}, [0 i-1])';
-%                                 rTouchFramesMat(:,(i-1)*(length(angles)+1) + ai) = circshift(rTouchFramesAngles{ai}, [0 i-1])';
-%                                 tTouchDurationMat(:,(i-1)*(length(angles)+1) + ai) = circshift(tTouchDurationAngles{ai}, [0 i-1])';
-%                                 pTouchDurationMat(:,(i-1)*(length(angles)+1) + ai) = circshift(pTouchDurationAngles{ai}, [0 i-1])';
-%                                 rTouchDurationMat(:,(i-1)*(length(angles)+1) + ai) = circshift(rTouchDurationAngles{ai}, [0 i-1])';
+                                pTouchFramesMat(:,(i-1)*(length(angles)+1) + ai) = circshift(pTouchFramesAngles{ai}, [0 i-1])';
+                                pTouchDurationMat(:,(i-1)*(length(angles)+1) + ai) = circshift(pTouchDurationAngles{ai}, [0 i-1])';
                             end
-%                             scPiezoMat(:,i) = circshift(scPiezo, [0 i-1])';
                             scPoleUpMat(:,i) = circshift(scPoleup, [0 i-1])';
                             scPoleDownMat(:,i) = circshift(scPoledown, [0 i-1])';
                             drinkOnsetMat(:,i) = circshift(drinkOnset, [0 i-1])';
@@ -701,16 +591,17 @@ for mi = 1 : length(mice)
                             firstRightLickMat(:,i) = circshift(firstRightLick, [0 -negShift + i - 1])';
                             lastRightLickMat(:,i) = circshift(lastRightLick, [0 -negShift + i - 1])';
                         end
-%                         touchMat = [tTouchCountMat, pTouchCountMat, rTouchCountMat, tTouchFramesMat, pTouchFramesMat, rTouchFramesMat, tTouchDurationMat, pTouchDurationMat, rTouchDurationMat];
-                        touchMat = [pTouchCountMat];
+%                         touchMat = [pTouchCountMat];
+                        touchMat = [pTouchCountMat, pTouchFramesMat, pTouchDurationMat];
                         soundMat = [scPoleUpMat, scPoleDownMat];
                         drinkMat = drinkOnsetMat;
                         whiskingMat = [whiskingOnsetMat, whiskingAmpMat, whiskingOAMat, whiskingMidpointMat];
                         lickingMat = [bLickMat, lLickMat, rLickMat, bLickOnsetMat, lLickOnsetMat, rLickOnsetMat, bLickOffsetMat, lLickOffsetMat, rLickOffsetMat, ...
                                 firstLickMat, lastLickMat, firstLeftLickMat, lastLeftLickMat, firstRightLickMat, lastRightLickMat];
+                        testInputMat{(cgi-1)*4 + plane} = [touchMat, soundMat, drinkMat, whiskingMat, lickingMat];
 %                         tempIM = [touchMat, soundMat, drinkMat, whiskingMat, lickingMat];
-                        tempIM = touchMat;
-                        testInputMat{(cgi-1)*4 + plane} = (tempIM - ones(size(tempIM,1),1)*min(tempIM)) ./ (ones(size(tempIM,1),1)*(max(tempIM) - min(tempIM)));
+%                         tempIM = touchMat;
+%                         testInputMat{(cgi-1)*4 + plane} = (tempIM - ones(size(tempIM,1),1)*min(tempIM)) ./ (ones(size(tempIM,1),1)*(max(tempIM) - min(tempIM)));
 
                     end
                 end
@@ -727,10 +618,6 @@ for mi = 1 : length(mice)
                 indPartial{3} = rewardInd;
                 indPartial{4} = whiskingInd;
                 indPartial{5} = lickInd;
-%         end
-%         if ~exist(savefnPredictors, 'file')                
-%             save(savefnPredictors, '*InputMat', 'indPartial', '*Group', '*Tn');
-%         end
         %%
 %             rtest(ri).fitInd = cell(length(u.cellNums),1); % parameters surviving lasso in training set
 %             rtest(ri).fitCoeffs = cell(length(u.cellNums),1); % intercept + coefficients of the parameters in training set
@@ -749,10 +636,10 @@ for mi = 1 : length(mice)
             fitCoeffInds = nan(length(u.cellNums),6); % first column is a dummy
             
             fitResults = zeros(length(u.cellNums), 6); % fitting result from test set
-            devExplained = zeros(length(u.cellNums),1); % deviance explained from test set
-            cvDev = zeros(length(u.cellNums),1); % deviance explained from training set
-            lambda = zeros(length(u.cellNums),1);
-            effectiveDF = zeros(length(u.cellNums),1);
+            fitDevExplained = zeros(length(u.cellNums),1); % deviance explained from test set
+            fitCvDev = zeros(length(u.cellNums),1); % deviance explained from training set
+            fitLambda = zeros(length(u.cellNums),1);
+            fitDF = zeros(length(u.cellNums),1);
 
             parfor cellnum = 1 : length(u.cellNums)
     %         for cellnum = 1
@@ -764,7 +651,6 @@ for mi = 1 : length(mice)
                 fitCoeffInd = zeros(1,6);
                 
 %                 fprintf('Mouse JK%03d session S%02d Loop %d: Running cell %d/%d \n', mouse, session, ri,cellnum, length(u.cellNums));
-
                 fprintf('Mouse JK%03d session S%02d: Running cell %d/%d \n', mouse, session,cellnum, length(u.cellNums));
                 
                 cID = u.cellNums(cellnum);
@@ -772,22 +658,20 @@ for mi = 1 : length(mice)
                 % find out trial indices for this specific cell
                 tindcell = find(cellfun(@(x) ismember(cID, x.neuindSession), u.trials));
     
-                tind = intersect(tindcell, trainingInd);
+                iTrain = intersect(tindcell, trainingInd);
                 % find out row number of this cell
-                cind = find(u.trials{tind(1)}.neuindSession == cID);
+                cind = find(u.trials{iTrain(1)}.neuindSession == cID);
                 planeInd = floor(cID/1000);
     
-                spkTrain = cell2mat(cellfun(@(x) [nan(1,posShift), x.spk(cind,:), nan(1,posShift)], u.trials(tind)','uniformoutput',false));                
+                spkTrain = cell2mat(cellfun(@(x) [nan(1,posShift), x.spk(cind,:), nan(1,posShift)], u.trials(iTrain)','uniformoutput',false));                
                 %%
                 finiteInd = intersect(find(isfinite(spkTrain)), find(isfinite(sum(trainingInputMat{planeInd},2))));
                 input = trainingInputMat{planeInd}(finiteInd,:);
                 spk = spkTrain(finiteInd)';
-%                 spk = (spk - min(spk)) / (max(spk) - min(spk)); % min-max normalization
     
-                cv = cvglmnet(input, spk, 'poisson', glmnetOpt);
-            %     [BFull, FitInfoFull] = lassoglm(trainingInputMat{planeInd}, spkTrain, 'poisson', 'Lambda', logspace(-4,2), 'CV', lambdaCV, 'Options', opt);
+                cv = cvglmnet(input, spk, 'poisson', glmnetOpt, [], lambdaCV);
                 %% survived coefficients
-                lambda(cellnum) = cv.lambda_1se;
+                fitLambda(cellnum) = cv.lambda_1se;
                 iLambda = find(cv.lambda == cv.lambda_1se);
                 fitCoeffs{cellnum} = [cv.glmnet_fit.a0(iLambda);cv.glmnet_fit.beta(:,iLambda)];
                 coeffInds = find(cv.glmnet_fit.beta(:,iLambda));                
@@ -800,29 +684,22 @@ for mi = 1 : length(mice)
                         fitCoeffInd(i + 1) = 0;
                     end
                 end
-                    
-            % %     find(ismember(touchInd, mincoefs))
-            % %     find(ismember(soundInd, mincoefs))
-            % %     find(ismember(rewardInd, mincoefs))
-            % %     find(ismember(whiskingInd, mincoefs))
-            % %     find(ismember(lickInd, mincoefs))
-    
+
                 %% test
                 cID = u.cellNums(cellnum);
     
                 % find out trial indices for this specific cell
                 tindcell = find(cellfun(@(x) ismember(cID, x.neuindSession), u.trials));
     
-                tind = intersect(tindcell, testInd);
+                iTest = intersect(tindcell, testInd);
                 % find out row number of this cell
-                cind = find(u.trials{tind(1)}.neuindSession == cID);
+                cind = find(u.trials{iTest(1)}.neuindSession == cID);
                 planeInd = floor(cID/1000);
     
-                spkTest = cell2mat(cellfun(@(x) [nan(1,posShift), x.spk(cind,:), nan(1,posShift)], u.trials(tind)','uniformoutput',false));
+                spkTest = cell2mat(cellfun(@(x) [nan(1,posShift), x.spk(cind,:), nan(1,posShift)], u.trials(iTest)','uniformoutput',false));
                 spkTest = spkTest';
                 finiteInd = intersect(find(isfinite(spkTest)), find(isfinite(sum(testInputMat{planeInd},2))));
                 spkTest = spkTest(finiteInd)';
-%                 spkTest = (spkTest - min(spkTest)) / (max(spkTest) - min(spkTest));
                 %% (1) if the full model is significant
                 fitResult = zeros(1,6);
     
@@ -832,35 +709,35 @@ for mi = 1 : length(mice)
                 fullLogLikelihood = sum(log(poisspdf(spkTest',model)));
                 saturatedLogLikelihood = sum(log(poisspdf(spkTest,spkTest)));
                 devianceFullNull = 2*(fullLogLikelihood - nullLogLikelihood);
-%                 dfFullNull = length(coeffInds);
-                dfFullNull = sum(cv.glmnet_fit.beta(:,iLambda).^2./(cv.glmnet_fit.beta(:,iLambda).^2 + cv.lambda_1se));
-                effectiveDF(cellnum) = dfFullNull;
-                devExplained(cellnum) = 1 - (saturatedLogLikelihood - fullLogLikelihood)/(saturatedLogLikelihood - nullLogLikelihood);
-                cvDev(cellnum) = cv.glmnet_fit.dev(iLambda);
-                if dfFullNull > 0.001
-                    if devianceFullNull > chi2inv(1-pThresholdNull, dfFullNull)
-                        fitResult(1) = 1;
-    %                     %% (2) test without each parameter (as a group)                
-    %                     for pi = 1 : 5
-    %                         if find(ismember(coeffInds, indPartial{pi}))
-    %                             if all(ismember(coeffInds, indPartial{pi}))
-    %                                 fitResult(pi+1) = 1;
-    %                             else
-    %                                 tempTrainInput = trainingInputMat{planeInd}(:,setdiff(coeffInds,indPartial{pi}));
-    %                                 tempTestInput = testInputMat{planeInd}(finiteInd,setdiff(coeffInds,indPartial{pi}));
-    %                                 cvPartial = cvglmnet(tempTrainInput(finiteInd,:), spk, 'poisson', partialGlmOpt);
-    %                                 iLambda = find(cvPartial.lambda == cvPartial.lambda_1se);
-    %                                 partialLogLikelihood = sum(log(poisspdf(spkTest', exp([ones(length(finiteInd),1), tempTestInput] * [cvPartial.glmnet_fit.a0(iLambda); cvPartial.glmnet_fit.beta(:,iLambda)]))));
-    %                                 devianceFullPartial = 2*(fullLogLikelihood - partialLogLikelihood);
-    %                                 dfFullPartial = dfFullNull - cvPartial.glmnet_fit.df(iLambda);
-    %                                 if devianceFullPartial > chi2inv(1-pThresholdPartial, dfFullPartial)
-    %                                     fitResult(pi+1) = 1;
-    %                                 end
-    %                             end
-    %                         end
-    %                     end
+                dfFullNull = length(coeffInds);                
+                fitDF(cellnum) = dfFullNull;
+                fitDevExplained(cellnum) = 1 - (saturatedLogLikelihood - fullLogLikelihood)/(saturatedLogLikelihood - nullLogLikelihood);
+                fitCvDev(cellnum) = cv.glmnet_fit.dev(iLambda);
+
+                if devianceFullNull > chi2inv(1-pThresholdNull, dfFullNull)
+                    fitResult(1) = 1;
+                    %% (2) test without each parameter (as a group)                
+                    for pi = 1 : 5
+                        if find(ismember(coeffInds, indPartial{pi}))
+                            if all(ismember(coeffInds, indPartial{pi}))
+                                fitResult(pi+1) = 1;
+                                break
+                            else
+                                tempTrainInput = trainingInputMat{planeInd}(:,setdiff(coeffInds,indPartial{pi}));
+                                tempTestInput = testInputMat{planeInd}(finiteInd,setdiff(coeffInds,indPartial{pi}));
+                                cvPartial = cvglmnet(tempTrainInput(finiteInd,:), spk, 'poisson', partialGlmOpt, [], lambdaCV);
+                                iLambda = find(cvPartial.lambda == cvPartial.lambda_1se);
+                                partialLogLikelihood = sum(log(poisspdf(spkTest', exp([ones(length(finiteInd),1), tempTestInput] * [cvPartial.glmnet_fit.a0(iLambda); cvPartial.glmnet_fit.beta(:,iLambda)]))));
+                                devianceFullPartial = 2*(fullLogLikelihood - partialLogLikelihood);
+                                dfFullPartial = dfFullNull - cvPartial.glmnet_fit.df(iLambda);
+                                if devianceFullPartial > chi2inv(1-pThresholdPartial, dfFullPartial)
+                                    fitResult(pi+1) = 1;
+                                end
+                            end
+                        end
                     end
                 end
+
                 
                 
                 corVal = corr(model, spkTest');
@@ -868,7 +745,7 @@ for mi = 1 : length(mice)
                 shuffleCorVals = zeros(numShuffle,1);
                 for iShuffle = 1 : numShuffle
 %                     spkTestShuffled = spkTest(randperm(length(spkTest)));
-                    spkTestShuffled = cell2mat(cellfun(@(x) [nan(1,posShift), x.spk(cind,randperm(size(x.spk,2))), nan(1,posShift)], u.trials(tind)','uniformoutput',false));
+                    spkTestShuffled = cell2mat(cellfun(@(x) [nan(1,posShift), x.spk(cind,randperm(size(x.spk,2))), nan(1,posShift)], u.trials(iTrain)','uniformoutput',false));
                     spkTestShuffled = spkTestShuffled(finiteInd);                    
                     shuffleCorVals(iShuffle) = corr(model,spkTestShuffled');
                 end
@@ -894,7 +771,7 @@ for mi = 1 : length(mice)
 %             rtest(ri).devExplained = devExplained;
 %             rtest(ri).cvDev = cvDev;
             
-            save(savefnResult, 'fitInd', 'fitCoeffs', 'fitCoeffInds', 'fitResults', 'devExplained', 'cvDev', '*InputMat', 'indPartial', '*Group', '*Tn', 'effectiveDF', 'lambda');
+            save(savefnResult, 'fit*', '*InputMat', 'indPartial', '*Group', '*Tn', 'lambda');
 
 %         end % of ri. random group selection index
         push_myphone(sprintf('GLM done for JK%03d S%02d', mouse, session))
