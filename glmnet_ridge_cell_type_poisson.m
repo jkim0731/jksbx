@@ -87,7 +87,7 @@ for mi = 1 : length(mice)
         numShuffle = 1000; % number of shuffling for testing r for ridge regression
 
         glmnetOpt = glmnetSet;
-        glmnetOpt.standardize = 1;
+        glmnetOpt.standardize = 0; % do the standardization at the level of predictors, including both training and test
         glmnetOpt.alpha = 0;
         
         partialGlmOpt = glmnetOpt;
@@ -291,15 +291,28 @@ for mi = 1 : length(mice)
 
                 trainingTn = setdiff(u.trialNums, testTn);
                 [~,trainingInd] = ismember(trainingTn, u.trialNums);
-                %% design matrix for training lambda
+                
+                %% Design matrices
+                % standardized using all the trials
+                allPredictors = cell(8,1);
+                allPredictorsMean = cell(8,1);
+                allPredictorsStd = cell(8,1);
+                nani = cell(8,1);
+                trainingPredictorInd = cell(8,1);
+                testPredictorInd = cell(8,1);
                 trainingInputMat = cell(8,1);
+                testInputMat = cell(8,1);
+                
                 for cgi = 1:2 % cell group index
                 % for cgi = 1
                     tindcell = find(cellfun(@(x) ismember(1001+(cgi-1)*4000, x.neuindSession), u.trials));
 
-                    tind = intersect(tindcell, trainingInd);
+                    tind = tindcell;
                     for plane = 1 : 4    
                 %     for plane = 1
+                        trainingPredictorInd{(cgi-1)*4 + plane} = cell2mat(cellfun(@(x) (ones(1,length(x.tpmTime{plane})+posShift*2)) * ismember(x.trialNum, trainingTn), u.trials(tind)','uniformoutput',false));
+                        testPredictorInd{(cgi-1)*4 + plane} = cell2mat(cellfun(@(x) (ones(1,length(x.tpmTime{plane})+posShift*2)) * ismember(x.trialNum, testTn), u.trials(tind)','uniformoutput',false));
+                        
                         pTouchCount = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(cellfun(@(y) y(1), x.protractionTouchChunks), [0, x.tpmTime{plane}]), nan(1,posShift)], u.trials(tind)','uniformoutput',false));
 
                         whiskerVideoFrameDuration = u.trials{tind(1)}.frameDuration * 1000; % in ms
@@ -367,8 +380,8 @@ for mi = 1 : length(mice)
                                 tempMid(i) = mean(midpoint(startInd:endInd));
                             end
                             tempMid(isnan(tempMid)) = deal(mode(tempMid(isfinite(tempMid))));
-                            whiskingAmpCell{ti} = [nan(1,posShift), tempAmp, nan(1,posShift)];        
-                            whiskingMidpointCell{ti} = [nan(1,posShift), tempMid, nan(1,posShift)];    
+                            whiskingAmpCell{ti} = [nan(1,posShift), tempAmp, nan(1,posShift)];
+                            whiskingMidpointCell{ti} = [nan(1,posShift), tempMid, nan(1,posShift)];
                         end
                         whiskingOnset = cell2mat(whiskingOnsetCell);
                         whiskingAmp = cell2mat(whiskingAmpCell);
@@ -443,168 +456,14 @@ for mi = 1 : length(mice)
                         whiskingMat = [whiskingOnsetMat, whiskingAmpMat, whiskingOAMat, whiskingMidpointMat];
                         lickingMat = [bLickMat, lLickMat, rLickMat, bLickOnsetMat, lLickOnsetMat, rLickOnsetMat, bLickOffsetMat, lLickOffsetMat, rLickOffsetMat, ...
                                 firstLickMat, lastLickMat, firstLeftLickMat, lastLeftLickMat, firstRightLickMat, lastRightLickMat];
-                        trainingInputMat{(cgi-1)*4 + plane} = [touchMat, soundMat, drinkMat, whiskingMat, lickingMat];
-%                         tempIM = [touchMat, soundMat, drinkMat, whiskingMat, lickingMat];
-%                         tempIM = touchMat;
-%                         trainingInputMat{(cgi-1)*4 + plane} = (tempIM - ones(size(tempIM,1),1)*min(tempIM)) ./ (ones(size(tempIM,1),1)*(max(tempIM) - min(tempIM)));                        
-                    end
-                end
-
-                %% design matrix for test 
-                testInputMat = cell(8,1);
-                for cgi = 1:2
-                % for cgi = 1
-                    tindcell = find(cellfun(@(x) ismember(1001+(cgi-1)*4000, x.neuindSession), u.trials));
-
-                    tind = intersect(tindcell, testInd);
-                    for plane = 1 : 4    
-                %     for plane = 1
-                        pTouchCount = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(cellfun(@(y) y(1), x.protractionTouchChunks), [0, x.tpmTime{plane}]), nan(1,posShift)], u.trials(tind)','uniformoutput',false));
-                        pTouchDuration = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(cell2mat(cellfun(@(y) y', x.protractionTouchChunks, 'uniformoutput', false)) * whiskerVideoFrameDuration, [0, x.tpmTime{plane}]), nan(1,posShift)], ...
-                            u.trials(tind)','uniformoutput',false));
-                        pTouchFrames = pTouchDuration;
-                        pTouchFrames(pTouchDuration > 0) = 1;
-
-                        pTouchCountAngles = cell(length(angles)+1,1);
-                        pTouchDurationAngles = cell(length(angles)+1,1);
-                        pTouchFramesAngles = cell(length(angles)+1,1);
-                        for ai = 1 : length(angles)
-                            tempAngleBinary = cell2mat(cellfun(@(x) ones(length(x.tpmTime{plane}) + 2 * posShift, 1) * (x.angle == angles(ai)), u.trials(tind), 'uniformoutput', false));
-                            pTouchCountAngles{ai} = pTouchCount .* tempAngleBinary';
-                            pTouchDurationAngles{ai} = pTouchDuration .* tempAngleBinary';
-                            pTouchFramesAngles{ai} = pTouchFrames .* tempAngleBinary';
-                        end
-                        pTouchCountAngles{end} = pTouchCount;
-                        pTouchDurationAngles{end} = pTouchDuration;
-                        pTouchFramesAngles{end} = pTouchFrames;
-
-                        scPoleup = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.poleUpOnsetTime, [0, x.tpmTime{plane}]), nan(1,posShift)], u.trials(tind)','uniformoutput',false));
-                        scPoledown = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.poleDownOnsetTime, [0, x.tpmTime{plane}]), nan(1,posShift)], u.trials(tind)','uniformoutput',false));
-                        drinkOnset = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.drinkingOnsetTime, [0, x.tpmTime{plane}]), nan(1,posShift)], u.trials(tind)','uniformoutput',false));
-
-                        bLick = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(union(x.leftLickTime, x.rightLickTime), [0, x.tpmTime{plane}]), nan(1,posShift)], u.trials(tind)','uniformoutput',false));
-                        lLick = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.leftLickTime, [0, x.tpmTime{plane}]), nan(1,posShift)], u.trials(tind)','uniformoutput',false));
-                        rLick = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.rightLickTime, [0, x.tpmTime{plane}]), nan(1,posShift)], u.trials(tind)','uniformoutput',false));
-
-                        bLickOnset = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.bothLickOnset, [0, x.tpmTime{plane}]), nan(1,posShift)], v(tind)','uniformoutput',false));
-                        lLickOnset = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.leftLickOnset, [0, x.tpmTime{plane}]), nan(1,posShift)], v(tind)','uniformoutput',false));
-                        rLickOnset = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.rightLickOnset, [0, x.tpmTime{plane}]), nan(1,posShift)], v(tind)','uniformoutput',false));
-
-                        bLickOffset = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.bothLickOffset, [0, x.tpmTime{plane}]), nan(1,posShift)], v(tind)','uniformoutput',false));
-                        lLickOffset = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.leftLickOffset, [0, x.tpmTime{plane}]), nan(1,posShift)], v(tind)','uniformoutput',false));
-                        rLickOffset = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.rightLickOffset, [0, x.tpmTime{plane}]), nan(1,posShift)], v(tind)','uniformoutput',false));
-
-                        firstLick = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.firstLick, [0, x.tpmTime{plane}]), nan(1,posShift)], v(tind)','uniformoutput',false));
-                        lastLick = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.lastLick, [0, x.tpmTime{plane}]), nan(1,posShift)], v(tind)','uniformoutput',false));
-                        firstLeftLick = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.firstLeftLick, [0, x.tpmTime{plane}]), nan(1,posShift)], v(tind)','uniformoutput',false));
-                        lastLeftLick = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.lastLeftLick, [0, x.tpmTime{plane}]), nan(1,posShift)], v(tind)','uniformoutput',false));
-                        firstRightLick = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.firstRightLick, [0, x.tpmTime{plane}]), nan(1,posShift)], v(tind)','uniformoutput',false));
-                        lastRightLick = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.lastRightLick, [0, x.tpmTime{plane}]), nan(1,posShift)], v(tind)','uniformoutput',false));
-                        %%
-                        whiskingOnsetCell = cell(1,length(tind));
-                        whiskingAmpCell = cell(1,length(tind));
-                        whiskingMaxAmpCell = cell(1,length(tind));
-                        whiskingMidpointCell = cell(1,length(tind));
-
-                        for ti = 1 : length(tind)
-                            currTrial = u.trials{tind(ti)};
-                            time = [0, currTrial.tpmTime{plane}];
-                            wtimes = currTrial.whiskerTime;
-                            [onsetFrame, amplitude, midpoint] = jkWhiskerOnsetNAmplitude(currTrial.theta, 5);
-                            onsetTimes = onsetFrame*whiskerVideoFrameDuration/1000; % back to s
-                            whiskingOnsetCell{ti} = [nan(1,posShift), histcounts(onsetTimes, time), nan(1,posShift)];
-
-                            tempAmp = zeros(1,length(time)-1);        
-                            tempMid = zeros(1,length(time)-1);
-                            for i = 1 : length(tempAmp)
-                                startInd = find(wtimes >= time(i), 1, 'first');
-                                endInd = find(wtimes < time(i+1), 1, 'last');
-                                tempAmp(i) = max(amplitude(startInd:endInd));
-                                tempMid(i) = mean(midpoint(startInd:endInd));
-                            end
-                            tempMid(isnan(tempMid)) = deal(mode(tempMid(isfinite(tempMid))));
-                            whiskingAmpCell{ti} = [nan(1,posShift), tempAmp, nan(1,posShift)];        
-                            whiskingMidpointCell{ti} = [nan(1,posShift), tempMid, nan(1,posShift)];    
-                        end
-                        whiskingOnset = cell2mat(whiskingOnsetCell);
-                        whiskingAmp = cell2mat(whiskingAmpCell);
-                        whiskingOA = (whiskingOnset > 0).*whiskingAmp;
-                        whiskingMidpoint = cell2mat(whiskingMidpointCell);
-
-                        %%
-                        pTouchCountMat = zeros(length(pTouchCount), (posShift + 1) * (length(angles)+1));
-                        pTouchFramesMat = zeros(length(pTouchFrames),(posShift + 1) * (length(angles)+1));
-                        pTouchDurationMat = zeros(length(pTouchDuration), (posShift + 1) * (length(angles)+1));
-
-                        scPoleUpMat = zeros(length(scPoleup), posShift + 1);
-                        scPoleDownMat = zeros(length(scPoledown), posShift + 1);
-                        drinkOnsetMat = zeros(length(drinkOnset), posShift + 1);
-                        for i = 1 : posShift + 1
-                            for ai = 1 : length(angles) + 1
-                                pTouchCountMat(:,(i-1)*(length(angles)+1) + ai) = circshift(pTouchCountAngles{ai}, [0 i-1])';
-                                pTouchFramesMat(:,(i-1)*(length(angles)+1) + ai) = circshift(pTouchFramesAngles{ai}, [0 i-1])';
-                                pTouchDurationMat(:,(i-1)*(length(angles)+1) + ai) = circshift(pTouchDurationAngles{ai}, [0 i-1])';
-                            end
-                            scPoleUpMat(:,i) = circshift(scPoleup, [0 i-1])';
-                            scPoleDownMat(:,i) = circshift(scPoledown, [0 i-1])';
-                            drinkOnsetMat(:,i) = circshift(drinkOnset, [0 i-1])';
-                        end
-
-                        whiskingOnsetMat = zeros(length(whiskingOnset), negShift + posShift + 1);
-                        whiskingAmpMat = zeros(length(whiskingAmp), negShift + posShift + 1);
-                        whiskingOAMat = zeros(length(whiskingOA), negShift + posShift + 1);
-                        whiskingMidpointMat = zeros(length(whiskingMidpoint), negShift + posShift + 1);
-
-                        bLickMat = zeros(length(bLick), negShift + posShift + 1);
-                        lLickMat = zeros(length(lLick), negShift + posShift + 1);
-                        rLickMat = zeros(length(rLick), negShift + posShift + 1);
-                        bLickOnsetMat = zeros(length(bLickOnset), negShift + posShift + 1);
-                        lLickOnsetMat = zeros(length(lLickOnset), negShift + posShift + 1);
-                        rLickOnsetMat = zeros(length(rLickOnset), negShift + posShift + 1);
-                        bLickOffsetMat = zeros(length(bLickOffset), negShift + posShift + 1);
-                        lLickOffsetMat = zeros(length(lLickOffset), negShift + posShift + 1);
-                        rLickOffsetMat = zeros(length(rLickOffset), negShift + posShift + 1);
-                        firstLickMat = zeros(length(firstLick), negShift + posShift + 1);
-                        lastLickMat = zeros(length(lastLick), negShift + posShift + 1);
-                        firstLeftLickMat = zeros(length(firstLeftLick), negShift + posShift + 1);
-                        lastLeftLickMat = zeros(length(lastLeftLick), negShift + posShift + 1);
-                        firstRightLickMat = zeros(length(firstRightLick), negShift + posShift + 1);
-                        lastRightLickMat = zeros(length(lastRightLick), negShift + posShift + 1);
-                        for i = 1 : negShift + posShift + 1
-                            whiskingOnsetMat(:,i) = circshift(whiskingOnset, [0 -negShift + i - 1])';
-                            whiskingAmpMat(:,i) = circshift(whiskingAmp, [0 -negShift + i - 1])';
-                            whiskingOAMat(:,i) = circshift(whiskingOA, [0 -negShift + i - 1])';
-                            whiskingMidpointMat(:,i) = circshift(whiskingMidpoint, [0 -negShift + i - 1])';
-
-                            bLickMat(:,i) = circshift(bLick, [0 -negShift + i - 1])';
-                            lLickMat(:,i) = circshift(lLick, [0 -negShift + i - 1])';
-                            rLickMat(:,i) = circshift(rLick, [0 -negShift + i - 1])';
-                            bLickOnsetMat(:,i) = circshift(bLickOnset, [0 -negShift + i - 1])';
-                            lLickOnsetMat(:,i) = circshift(lLickOnset, [0 -negShift + i - 1])';
-                            rLickOnsetMat(:,i) = circshift(rLickOnset, [0 -negShift + i - 1])';
-                            bLickOffsetMat(:,i) = circshift(bLickOffset, [0 -negShift + i - 1])';
-                            lLickOffsetMat(:,i) = circshift(lLickOffset, [0 -negShift + i - 1])';
-                            rLickOffsetMat(:,i) = circshift(rLickOffset, [0 -negShift + i - 1])';
-                            firstLickMat(:,i) = circshift(firstLick, [0 -negShift + i - 1])';
-                            lastLickMat(:,i) = circshift(lastLick, [0 -negShift + i - 1])';
-                            firstLeftLickMat(:,i) = circshift(firstLeftLick, [0 -negShift + i - 1])';
-                            lastLeftLickMat(:,i) = circshift(lastLeftLick, [0 -negShift + i - 1])';
-                            firstRightLickMat(:,i) = circshift(firstRightLick, [0 -negShift + i - 1])';
-                            lastRightLickMat(:,i) = circshift(lastRightLick, [0 -negShift + i - 1])';
-                        end
-%                         touchMat = [tTouchCountMat, pTouchCountMat, rTouchCountMat, tTouchFramesMat, pTouchFramesMat, rTouchFramesMat, tTouchDurationMat, pTouchDurationMat, rTouchDurationMat];
-%                         touchMat = [pTouchCountMat];
-                        touchMat = [pTouchCountMat, pTouchFramesMat, pTouchDurationMat];
-                        soundMat = [scPoleUpMat, scPoleDownMat];
-                        drinkMat = drinkOnsetMat;
-                        whiskingMat = [whiskingOnsetMat, whiskingAmpMat, whiskingOAMat, whiskingMidpointMat];
-                        lickingMat = [bLickMat, lLickMat, rLickMat, bLickOnsetMat, lLickOnsetMat, rLickOnsetMat, bLickOffsetMat, lLickOffsetMat, rLickOffsetMat, ...
-                                firstLickMat, lastLickMat, firstLeftLickMat, lastLeftLickMat, firstRightLickMat, lastRightLickMat];
-                        testInputMat{(cgi-1)*4 + plane} = [touchMat, soundMat, drinkMat, whiskingMat, lickingMat];
-%                         tempIM = [touchMat, soundMat, drinkMat, whiskingMat, lickingMat];
-%                         tempIM = touchMat;
-%                         testInputMat{(cgi-1)*4 + plane} = (tempIM - ones(size(tempIM,1),1)*min(tempIM)) ./ (ones(size(tempIM,1),1)*(max(tempIM) - min(tempIM)));
-
+                        allPredictors{(cgi-1)*4 + plane} = [touchMat, soundMat, drinkMat, whiskingMat, lickingMat];
+                        nani{(cgi-1)*4 + plane} = find(nanstd(allPredictors{(cgi-1)*4 + plane})==0);
+                        allPredictorsMean{(cgi-1)*4 + plane} = nanmean(allPredictors{(cgi-1)*4 + plane});
+                        allPredictorsStd{(cgi-1)*4 + plane} = nanstd(allPredictors{(cgi-1)*4 + plane});
+                        allPredictors{(cgi-1)*4 + plane} = (allPredictors{(cgi-1)*4 + plane} - nanmean(allPredictors{(cgi-1)*4 + plane})) ./ nanstd(allPredictors{(cgi-1)*4 + plane});
+                        allPredictors{(cgi-1)*4 + plane}(:,nani{(cgi-1)*4 + plane}) = deal(0);
+                        trainingInputMat{(cgi-1)*4 + plane} = allPredictors{(cgi-1)*4 + plane}(find(trainingPredictorInd{(cgi-1)*4 + plane}),:);
+                        testInputMat{(cgi-1)*4 + plane} = allPredictors{(cgi-1)*4 + plane}(find(testPredictorInd{(cgi-1)*4 + plane}),:);
                     end
                 end
 
@@ -644,7 +503,7 @@ for mi = 1 : length(mice)
             fitLambda = zeros(length(u.cellNums),1);
             fitEffectiveDF = zeros(length(u.cellNums),1);
 
-            parfor cellnum = 1 : length(u.cellNums)
+            for cellnum = 1 : length(u.cellNums)
     %         for cellnum = 1
     %         ci = 0;
     %         for cellnum = 1:division:length(u.cellNums)
@@ -712,7 +571,7 @@ for mi = 1 : length(mice)
                     if devianceFullNull > chi2inv(1-pThresholdNull, dfFullNull)
                         fitResult(1) = 1;
                         shuffleCoeff = zeros(numShuffle, size(input,2));
-                        for ishuffle = 1 : numShuffle
+                        parfor ishuffle = 1 : numShuffle
                             spkTrainShuffled = cell2mat(cellfun(@(x) [nan(1,posShift), x.spk(cind,randperm(size(x.spk,2))), nan(1,posShift)], u.trials(iTrain)','uniformoutput',false));
                             spkTrainShuffled = spkTrainShuffled(finiteIndTrain);
                             cv = cvglmnet(input, spkTrainShuffled, 'poisson', glmnetOpt, [], lambdaCV);
@@ -720,7 +579,8 @@ for mi = 1 : length(mice)
                             shuffleCoeff(ishuffle,:) = cv.glmnet_fit.beta(:,iLambda);
                         end
                         betaThreshold = prctile(shuffleCoeff, 95);
-                        fitInd{cellnum} = find(fitCoeffs{cellnum} > betaThreshold);
+                        tempNegativityFix = (-(fitCoeffs{cellnum} < 0)*2 + 1); 
+                        fitInd{cellnum} = find(fitCoeffs{cellnum}.*tempNegativityFix > betaThreshold.*tempNegativityFix);
                         
                         for iInd = 1 : length(indPartial)
                             if sum(ismember(fitInd{cellnum}, indPartial{iInd})) > 0
@@ -746,7 +606,7 @@ for mi = 1 : length(mice)
 %             rtest(ri).devExplained = devExplained;
 %             rtest(ri).cvDev = cvDev;
             
-            save(savefnResult, 'fit*', '*InputMat', 'indPartial', '*Group', '*Tn', 'lambdaCV', '*Opt');
+            save(savefnResult, 'fit*', 'allPredictors', '*InputMat', 'indPartial', '*Group', '*Tn', 'lambdaCV', '*Opt');
 
 %         end % of ri. random group selection index
         push_myphone(sprintf('GLM done for JK%03d S%02d', mouse, session))
