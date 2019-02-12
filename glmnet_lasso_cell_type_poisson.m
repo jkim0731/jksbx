@@ -524,9 +524,9 @@ for mi = 1 : length(mice)
     
                 spkTrain = cell2mat(cellfun(@(x) [nan(1,posShift), x.spk(cind,:), nan(1,posShift)], u.trials(iTrain)','uniformoutput',false));                
                 %%
-                finiteInd = intersect(find(isfinite(spkTrain)), find(isfinite(sum(trainingInputMat{planeInd},2))));
-                input = trainingInputMat{planeInd}(finiteInd,:);
-                spk = spkTrain(finiteInd)';
+                finiteIndTrain = intersect(find(isfinite(spkTrain)), find(isfinite(sum(trainingInputMat{planeInd},2))));
+                input = trainingInputMat{planeInd}(finiteIndTrain,:);
+                spk = spkTrain(finiteIndTrain)';
     
                 cv = cvglmnet(input, spk, 'poisson', glmnetOpt, [], lambdaCV);
                 %% survived coefficients
@@ -557,12 +557,12 @@ for mi = 1 : length(mice)
     
                 spkTest = cell2mat(cellfun(@(x) [nan(1,posShift), x.spk(cind,:), nan(1,posShift)], u.trials(iTest)','uniformoutput',false));
                 spkTest = spkTest';
-                finiteInd = intersect(find(isfinite(spkTest)), find(isfinite(sum(testInputMat{planeInd},2))));
-                spkTest = spkTest(finiteInd)';
+                finiteIndTest = intersect(find(isfinite(spkTest)), find(isfinite(sum(testInputMat{planeInd},2))));
+                spkTest = spkTest(finiteIndTest)';
                 %% (1) if the full model is significant
                 fitResult = zeros(1,6);
     
-                model = exp([ones(length(finiteInd),1),testInputMat{planeInd}(finiteInd,:)]*[cv.glmnet_fit.a0(iLambda); cv.glmnet_fit.beta(:,iLambda)]);
+                model = exp([ones(length(finiteIndTest),1),testInputMat{planeInd}(finiteIndTest,:)]*[cv.glmnet_fit.a0(iLambda); cv.glmnet_fit.beta(:,iLambda)]);
                 mu = mean(spkTest); % null poisson parameter
                 nullLogLikelihood = sum(log(poisspdf(spkTest,mu)));
                 fullLogLikelihood = sum(log(poisspdf(spkTest',model)));
@@ -583,10 +583,10 @@ for mi = 1 : length(mice)
                                 break
                             else
                                 tempTrainInput = trainingInputMat{planeInd}(:,setdiff(coeffInds,indPartial{pi}));
-                                tempTestInput = testInputMat{planeInd}(finiteInd,setdiff(coeffInds,indPartial{pi}));
-                                cvPartial = cvglmnet(tempTrainInput(finiteInd,:), spk, 'poisson', partialGlmOpt, [], lambdaCV);
+                                tempTestInput = testInputMat{planeInd}(finiteIndTest,setdiff(coeffInds,indPartial{pi}));
+                                cvPartial = cvglmnet(tempTrainInput(finiteIndTrain,:), spk, 'poisson', partialGlmOpt, [], lambdaCV);
                                 iLambda = find(cvPartial.lambda == cvPartial.lambda_1se);
-                                partialLogLikelihood = sum(log(poisspdf(spkTest', exp([ones(length(finiteInd),1), tempTestInput] * [cvPartial.glmnet_fit.a0(iLambda); cvPartial.glmnet_fit.beta(:,iLambda)]))));
+                                partialLogLikelihood = sum(log(poisspdf(spkTest', exp([ones(length(finiteIndTest),1), tempTestInput] * [cvPartial.glmnet_fit.a0(iLambda); cvPartial.glmnet_fit.beta(:,iLambda)]))));
                                 devianceFullPartial = 2*(fullLogLikelihood - partialLogLikelihood);
                                 dfFullPartial = dfFullNull - cvPartial.glmnet_fit.df(iLambda);
                                 if devianceFullPartial > chi2inv(1-pThresholdPartial, dfFullPartial)
