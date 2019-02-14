@@ -61,17 +61,17 @@
 %     - firstRightLick
 %     - lastRightLick
 
-baseDir = 'Y:\Whiskernas\JK\suite2p\';
+baseDir = 'D:\JK\suite2p\';
 
 mice = [25,27,30,36,37,38,39,41,52,53,54,56];
 sessions = {[4,19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]}; 
 
 %%
-% mice = [36,37,38,39,41,52,53,54,56];
+% mice = [25,27,30];
 % sessions = {[17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]}; 
-
-for mi = 1 : length(mice)
-%     for mi = 1
+% sessions = {[19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]}; 
+for mi = 2 : length(mice)
+% for mi = 2
     for si = 1:length(sessions{mi})
 %     for si = 1
 
@@ -397,13 +397,13 @@ for mi = 1 : length(mice)
                         drinkOnsetMat = zeros(length(drinkOnset), posShift + 1);
                         for i = 1 : posShift + 1
                             for ai = 1 : length(angles) + 1
-                                pTouchCountMat(:,(i-1)*(length(angles)+1) + ai) = circshift(pTouchCountAngles{ai}, [0 i-1])';
-                                pTouchFramesMat(:,(i-1)*(length(angles)+1) + ai) = circshift(pTouchFramesAngles{ai}, [0 i-1])';
-                                pTouchDurationMat(:,(i-1)*(length(angles)+1) + ai) = circshift(pTouchDurationAngles{ai}, [0 i-1])';
+                                pTouchCountMat(:,(i-1)*(length(angles)+1) + ai) = circshift(pTouchCountAngles{ai}, [0 -i+1])';
+                                pTouchFramesMat(:,(i-1)*(length(angles)+1) + ai) = circshift(pTouchFramesAngles{ai}, [0 -i+1])';
+                                pTouchDurationMat(:,(i-1)*(length(angles)+1) + ai) = circshift(pTouchDurationAngles{ai}, [0 -i+1])';
                             end
-                            scPoleUpMat(:,i) = circshift(scPoleup, [0 i-1])';
-                            scPoleDownMat(:,i) = circshift(scPoledown, [0 i-1])';
-                            drinkOnsetMat(:,i) = circshift(drinkOnset, [0 i-1])';
+                            scPoleUpMat(:,i) = circshift(scPoleup, [0 -i+1])';
+                            scPoleDownMat(:,i) = circshift(scPoledown, [0 -i+1])';
+                            drinkOnsetMat(:,i) = circshift(drinkOnset, [0 -i+1])';
                         end
 
                         whiskingOnsetMat = zeros(length(whiskingOnset), negShift + posShift + 1);
@@ -427,26 +427,26 @@ for mi = 1 : length(mice)
                         firstRightLickMat = zeros(length(firstRightLick), negShift + posShift + 1);
                         lastRightLickMat = zeros(length(lastRightLick), negShift + posShift + 1);
                         for i = 1 : negShift + posShift + 1
-                            whiskingOnsetMat(:,i) = circshift(whiskingOnset, [0 -negShift + i - 1])';
-                            whiskingAmpMat(:,i) = circshift(whiskingAmp, [0 -negShift + i - 1])';
-                            whiskingOAMat(:,i) = circshift(whiskingOA, [0 -negShift + i - 1])';
-                            whiskingMidpointMat(:,i) = circshift(whiskingMidpoint, [0 -negShift + i - 1])';
+                            whiskingOnsetMat(:,i) = circshift(whiskingOnset, [0 negShift - i + 1])';
+                            whiskingAmpMat(:,i) = circshift(whiskingAmp, [0 negShift - i + 1])';
+                            whiskingOAMat(:,i) = circshift(whiskingOA, [0 negShift - i + 1])';
+                            whiskingMidpointMat(:,i) = circshift(whiskingMidpoint, [0 negShift - i + 1])';
 
-                            bLickMat(:,i) = circshift(bLick, [0 -negShift + i - 1])';
-                            lLickMat(:,i) = circshift(lLick, [0 -negShift + i - 1])';
-                            rLickMat(:,i) = circshift(rLick, [0 -negShift + i - 1])';
-                            bLickOnsetMat(:,i) = circshift(bLickOnset, [0 -negShift + i - 1])';
-                            lLickOnsetMat(:,i) = circshift(lLickOnset, [0 -negShift + i - 1])';
-                            rLickOnsetMat(:,i) = circshift(rLickOnset, [0 -negShift + i - 1])';
-                            bLickOffsetMat(:,i) = circshift(bLickOffset, [0 -negShift + i - 1])';
-                            lLickOffsetMat(:,i) = circshift(lLickOffset, [0 -negShift + i - 1])';
-                            rLickOffsetMat(:,i) = circshift(rLickOffset, [0 -negShift + i - 1])';
-                            firstLickMat(:,i) = circshift(firstLick, [0 -negShift + i - 1])';
-                            lastLickMat(:,i) = circshift(lastLick, [0 -negShift + i - 1])';
-                            firstLeftLickMat(:,i) = circshift(firstLeftLick, [0 -negShift + i - 1])';
-                            lastLeftLickMat(:,i) = circshift(lastLeftLick, [0 -negShift + i - 1])';
-                            firstRightLickMat(:,i) = circshift(firstRightLick, [0 -negShift + i - 1])';
-                            lastRightLickMat(:,i) = circshift(lastRightLick, [0 -negShift + i - 1])';
+                            bLickMat(:,i) = circshift(bLick, [0 negShift - i + 1])';
+                            lLickMat(:,i) = circshift(lLick, [0 negShift - i + 1])';
+                            rLickMat(:,i) = circshift(rLick, [0 negShift - i + 1])';
+                            bLickOnsetMat(:,i) = circshift(bLickOnset, [0 negShift - i + 1])';
+                            lLickOnsetMat(:,i) = circshift(lLickOnset, [0 negShift - i + 1])';
+                            rLickOnsetMat(:,i) = circshift(rLickOnset, [0 negShift - i + 1])';
+                            bLickOffsetMat(:,i) = circshift(bLickOffset, [0 negShift - i + 1])';
+                            lLickOffsetMat(:,i) = circshift(lLickOffset, [0 negShift - i + 1])';
+                            rLickOffsetMat(:,i) = circshift(rLickOffset, [0 negShift - i + 1])';
+                            firstLickMat(:,i) = circshift(firstLick, [0 negShift - i + 1])';
+                            lastLickMat(:,i) = circshift(lastLick, [0 negShift - i + 1])';
+                            firstLeftLickMat(:,i) = circshift(firstLeftLick, [0 negShift - i + 1])';
+                            lastLeftLickMat(:,i) = circshift(lastLeftLick, [0 negShift - i + 1])';
+                            firstRightLickMat(:,i) = circshift(firstRightLick, [0 negShift - i + 1])';
+                            lastRightLickMat(:,i) = circshift(lastRightLick, [0 negShift - i + 1])';
                         end
 %                         touchMat = [tTouchCountMat, pTouchCountMat, rTouchCountMat, tTouchFramesMat, pTouchFramesMat, rTouchFramesMat, tTouchDurationMat, pTouchDurationMat, rTouchDurationMat];
                         touchMat = [pTouchCountMat, pTouchFramesMat, pTouchDurationMat];                        
@@ -499,9 +499,11 @@ for mi = 1 : length(mice)
             fitCvDev = zeros(length(u.cellNums),1); % deviance explained from training set
             fitLambda = zeros(length(u.cellNums),1);
             fitDF = zeros(length(u.cellNums),1);
+            started = zeros(length(u.cellNums),1);
+            done = zeros(length(u.cellNums),1);
 
             parfor cellnum = 1 : length(u.cellNums)
-    %         for cellnum = 1
+%             for cellnum = 102, 127, (212 convergence error), 221, 658
     %         ci = 0;
     %         for cellnum = 1:division:length(u.cellNums)
     %             ci = ci + 1;
@@ -511,6 +513,7 @@ for mi = 1 : length(mice)
                 
 %                 fprintf('Mouse JK%03d session S%02d Loop %d: Running cell %d/%d \n', mouse, session, ri,cellnum, length(u.cellNums));
                 fprintf('Mouse JK%03d session S%02d: Running cell %d/%d \n', mouse, session,cellnum, length(u.cellNums));
+                started(cellnum) = cellnum;
                 
                 cID = u.cellNums(cellnum);
     
@@ -599,6 +602,7 @@ for mi = 1 : length(mice)
                 
                 fitResults(cellnum,:) = fitResult;
                 fitCoeffInds(cellnum,:) = fitCoeffInd;
+                done(cellnum) = cellnum;
             end % end of parfor cellnum
             
 %             rtest(ri).fitInd = fitInd; % parameters surviving lasso in training set
