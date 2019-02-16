@@ -1,6 +1,6 @@
 
 
-savefnResultRe = [savefnResult, '_02'];
+savefnResultRe = [savefnResult, '_03'];
 
 previousDone = done(find(done));
 
@@ -17,7 +17,7 @@ fitCvDevRe = zeros(length(remainingCell),1);
 fitResultsRe = zeros(length(remainingCell),6);
 fitCoeffIndsRe = zeros(length(remainingCell),6);
 doneRe = zeros(length(remainingCell),1);
-parfor cellnumInd = 1 : length(remainingCell)
+for cellnumInd = 1 : length(remainingCell)
     cellnum = remainingCell(cellnumInd);
 %             for cellnum = 102, 127, (212 convergence error), 221, 658
 %         ci = 0;

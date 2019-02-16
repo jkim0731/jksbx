@@ -61,7 +61,7 @@
 %     - firstRightLick
 %     - lastRightLick
 
-baseDir = 'Y:\Whiskernas\JK\suite2p\';
+baseDir = 'D:\JK\suite2p\';
 
 mice = [25,27,30,36,37,38,39,41,52,53,54,56];
 sessions = {[4,19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]}; 
@@ -314,13 +314,12 @@ for mi = 1 : length(mice)
                         testPredictorInd{(cgi-1)*4 + plane} = cell2mat(cellfun(@(x) (ones(1,length(x.tpmTime{plane})+posShift*2)) * ismember(x.trialNum, testTn), u.trials(tind)','uniformoutput',false));
                         
                         pTouchCount = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(cellfun(@(y) y(1), x.protractionTouchChunks), [0, x.tpmTime{plane}]), nan(1,posShift)], u.trials(tind)','uniformoutput',false));
-
-                        whiskerVideoFrameDuration = u.trials{tind(1)}.frameDuration * 1000; % in ms
-
-                        pTouchDuration = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(cell2mat(cellfun(@(y) y', x.protractionTouchChunks, 'uniformoutput', false)) * whiskerVideoFrameDuration, [0, x.tpmTime{plane}]), nan(1,posShift)], ...
-                            u.trials(tind)','uniformoutput',false));
-                        pTouchFrames = pTouchDuration;
-                        pTouchFrames(pTouchDuration > 0) = 1;
+                        
+                        pTouchFrames = pTouchCount;
+                        pTouchFrames(pTouchCount > 0) = 1;
+                        
+                        pTouchDuration = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(cell2mat(cellfun(@(y) y', x.protractionTouchChunks, 'uniformoutput', false)), [0, x.tpmTime{plane}]), nan(1,posShift)], ...
+                            u.trials(tind)','uniformoutput',false));                        
 
                         pTouchCountAngles = cell(length(angles)+1,1);
                         pTouchDurationAngles = cell(length(angles)+1,1);
@@ -368,7 +367,8 @@ for mi = 1 : length(mice)
                             time = [0, currTrial.tpmTime{plane}];
                             wtimes = currTrial.whiskerTime;
                             [onsetFrame, amplitude, midpoint] = jkWhiskerOnsetNAmplitude(currTrial.theta, 5);
-                            onsetTimes = onsetFrame*whiskerVideoFrameDuration/1000; % back to s
+                            whiskerVideoFrameDuration = u.trials{tind(1)}.frameDuration; % in s
+                            onsetTimes = onsetFrame*whiskerVideoFrameDuration;
                             whiskingOnsetCell{ti} = [nan(1,posShift), histcounts(onsetTimes, time), nan(1,posShift)];
 
                             tempAmp = zeros(1,length(time)-1);        
