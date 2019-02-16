@@ -70,10 +70,10 @@ sessions = {[4,19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]};
 % mice = [25,27,30];
 % sessions = {[17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]}; 
 % sessions = {[19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]}; 
-for mi = 2 : length(mice)
-% for mi = 2
+for mi = 1 : length(mice)
+% for mi = 1
     for si = 1:length(sessions{mi})
-%     for si = 1
+%     for si = 2
 
         mouse = mice(mi);
         session = sessions{mi}(si);
@@ -618,7 +618,7 @@ for mi = 2 : length(mice)
 %             rtest(ri).devExplained = devExplained;
 %             rtest(ri).cvDev = cvDev;
             
-            save(savefnResult, 'fit*', 'allPredictors', '*InputMat', 'indPartial', '*Group', '*Tn', 'lambdaCV', '*Opt');
+            save(savefnResult, 'fit*', 'allPredictors', '*InputMat', 'indPartial', '*Group', '*Tn', 'lambdaCV', '*Opt', 'done');
 
 %         end % of ri. random group selection index
         push_myphone(sprintf('GLM done for JK%03d S%02d', mouse, session))
