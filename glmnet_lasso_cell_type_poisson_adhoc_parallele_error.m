@@ -1,6 +1,11 @@
+ save(savefnResult, 'fit*', 'allPredictors', '*InputMat', 'indPartial', '*Group', '*Tn', 'lambdaCV', '*Opt', 'done');
+ 
+ %%
+mouse = 36;
+session = 1;
+savefnResult = sprintf('glmResponseType_JK%03dS%02d_glmnet_m14',mouse, session);
 
-
-savefnResultRe = [savefnResult, '_03'];
+savefnResultRe = [savefnResult, '_02'];
 
 previousDone = done(find(done));
 
@@ -17,7 +22,7 @@ fitCvDevRe = zeros(length(remainingCell),1);
 fitResultsRe = zeros(length(remainingCell),6);
 fitCoeffIndsRe = zeros(length(remainingCell),6);
 doneRe = zeros(length(remainingCell),1);
-for cellnumInd = 1 : length(remainingCell)
+for cellnumInd = 2 : length(remainingCell)
     cellnum = remainingCell(cellnumInd);
 %             for cellnum = 102, 127, (212 convergence error), 221, 658
 %         ci = 0;
@@ -129,8 +134,8 @@ fitInd(remainingCell) = fitIndRe;
 fitDF(remainingCell) = fitDFRe;
 fitDevExplained(remainingCell) = fitDevExplainedRe;
 fitCvDev(remainingCell) = fitCvDevRe;
-fitResults(remainingCell) = fitResultsRe;
-fitCoeffInds(remainingCell) = fitCoeffIndsRe;
+fitResults(remainingCell,:) = fitResultsRe;
+fitCoeffInds(remainingCell,:) = fitCoeffIndsRe;
 done(remainingCell) = doneRe;
 %             rtest(ri).fitInd = fitInd; % parameters surviving lasso in training set
 %             rtest(ri).fitCoeffs = fitCoeffs;
@@ -145,8 +150,14 @@ done(remainingCell) = doneRe;
 %             rtest(ri).devExplained = devExplained;
 %             rtest(ri).cvDev = cvDev;
 
-
-save(savefnResultRe, 'fit*', 'allPredictors', '*InputMat', 'indPartial', '*Group', '*Tn', 'lambdaCV', '*Opt', 'done');
-
+save(savefnResultRe, 'fit*', 'allPredictors', '*InputMat', 'indPartial', '*Group', '*Tn', 'lambdaCV', '*Opt', 'done', '*Re', 'remainingCell');
+%%
 %         end % of ri. random group selection index
 push_myphone(sprintf('GLM done for JK%03d S%02d', mouse, session))
+
+
+%%
+% myCluster = parcluster('local');
+% delete(myCluster.Jobs)
+% clear myCluster
+% parpool(34, 'SpmdEnabled', true);

@@ -61,16 +61,16 @@
 %     - firstRightLick
 %     - lastRightLick
 
-baseDir = 'D:\JK\suite2p\';
+baseDir = 'C:\JK\';
 
 mice = [25,27,30,36,37,38,39,41,52,53,54,56];
-sessions = {[4,19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]}; 
-
+% sessions = {[4,19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]}; 
+sessions = {[19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]};
 %%
 % mice = [25,27,30];
 % sessions = {[17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]}; 
 % sessions = {[19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]}; 
-for mi = 1 : length(mice)
+for mi = 4 : length(mice)
 % for mi = 1
     for si = 1:length(sessions{mi})
 %     for si = 2
@@ -432,7 +432,7 @@ for mi = 1 : length(mice)
                             whiskingOAMat(:,i) = circshift(whiskingOA, [0 negShift - i + 1])';
                             whiskingMidpointMat(:,i) = circshift(whiskingMidpoint, [0 negShift - i + 1])';
 
-                            bLickMat(:,i) = circshift(bLick, [0 neg Shift - i + 1])';
+                            bLickMat(:,i) = circshift(bLick, [0 negShift - i + 1])';
                             lLickMat(:,i) = circshift(lLick, [0 negShift - i + 1])';
                             rLickMat(:,i) = circshift(rLick, [0 negShift - i + 1])';
                             bLickOnsetMat(:,i) = circshift(bLickOnset, [0 negShift - i + 1])';
@@ -621,7 +621,7 @@ for mi = 1 : length(mice)
             save(savefnResult, 'fit*', 'allPredictors', '*InputMat', 'indPartial', '*Group', '*Tn', 'lambdaCV', '*Opt', 'done');
 
 %         end % of ri. random group selection index
-        push_myphone(sprintf('GLM done for JK%03d S%02d', mouse, session))
+        push_myphone(sprintf('Lasso GLM done for JK%03d S%02d', mouse, session))
 
     end
 end

@@ -69,8 +69,7 @@ cd(caDir)
     end
     
     
-    if strcmp(bSession.mouseName, wfArray.mouseName) && strcmp(bSession.mouseName, wfArray.mouseName) ...            
-            && strcmp(bSession.sessionName, wfArray.sessionName) && strcmp(bSession.sessionName, ['S', caArray.sessionName(2:3)])
+    if strcmp(bSession.mouseName, wfArray.mouseName) && strcmp(bSession.sessionName, wfArray.sessionName) && strcmp(bSession.sessionName, ['S', caArray.sessionName(2:3)])
         u = Uber.Uber_2padArray(bSession, wfArray, caArray);
     else
         disp('mouseName or sessionName mismatch')
