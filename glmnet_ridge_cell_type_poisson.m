@@ -502,8 +502,24 @@ for mi = 1 : length(mice)
             fitCvDev = zeros(length(u.cellNums),1); % deviance explained from training set
             fitLambda = zeros(length(u.cellNums),1);
             fitEffectiveDF = zeros(length(u.cellNums),1);
+            
+            numCell = length(u.cellNums);
+            cIDAll = u.cellNums;
+            tindcellAll = cell(numCell,1);
+            cindAll = zeros(numCell,1);
+            planeIndAll = zeros(numCell,1);
+            iTrainAll = cell(numCell,1);
+            iTestAll = cell(numCell,1);
+            for i = 1 : numCell
+                tindcellAll{i} = find(cellfun(@(x) ismember(cIDAll(i), x.neuindSession), u.trials));
+                cindAll(i) = find(u.trials{tindcellAll{i}(1)}.neuindSession == cIDAll(i));
+                planeIndAll(i) = floor(cIDAll(i)/1000);
+                iTrainAll{i} = intersect(tindcellAll{i}, trainingInd);
+                iTestAll{i} = intersect(tindcellAll{i}, testInd);
+            end
+            spikeAll = cellfun(@(x) x.spk, u.trials, 'uniformoutput', false);    
 
-            for cellnum = 1 : length(u.cellNums)
+            for cellnum = 1 : numCell
     %         for cellnum = 1
     %         ci = 0;
     %         for cellnum = 1:division:length(u.cellNums)
@@ -512,26 +528,20 @@ for mi = 1 : length(mice)
             %     cellnum = 1;
                 
 %                 fprintf('Mouse JK%03d session S%02d Loop %d: Running cell %d/%d \n', mouse, session, ri,cellnum, length(u.cellNums));
-                fprintf('Mouse JK%03d session S%02d: Running cell %d/%d \n', mouse, session,cellnum, length(u.cellNums));
+                fprintf('Mouse JK%03d session S%02d: Running cell %d/%d \n', mouse, session,cellnum, numCell);
                 
-                cID = u.cellNums(cellnum);
+                cID = cIDAll(cellnum);
     
-                % find out trial indices for this specific cell
-                tindcell = find(cellfun(@(x) ismember(cID, x.neuindSession), u.trials));
+                iTrain = iTrainAll{cellnum};
+                cind = cindAll(cellnum);
+                planeInd = planeIndAll(cellnum);
     
-                iTrain = intersect(tindcell, trainingInd);
-                % find out row number of this cell
-                cind = find(u.trials{iTrain(1)}.neuindSession == cID);
-                planeInd = floor(cID/1000);
-    
-                spkTrain = cell2mat(cellfun(@(x) [nan(1,posShift), x.spk(cind,:), nan(1,posShift)], u.trials(iTrain)','uniformoutput',false));                
-                %%
+                spkTrain = cell2mat(cellfun(@(x) [nan(1,posShift), x(cind,:), nan(1,posShift)], spikeAll(iTrain)','uniformoutput',false));                
                 finiteIndTrain = intersect(find(isfinite(spkTrain)), find(isfinite(sum(trainingInputMat{planeInd},2))));
                 input = trainingInputMat{planeInd}(finiteIndTrain,:);
                 spkTrain = spkTrain(finiteIndTrain)';
     
-                cv = cvglmnet(input, spkTrain, 'poisson', glmnetOpt, [], lambdaCV);
-
+                cv = cvglmnet(input, spkTrain, 'poisson', glmnetOpt, [], lambdaCV);              
                 %% survived coefficients
                 fitLambda(cellnum) = cv.lambda_1se;
                 iLambda = find(cv.lambda == cv.lambda_1se);
@@ -539,17 +549,8 @@ for mi = 1 : length(mice)
                 fitCoeffs{cellnum} = cv.glmnet_fit.beta(:,iLambda);
                 
                 %% test
-                cID = u.cellNums(cellnum);
-    
-                % find out trial indices for this specific cell
-                tindcell = find(cellfun(@(x) ismember(cID, x.neuindSession), u.trials));
-    
-                iTest = intersect(tindcell, testInd);
-                % find out row number of this cell
-                cind = find(u.trials{iTest(1)}.neuindSession == cID);
-                planeInd = floor(cID/1000);
-    
-                spkTest = cell2mat(cellfun(@(x) [nan(1,posShift), x.spk(cind,:), nan(1,posShift)], u.trials(iTest)','uniformoutput',false));
+                iTest = iTestAll{cellnum};                
+                spkTest = cell2mat(cellfun(@(x) [nan(1,posShift), x(cind,:), nan(1,posShift)], spikeAll(iTest)','uniformoutput',false));
                 spkTest = spkTest';
                 finiteIndTest = intersect(find(isfinite(spkTest)), find(isfinite(sum(testInputMat{planeInd},2))));
                 spkTest = spkTest(finiteIndTest)';
@@ -572,7 +573,7 @@ for mi = 1 : length(mice)
                         fitResult(1) = 1;
                         shuffleCoeff = zeros(numShuffle, size(input,2));
                         parfor ishuffle = 1 : numShuffle
-                            spkTrainShuffled = cell2mat(cellfun(@(x) [nan(1,posShift), x.spk(cind,randperm(size(x.spk,2))), nan(1,posShift)], u.trials(iTrain)','uniformoutput',false));
+                            spkTrainShuffled = cell2mat(cellfun(@(x) [nan(1,posShift), x(cind,randperm(size(x.spk,2))), nan(1,posShift)], spikeAll(iTrain)','uniformoutput',false));
                             spkTrainShuffled = spkTrainShuffled(finiteIndTrain);
                             cv = cvglmnet(input, spkTrainShuffled, 'poisson', glmnetOpt, [], lambdaCV);
                             iLambda = find(cv.lambda == cv.lambda_1se);
