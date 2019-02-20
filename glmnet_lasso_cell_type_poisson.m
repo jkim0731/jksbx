@@ -70,7 +70,7 @@ sessions = {[19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]};
 % mice = [25,27,30];
 % sessions = {[17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]}; 
 % sessions = {[19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]}; 
-for mi = 4 : length(mice)
+for mi = 6 : length(mice)
 % for mi = 1
     for si = 1:length(sessions{mi})
 %     for si = 2
@@ -532,8 +532,6 @@ for mi = 4 : length(mice)
                 fprintf('Mouse JK%03d session S%02d: Running cell %d/%d \n', mouse, session,cellnum, numCell);
                 started(cellnum) = cellnum;
                 
-                cID = cIDAll(cellnum);
-    
                 iTrain = iTrainAll{cellnum};
                 cind = cindAll(cellnum);
                 planeInd = planeIndAll(cellnum);
@@ -621,7 +619,7 @@ for mi = 4 : length(mice)
 %             rtest(ri).devExplained = devExplained;
 %             rtest(ri).cvDev = cvDev;
             
-            save(savefnResult, 'fit*', 'allPredictors', '*InputMat', 'indPartial', '*Group', '*Tn', 'lambdaCV', '*Opt', 'done');
+            save(savefnResult, 'fit*', 'allPredictors', '*InputMat', 'indPartial', '*Group', '*Tn', 'lambdaCV', '*Opt', 'done', 'pThreshold*', '*Shift');
 
 %         end % of ri. random group selection index
         push_myphone(sprintf('Lasso GLM done for JK%03d S%02d', mouse, session))

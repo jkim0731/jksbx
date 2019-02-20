@@ -1,7 +1,26 @@
- save(savefnResult, 'fit*', 'allPredictors', '*InputMat', 'indPartial', '*Group', '*Tn', 'lambdaCV', '*Opt', 'done');
+%  save(savefnResult, 'fit*', 'allPredictors', '*InputMat', 'indPartial', '*Group', '*Tn', 'lambdaCV', '*Opt', 'done');
  
- %%
-mouse = 36;
+%%
+if ~exist('pThresholdPartial', 'var')
+    pThresholdPartial = 0.05;
+end
+if ~exist('pThresholdNull', 'var')
+    pThresholdNull = 0.05;
+end
+
+if ~exist('posShift', 'var')
+    posShift = 4;
+end
+if ~exist('negShift', 'var')
+    negShift = 2;
+end
+
+[~,testInd] = ismember(testTn, u.trialNums);
+
+trainingTn = setdiff(u.trialNums, testTn);
+[~,trainingInd] = ismember(trainingTn, u.trialNums);
+
+mouse = 39;
 session = 1;
 savefnResult = sprintf('glmResponseType_JK%03dS%02d_glmnet_m14',mouse, session);
 
@@ -22,7 +41,25 @@ fitCvDevRe = zeros(length(remainingCell),1);
 fitResultsRe = zeros(length(remainingCell),6);
 fitCoeffIndsRe = zeros(length(remainingCell),6);
 doneRe = zeros(length(remainingCell),1);
-for cellnumInd = 2 : length(remainingCell)
+
+
+numCell = length(u.cellNums);
+cIDAll = u.cellNums;
+tindcellAll = cell(numCell,1);
+cindAll = zeros(numCell,1);
+planeIndAll = zeros(numCell,1);
+iTrainAll = cell(numCell,1);
+iTestAll = cell(numCell,1);
+for i = 1 : numCell
+    tindcellAll{i} = find(cellfun(@(x) ismember(cIDAll(i), x.neuindSession), u.trials));
+    cindAll(i) = find(u.trials{tindcellAll{i}(1)}.neuindSession == cIDAll(i));
+    planeIndAll(i) = floor(cIDAll(i)/1000);
+    iTrainAll{i} = intersect(tindcellAll{i}, trainingInd);
+    iTestAll{i} = intersect(tindcellAll{i}, testInd);
+end
+spikeAll = cellfun(@(x) x.spk, u.trials, 'uniformoutput', false);
+
+parfor cellnumInd = 1 : length(remainingCell)
     cellnum = remainingCell(cellnumInd);
 %             for cellnum = 102, 127, (212 convergence error), 221, 658
 %         ci = 0;
@@ -33,26 +70,19 @@ for cellnumInd = 2 : length(remainingCell)
     fitCoeffInd = zeros(1,6);
 
 %                 fprintf('Mouse JK%03d session S%02d Loop %d: Running cell %d/%d \n', mouse, session, ri,cellnum, length(u.cellNums));
-    fprintf('Mouse JK%03d session S%02d: Running cell %d/%d \n', mouse, session,cellnum, length(u.cellNums));
+    fprintf('Mouse JK%03d session S%02d: Running cell %d/%d \n', mouse, session,cellnum, numCell);
     startedRe(cellnumInd) = cellnum;
-
-    cID = u.cellNums(cellnum);
-
-    % find out trial indices for this specific cell
-    tindcell = find(cellfun(@(x) ismember(cID, x.neuindSession), u.trials));
-
-    iTrain = intersect(tindcell, trainingInd);
-    % find out row number of this cell
-    cind = find(u.trials{iTrain(1)}.neuindSession == cID);
-    planeInd = floor(cID/1000);
-
-    spkTrain = cell2mat(cellfun(@(x) [nan(1,posShift), x.spk(cind,:), nan(1,posShift)], u.trials(iTrain)','uniformoutput',false));                
-    %%
+    iTrain = iTrainAll{cellnum};
+    cind = cindAll(cellnum);
+    planeInd = planeIndAll(cellnum);
+    
+    spkTrain = cell2mat(cellfun(@(x) [nan(1,posShift), x(cind,:), nan(1,posShift)], spikeAll(iTrain)','uniformoutput',false));                
     finiteIndTrain = intersect(find(isfinite(spkTrain)), find(isfinite(sum(trainingInputMat{planeInd},2))));
     input = trainingInputMat{planeInd}(finiteIndTrain,:);
-    spk = spkTrain(finiteIndTrain)';
+    spkTrain = spkTrain(finiteIndTrain)';
 
-    cv = cvglmnet(input, spk, 'poisson', glmnetOpt, [], lambdaCV);
+    cv = cvglmnet(input, spkTrain, 'poisson', glmnetOpt, [], lambdaCV);
+    
     %% survived coefficients
     fitLambdaRe(cellnumInd) = cv.lambda_1se;
     iLambda = find(cv.lambda == cv.lambda_1se);
@@ -69,17 +99,8 @@ for cellnumInd = 2 : length(remainingCell)
     end
 
     %% test
-    cID = u.cellNums(cellnum);
-
-    % find out trial indices for this specific cell
-    tindcell = find(cellfun(@(x) ismember(cID, x.neuindSession), u.trials));
-
-    iTest = intersect(tindcell, testInd);
-    % find out row number of this cell
-    cind = find(u.trials{iTest(1)}.neuindSession == cID);
-    planeInd = floor(cID/1000);
-
-    spkTest = cell2mat(cellfun(@(x) [nan(1,posShift), x.spk(cind,:), nan(1,posShift)], u.trials(iTest)','uniformoutput',false));
+    iTest = iTestAll{cellnum};                
+    spkTest = cell2mat(cellfun(@(x) [nan(1,posShift), x(cind,:), nan(1,posShift)], spikeAll(iTest)','uniformoutput',false));
     spkTest = spkTest';
     finiteIndTest = intersect(find(isfinite(spkTest)), find(isfinite(sum(testInputMat{planeInd},2))));
     spkTest = spkTest(finiteIndTest)';
@@ -108,7 +129,7 @@ for cellnumInd = 2 : length(remainingCell)
                 else
                     tempTrainInput = trainingInputMat{planeInd}(:,setdiff(coeffInds,indPartial{pi}));
                     tempTestInput = testInputMat{planeInd}(finiteIndTest,setdiff(coeffInds,indPartial{pi}));
-                    cvPartial = cvglmnet(tempTrainInput(finiteIndTrain,:), spk, 'poisson', partialGlmOpt, [], lambdaCV);
+                    cvPartial = cvglmnet(tempTrainInput(finiteIndTrain,:), spkTrain, 'poisson', partialGlmOpt, [], lambdaCV);
                     iLambda = find(cvPartial.lambda == cvPartial.lambda_1se);
                     partialLogLikelihood = sum(log(poisspdf(spkTest', exp([ones(length(finiteIndTest),1), tempTestInput] * [cvPartial.glmnet_fit.a0(iLambda); cvPartial.glmnet_fit.beta(:,iLambda)]))));
                     devianceFullPartial = 2*(fullLogLikelihood - partialLogLikelihood);
@@ -150,7 +171,7 @@ done(remainingCell) = doneRe;
 %             rtest(ri).devExplained = devExplained;
 %             rtest(ri).cvDev = cvDev;
 
-save(savefnResultRe, 'fit*', 'allPredictors', '*InputMat', 'indPartial', '*Group', '*Tn', 'lambdaCV', '*Opt', 'done', '*Re', 'remainingCell');
+save(savefnResultRe, 'fit*', 'allPredictors', '*InputMat', 'indPartial', '*Group', '*Tn', 'lambdaCV', '*Opt', 'done', '*Re', 'remainingCell', 'pThreshold*', '*Shift');
 %%
 %         end % of ri. random group selection index
 push_myphone(sprintf('GLM done for JK%03d S%02d', mouse, session))
