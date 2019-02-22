@@ -74,6 +74,11 @@ sessions = {[19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]};
 for mi = 7
 %     for si = 1:length(sessions{mi})
     for si = 1
+        poolobj = gcp('nocreate');
+        if poolobj.SpmdEnabled == 0
+            error('SpmdEnabled turned to false at #1');
+        end
+        
         timeStart = tic;
         mouse = mice(mi);
         session = sessions{mi}(si);
@@ -521,6 +526,12 @@ for mi = 7
             end
             spikeAll = cellfun(@(x) x.spk, u.trials, 'uniformoutput', false);            
 
+            
+            poolobj = gcp('nocreate');
+            if poolobj.SpmdEnabled == 0
+                error('SpmdEnabled turned to false at #2');
+            end
+            
             parfor cellnum = 1 : numCell
 %             for cellnum = 102, 127, (212 convergence error), 221, 658
     %         ci = 0;
