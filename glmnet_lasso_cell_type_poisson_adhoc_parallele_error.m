@@ -1,11 +1,16 @@
 % save(savefnResultRe, 'fit*', 'allPredictors', '*InputMat', 'indPartial', '*Group', '*Tn', 'lambdaCV', '*Opt', 'done', '*Re', 'remainingCell', 'pThreshold*', '*Shift');
 
 %%
-% parSetNum = 34;
-% myCluster = parcluster('local');
-% delete(myCluster.Jobs)
-% clear myCluster
-% parpool(parSetNum, 'SpmdEnabled', false);
+parSetNum = 34;
+myCluster = parcluster('local');
+delete(myCluster.Jobs)
+clear myCluster
+parpool(parSetNum, 'SpmdEnabled', true);
+
+poolobj = gcp('nocreate');
+if poolobj.SpmdEnabled == 0
+    error('SpmdEnabled changed to false')
+end
 
 if ~exist('pThresholdPartial', 'var')
     pThresholdPartial = 0.05;
@@ -35,7 +40,7 @@ mouse = 39;
 session = 1;
 savefnResult = sprintf('glmResponseType_JK%03dS%02d_glmnet_m14',mouse, session);
 
-savefnResultRe = [savefnResult, '_02'];
+savefnResultRe = [savefnResult, '_03'];
 
 previousDone = done(find(done));
 
@@ -53,7 +58,7 @@ fitCvDevRe = zeros(length(remainingCell),1);
 fitResultsRe = zeros(length(remainingCell),6);
 fitCoeffIndsRe = zeros(length(remainingCell),6);
 doneRe = zeros(length(remainingCell),1);
-
+cellTimeRe = zeros(length(remainingCell),1);
 
 
 tindcellAll = cell(numCell,1);
@@ -72,19 +77,26 @@ spikeAll = cellfun(@(x) x.spk, u.trials, 'uniformoutput', false);
 
 % clear u
 
+
+poolobj = gcp('nocreate');
+if poolobj.SpmdEnabled == 0
+    error('SpmdEnabled changed to false')
+end
+
 parfor cellnumInd = 1 : length(remainingCell)
+    celltic = tic;
 %     poolobj = gcp('nocreate')
     
 %     fprintf('Is NumWorkers a prop = %d \n', isprop(poolobj,'NumWorkers'))
 %     if poolobj.NumWorkers < parSetNum
 %         push_myphone('Lasso GLM error')
 %         error('Error occurred')
-%     end
+%     end    
     cellnum = remainingCell(cellnumInd);
 %     if ismember(cellnum, doneRe)
 %         error('Lasso GLM error')
 %     end
-    fitCoeffInd = zeros(1,6);
+    fitCoeffInd = nan(1,6);
 
 %                 fprintf('Mouse JK%03d session S%02d Loop %d: Running cell %d/%d \n', mouse, session, ri,cellnum, length(u.cellNums));
     fprintf('Mouse JK%03d session S%02d: Running cell %d/%d \n', mouse, session,cellnum, numCell);
@@ -162,6 +174,7 @@ parfor cellnumInd = 1 : length(remainingCell)
     fitResultsRe(cellnumInd,:) = fitResult;
     fitCoeffIndsRe(cellnumInd,:) = fitCoeffInd;
     doneRe(cellnumInd) = cellnum;
+    cellTimeRe(cellnumInd) = toc(celltic);
 end % end of parfor cellnum
 
 %%
@@ -175,6 +188,7 @@ fitCvDev(remainingCell) = fitCvDevRe;
 fitResults(remainingCell,:) = fitResultsRe;
 fitCoeffInds(remainingCell,:) = fitCoeffIndsRe;
 done(remainingCell) = doneRe;
+
 %             rtest(ri).fitInd = fitInd; % parameters surviving lasso in training set
 %             rtest(ri).fitCoeffs = fitCoeffs;
 %             rtest(ri).fitCoeffInds = fitCoeffInds; % first column is dummy
@@ -188,7 +202,7 @@ done(remainingCell) = doneRe;
 %             rtest(ri).devExplained = devExplained;
 %             rtest(ri).cvDev = cvDev;
 
-save(savefnResultRe, 'fit*', 'allPredictors', '*InputMat', 'indPartial', '*Group', '*Tn', 'lambdaCV', '*Opt', 'done', '*Re', 'remainingCell', 'pThreshold*', '*Shift', 'testInd', 'trainingInd', 'cIDAll');
+save(savefnResultRe, 'fit*', 'allPredictors', '*InputMat', 'indPartial', '*Group', '*Tn', 'lambdaCV', '*Opt', 'done', '*Re', 'remainingCell', 'pThreshold*', '*Shift', 'testInd', 'trainingInd', 'cIDAll', 'cellTime');
 %%
 %         end % of ri. random group selection index
 push_myphone(sprintf('GLM done for JK%03d S%02d', mouse, session))

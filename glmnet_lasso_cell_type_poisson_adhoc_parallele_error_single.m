@@ -174,7 +174,7 @@ cellTime(remainingCell) = cellTimeRe;
 %             rtest(ri).devExplained = devExplained;
 %             rtest(ri).cvDev = cvDev;
 
-save(savefnResultRe, 'fit*', 'allPredictors', '*InputMat', 'indPartial', '*Group', '*Tn', 'lambdaCV', '*Opt', 'done', '*Re', 'remainingCell', 'pThreshold*', '*Shift', 'runTime', 'cellTime');
+save(savefnResultRe, 'fit*', 'allPredictors', '*InputMat', 'indPartial', '*Group', '*Tn', 'lambdaCV', '*Opt', 'done', '*Re', 'remainingCell', 'pThreshold*', '*Shift', 'cellTime');
 %%
 %         end % of ri. random group selection index
 push_myphone(sprintf('GLM done for JK%03d S%02d', mouse, session))
