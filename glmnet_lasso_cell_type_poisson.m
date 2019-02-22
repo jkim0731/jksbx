@@ -70,11 +70,11 @@ sessions = {[19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]};
 % mice = [25,27,30];
 % sessions = {[17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]}; 
 % sessions = {[19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]}; 
-for mi = 6 : length(mice)
-% for mi = 1
-    for si = 1:length(sessions{mi})
-%     for si = 2
-
+% for mi = 6 : length(mice)
+for mi = 7
+%     for si = 1:length(sessions{mi})
+    for si = 1
+        timeStart = tic;
         mouse = mice(mi);
         session = sessions{mi}(si);
 
@@ -287,10 +287,11 @@ for mi = 6 : length(mice)
                     end
                 end
                 %
-                [~,testInd] = ismember(testTn, u.trialNums);
+                totalTn = u.trialNums;
+                [~,testInd] = ismember(testTn, totalTn);
 
-                trainingTn = setdiff(u.trialNums, testTn);
-                [~,trainingInd] = ismember(trainingTn, u.trialNums);
+                trainingTn = setdiff(totalTn, testTn);
+                [~,trainingInd] = ismember(trainingTn, totalTn);
                 %% Design matrices
                 % standardized using all the trials
                 allPredictors = cell(8,1);
@@ -490,21 +491,22 @@ for mi = 6 : length(mice)
 %                 % fitResult(:,3) for sound, (:,4) for reward, (:,5) for whisking, and (:,6) for licking    
 %             rtest(ri).devExplained = zeros(length(u.cellNums),1);            
     
-            fitInd = cell(length(u.cellNums),1); % parameters surviving lasso in training set
-            fitCoeffs = cell(length(u.cellNums),1); % intercept + coefficients of the parameters in training set
-            fitCoeffInds = nan(length(u.cellNums),6); % first column is a dummy
-            
-            fitResults = zeros(length(u.cellNums), 6); % fitting result from test set
-            fitDevExplained = zeros(length(u.cellNums),1); % deviance explained from test set
-            fitCvDev = zeros(length(u.cellNums),1); % deviance explained from training set
-            fitLambda = zeros(length(u.cellNums),1);
-            fitDF = zeros(length(u.cellNums),1);
-            started = zeros(length(u.cellNums),1);
-            done = zeros(length(u.cellNums),1);
-            
-            
-            numCell = length(u.cellNums);
             cIDAll = u.cellNums;
+            fitInd = cell(length(cIDAll),1); % parameters surviving lasso in training set
+            fitCoeffs = cell(length(cIDAll),1); % intercept + coefficients of the parameters in training set
+            fitCoeffInds = nan(length(cIDAll),6); % first column is a dummy
+            
+            fitResults = zeros(length(cIDAll), 6); % fitting result from test set
+            fitDevExplained = zeros(length(cIDAll),1); % deviance explained from test set
+            fitCvDev = zeros(length(cIDAll),1); % deviance explained from training set
+            fitLambda = zeros(length(cIDAll),1);
+            fitDF = zeros(length(cIDAll),1);
+            started = zeros(length(cIDAll),1);
+            done = zeros(length(cIDAll),1);
+            cellTime = zeros(length(cIDAll),1);
+            
+            
+            numCell = length(cIDAll);            
             tindcellAll = cell(numCell,1);
             cindAll = zeros(numCell,1);
             planeIndAll = zeros(numCell,1);
@@ -526,6 +528,7 @@ for mi = 6 : length(mice)
     %             ci = ci + 1;
     %         for cellnum = 1
             %     cellnum = 1;
+                cellTimeStart = tic;
                 fitCoeffInd = zeros(1,6);
                 
 %                 fprintf('Mouse JK%03d session S%02d Loop %d: Running cell %d/%d \n', mouse, session, ri,cellnum, length(u.cellNums));
@@ -604,6 +607,7 @@ for mi = 6 : length(mice)
                 fitResults(cellnum,:) = fitResult;
                 fitCoeffInds(cellnum,:) = fitCoeffInd;
                 done(cellnum) = cellnum;
+                cellTime(cellnum) = toc(cellTimeStart);
             end % end of parfor cellnum
             
 %             rtest(ri).fitInd = fitInd; % parameters surviving lasso in training set
@@ -618,8 +622,8 @@ for mi = 6 : length(mice)
 %     
 %             rtest(ri).devExplained = devExplained;
 %             rtest(ri).cvDev = cvDev;
-            
-            save(savefnResult, 'fit*', 'allPredictors', '*InputMat', 'indPartial', '*Group', '*Tn', 'lambdaCV', '*Opt', 'done', 'pThreshold*', '*Shift');
+            runTime = toc(timeStart);
+            save(savefnResult, 'fit*', 'allPredictors', '*InputMat', 'indPartial', '*Group', '*Tn', 'lambdaCV', '*Opt', 'done', 'pThreshold*', '*Shift', '*Time', 'testInd', 'trainingInd', 'cIDAll');
 
 %         end % of ri. random group selection index
         push_myphone(sprintf('Lasso GLM done for JK%03d S%02d', mouse, session))

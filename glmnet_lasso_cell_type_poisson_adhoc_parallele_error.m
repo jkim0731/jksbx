@@ -1,6 +1,12 @@
-%  save(savefnResult, 'fit*', 'allPredictors', '*InputMat', 'indPartial', '*Group', '*Tn', 'lambdaCV', '*Opt', 'done');
- 
+% save(savefnResultRe, 'fit*', 'allPredictors', '*InputMat', 'indPartial', '*Group', '*Tn', 'lambdaCV', '*Opt', 'done', '*Re', 'remainingCell', 'pThreshold*', '*Shift');
+
 %%
+% parSetNum = 34;
+% myCluster = parcluster('local');
+% delete(myCluster.Jobs)
+% clear myCluster
+% parpool(parSetNum, 'SpmdEnabled', false);
+
 if ~exist('pThresholdPartial', 'var')
     pThresholdPartial = 0.05;
 end
@@ -14,11 +20,16 @@ end
 if ~exist('negShift', 'var')
     negShift = 2;
 end
+if ~exist('totalTn', 'var')
+    totalTn = union(testTn,trainingTn);
+end
+if ~exist('cIDAll', 'var')
+    cIDAll = u.cellNums;    
+end
+[~,testInd] = ismember(testTn, totalTn);
 
-[~,testInd] = ismember(testTn, u.trialNums);
-
-trainingTn = setdiff(u.trialNums, testTn);
-[~,trainingInd] = ismember(trainingTn, u.trialNums);
+trainingTn = setdiff(totalTn, testTn);
+[~,trainingInd] = ismember(trainingTn, totalTn);
 
 mouse = 39;
 session = 1;
@@ -28,7 +39,8 @@ savefnResultRe = [savefnResult, '_02'];
 
 previousDone = done(find(done));
 
-remainingCell = setdiff(1 : length(u.cellNums), previousDone);
+numCell = length(cIDAll);
+remainingCell = setdiff(1 : numCell, previousDone);
 
 
 startedRe = zeros(length(remainingCell),1);
@@ -43,8 +55,7 @@ fitCoeffIndsRe = zeros(length(remainingCell),6);
 doneRe = zeros(length(remainingCell),1);
 
 
-numCell = length(u.cellNums);
-cIDAll = u.cellNums;
+
 tindcellAll = cell(numCell,1);
 cindAll = zeros(numCell,1);
 planeIndAll = zeros(numCell,1);
@@ -59,14 +70,20 @@ for i = 1 : numCell
 end
 spikeAll = cellfun(@(x) x.spk, u.trials, 'uniformoutput', false);
 
+% clear u
+
 parfor cellnumInd = 1 : length(remainingCell)
+%     poolobj = gcp('nocreate')
+    
+%     fprintf('Is NumWorkers a prop = %d \n', isprop(poolobj,'NumWorkers'))
+%     if poolobj.NumWorkers < parSetNum
+%         push_myphone('Lasso GLM error')
+%         error('Error occurred')
+%     end
     cellnum = remainingCell(cellnumInd);
-%             for cellnum = 102, 127, (212 convergence error), 221, 658
-%         ci = 0;
-%         for cellnum = 1:division:length(u.cellNums)
-%             ci = ci + 1;
-%         for cellnum = 1
-%     cellnum = 1;
+%     if ismember(cellnum, doneRe)
+%         error('Lasso GLM error')
+%     end
     fitCoeffInd = zeros(1,6);
 
 %                 fprintf('Mouse JK%03d session S%02d Loop %d: Running cell %d/%d \n', mouse, session, ri,cellnum, length(u.cellNums));
@@ -120,26 +137,26 @@ parfor cellnumInd = 1 : length(remainingCell)
 
     if devianceFullNull > chi2inv(1-pThresholdNull, dfFullNull)
         fitResult(1) = 1;
-        %% (2) test without each parameter (as a group)                
-        for pi = 1 : 5
-            if find(ismember(coeffInds, indPartial{pi}))
-                if all(ismember(coeffInds, indPartial{pi}))
-                    fitResult(pi+1) = 1;
-                    break
-                else
-                    tempTrainInput = trainingInputMat{planeInd}(:,setdiff(coeffInds,indPartial{pi}));
-                    tempTestInput = testInputMat{planeInd}(finiteIndTest,setdiff(coeffInds,indPartial{pi}));
-                    cvPartial = cvglmnet(tempTrainInput(finiteIndTrain,:), spkTrain, 'poisson', partialGlmOpt, [], lambdaCV);
-                    iLambda = find(cvPartial.lambda == cvPartial.lambda_1se);
-                    partialLogLikelihood = sum(log(poisspdf(spkTest', exp([ones(length(finiteIndTest),1), tempTestInput] * [cvPartial.glmnet_fit.a0(iLambda); cvPartial.glmnet_fit.beta(:,iLambda)]))));
-                    devianceFullPartial = 2*(fullLogLikelihood - partialLogLikelihood);
-                    dfFullPartial = dfFullNull - cvPartial.glmnet_fit.df(iLambda);
-                    if devianceFullPartial > chi2inv(1-pThresholdPartial, dfFullPartial)
-                        fitResult(pi+1) = 1;
-                    end
-                end
-            end
-        end
+%         %% (2) test without each parameter (as a group)                
+%         for pi = 1 : 5
+%             if find(ismember(coeffInds, indPartial{pi}))
+%                 if all(ismember(coeffInds, indPartial{pi}))
+%                     fitResult(pi+1) = 1;
+%                     break
+%                 else
+%                     tempTrainInput = trainingInputMat{planeInd}(:,setdiff(coeffInds,indPartial{pi}));
+%                     tempTestInput = testInputMat{planeInd}(finiteIndTest,setdiff(coeffInds,indPartial{pi}));
+%                     cvPartial = cvglmnet(tempTrainInput(finiteIndTrain,:), spkTrain, 'poisson', partialGlmOpt, [], lambdaCV);
+%                     iLambda = find(cvPartial.lambda == cvPartial.lambda_1se);
+%                     partialLogLikelihood = sum(log(poisspdf(spkTest', exp([ones(length(finiteIndTest),1), tempTestInput] * [cvPartial.glmnet_fit.a0(iLambda); cvPartial.glmnet_fit.beta(:,iLambda)]))));
+%                     devianceFullPartial = 2*(fullLogLikelihood - partialLogLikelihood);
+%                     dfFullPartial = dfFullNull - cvPartial.glmnet_fit.df(iLambda);
+%                     if devianceFullPartial > chi2inv(1-pThresholdPartial, dfFullPartial)
+%                         fitResult(pi+1) = 1;
+%                     end
+%                 end
+%             end
+%         end
     end
 
     fitResultsRe(cellnumInd,:) = fitResult;
@@ -171,7 +188,7 @@ done(remainingCell) = doneRe;
 %             rtest(ri).devExplained = devExplained;
 %             rtest(ri).cvDev = cvDev;
 
-save(savefnResultRe, 'fit*', 'allPredictors', '*InputMat', 'indPartial', '*Group', '*Tn', 'lambdaCV', '*Opt', 'done', '*Re', 'remainingCell', 'pThreshold*', '*Shift');
+save(savefnResultRe, 'fit*', 'allPredictors', '*InputMat', 'indPartial', '*Group', '*Tn', 'lambdaCV', '*Opt', 'done', '*Re', 'remainingCell', 'pThreshold*', '*Shift', 'testInd', 'trainingInd', 'cIDAll');
 %%
 %         end % of ri. random group selection index
 push_myphone(sprintf('GLM done for JK%03d S%02d', mouse, session))
