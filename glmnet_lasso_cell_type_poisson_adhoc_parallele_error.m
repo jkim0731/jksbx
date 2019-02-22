@@ -188,7 +188,7 @@ fitCvDev(remainingCell) = fitCvDevRe;
 fitResults(remainingCell,:) = fitResultsRe;
 fitCoeffInds(remainingCell,:) = fitCoeffIndsRe;
 done(remainingCell) = doneRe;
-
+cellTime(remainingCell) = cellTimeRe;
 %             rtest(ri).fitInd = fitInd; % parameters surviving lasso in training set
 %             rtest(ri).fitCoeffs = fitCoeffs;
 %             rtest(ri).fitCoeffInds = fitCoeffInds; % first column is dummy

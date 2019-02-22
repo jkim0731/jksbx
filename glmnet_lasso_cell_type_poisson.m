@@ -65,21 +65,20 @@ baseDir = 'C:\JK\';
 
 mice = [25,27,30,36,37,38,39,41,52,53,54,56];
 % sessions = {[4,19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]}; 
-sessions = {[19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]};
+sessions = {[19],[3,16],[3,21],[1,17],[7],[2],[22],[3],[3,21],[3],[3],[3]};
 %%
 % mice = [25,27,30];
 % sessions = {[17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]}; 
 % sessions = {[19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]}; 
 % for mi = 6 : length(mice)
-for mi = 7
-%     for si = 1:length(sessions{mi})
-    for si = 1
+for mi = 7 : 8
+    for si = 1:length(sessions{mi})
+%     for si = 1
         poolobj = gcp('nocreate');
         if poolobj.SpmdEnabled == 0
             error('SpmdEnabled turned to false at #1');
         end
         
-        timeStart = tic;
         mouse = mice(mi);
         session = sessions{mi}(si);
 
@@ -633,8 +632,8 @@ for mi = 7
 %     
 %             rtest(ri).devExplained = devExplained;
 %             rtest(ri).cvDev = cvDev;
-            runTime = toc(timeStart);
-            save(savefnResult, 'fit*', 'allPredictors', '*InputMat', 'indPartial', '*Group', '*Tn', 'lambdaCV', '*Opt', 'done', 'pThreshold*', '*Shift', '*Time', 'testInd', 'trainingInd', 'cIDAll');
+
+            save(savefnResult, 'fit*', 'allPredictors', '*InputMat', 'indPartial', '*Group', '*Tn', 'lambdaCV', '*Opt', 'done', 'pThreshold*', '*Shift', 'cellTime', 'testInd', 'trainingInd', 'cIDAll');
 
 %         end % of ri. random group selection index
         push_myphone(sprintf('Lasso GLM done for JK%03d S%02d', mouse, session))
