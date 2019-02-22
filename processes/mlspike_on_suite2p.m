@@ -20,8 +20,8 @@ baseDir = 'D:\2p\JK\';
 for mi = 1 : length(mice)
     cd(sprintf('%s%03d',baseDir, mice(mi)))
     flist = dir('F_*_proc_final.mat');
-%     for fi = 2 : length(flist)
-    for fi = 1
+    for fi = 1 : length(flist)
+%     for fi = 1
         load(flist(fi).name)
 %         indCell = find([dat.stat.iscell]);
         dt = 1/dat.ops.imageRate*dat.ops.num_plane;
