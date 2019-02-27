@@ -67,14 +67,16 @@ mice = [25,27,30,36,37,38,39,41,52,53,54,56];
 % sessions = {[4,19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]}; 
 
             repetition = 10;
-sessions = {[4],[3,16],[3,21],[1,17],[7],[2],[],[],[3],[3],[3],[3]};
+sessions = {[4,19],[3,16],[3,21],[1,17],[7],[2],[1,22],[],[3,21],[3],[3],[3]};
+errorCell = {{[],[224]},{[],[]},{[],[]},{[],[]},{[]},{[]},{[1211,1972],[1286]},{[]},{[],[605, 676, 740, 755, 811]},{[]},{[]},{[]}};
 %%
 % mice = [25,27,30];
 % sessions = {[17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]}; 
 % sessions = {[19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]}; 
 % for mi = 1 : length(mice)
-for mi = 1:4
+for mi = 1:6
     for si = 1:length(sessions{mi})
+        errorCellSession = errorCell{mi}{si};
 %     for si = 1
         poolobj = gcp('nocreate');
         if poolobj.SpmdEnabled == 0
@@ -506,8 +508,11 @@ for mi = 1:4
             fitCoeffInds = nan(length(cIDAll),6); % first column is a dummy
             
             fitResults = zeros(length(cIDAll), 6); % fitting result from test set
+            fitResultsRidge = zeros(length(cIDAll), 6); % fitting result from test set, with second ridge regression 
             fitDevExplained = zeros(length(cIDAll),1); % deviance explained from test set
+            fitDevExplainedRidge = zeros(length(cIDAll),1); % deviance explained from test set, with second ridge regression
             fitCvDev = zeros(length(cIDAll),1); % deviance explained from training set
+            fitCvDevRidge = zeros(length(cIDAll),1); % deviance explained from training set, with second ridge regression
             fitLambda = zeros(length(cIDAll),1);
             fitDF = zeros(length(cIDAll),1);
             started = zeros(length(cIDAll),1);
@@ -542,6 +547,7 @@ for mi = 1:4
     %             ci = ci + 1;
     %         for cellnum = 1
             %     cellnum = 1;
+            if ~ismember(numCell, errorCellSession)
                 cellTimeStart = tic;
                 fitCoeffInd = zeros(1,6);
                 
@@ -582,6 +588,7 @@ for mi = 1:4
                 spkTest = spkTest(finiteIndTest)';
                 %% (1) if the full model is significant
                 fitResult = zeros(1,6);
+                fitResultRidge = zeros(1,6);
     
                 model = exp([ones(length(finiteIndTest),1),testInputMat{planeInd}(finiteIndTest,:)]*[cv.glmnet_fit.a0(iLambda); cv.glmnet_fit.beta(:,iLambda)]);
                 mu = mean(spkTest); % null poisson parameter
@@ -596,6 +603,19 @@ for mi = 1:4
 
                 if devianceFullNull > chi2inv(1-pThresholdNull, dfFullNull)
                     fitResult(1) = 1;
+                    
+                    % Second run with ridge, with the coefficients selected from lasso (elastic-net 0.95)
+                    cvRidge = cvglmnet(input(:,coeffInds), spkTrain, 'poisson', partialGlmOpt, [], lamdbaCV);
+                    iLambda = find(cvRidge.lambda == cvRidge.lambda_1se);
+                    modelRidge = exp([ones(length(finiteIndTest),1),testInputMat{planeInd}(finiteIndTest,coeffInds)]*[cvRidge.glmnet_fit.a0(iLambda); cvRidge.glmnet_fit.beta(:,iLambda)]);
+                    ridgeLogLikelihood = sum(log(poisspdf(spkTest',modelRidge)));
+                    saturatedLogLikelihood = sum(log(poisspdf(spkTest,spkTest)));
+                    devianceRidgeNull = 2*(ridgeLogLikelihood - nullLogLikelihood);
+                    fitDevExplainedRidge(cellnum) = 1 - (saturatedLogLikelihood - ridgeLogLikelihood)/(saturatedLogLikelihood - nullLogLikelihood);
+                    fitCvDevRidge(cellnum) = cvRidge.glmnet_fit.dev(iLambda);
+                    if devianceRidgeNull > chi2inv(1-pThresholdNull, dfFullNull)
+                        fitResultRidge(1) = 1;
+                    end
                     %% (2) test without each parameter (as a group)                
                     for pi = 1 : 5
                         if find(ismember(coeffInds, indPartial{pi}))
@@ -609,9 +629,14 @@ for mi = 1:4
                                 iLambda = find(cvPartial.lambda == cvPartial.lambda_1se);
                                 partialLogLikelihood = sum(log(poisspdf(spkTest', exp([ones(length(finiteIndTest),1), tempTestInput] * [cvPartial.glmnet_fit.a0(iLambda); cvPartial.glmnet_fit.beta(:,iLambda)]))));
                                 devianceFullPartial = 2*(fullLogLikelihood - partialLogLikelihood);
-                                dfFullPartial = dfFullNull - cvPartial.glmnet_fit.df(iLambda);
+                                dfFullPartial = dfFullNull - length(setdiff(coeffInds, indPartial{pi}));
                                 if devianceFullPartial > chi2inv(1-pThresholdPartial, dfFullPartial)
                                     fitResult(pi+1) = 1;
+                                end
+                                
+                                devianceRidgePartial = 2*(ridgeLogLikelihood - partialLogLikelihood);
+                                if devianceRidgePartial > chi2inv(1-pThresholdPartial, dfFullPartial)
+                                    fitResultRidge(pi+1) = 1;
                                 end
                             end
                         end
@@ -619,9 +644,11 @@ for mi = 1:4
                 end
                 
                 fitResults(cellnum,:) = fitResult;
+                fitResultsRidge(cellnum,:) = fitResultRidge;
                 fitCoeffInds(cellnum,:) = fitCoeffInd;
                 done(cellnum) = cellnum;
                 cellTime(cellnum) = toc(cellTimeStart);
+            end
             end % end of parfor cellnum
 
             save(sprintf('%s_R%02d',savefnResult), 'fit*', 'allPredictors', '*InputMat', 'indPartial', '*Group', '*Tn', 'lambdaCV', '*Opt', 'done', 'pThreshold*', '*Shift', 'cellTime', 'testInd', 'trainingInd', 'cIDAll');
