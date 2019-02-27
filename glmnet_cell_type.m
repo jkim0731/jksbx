@@ -605,7 +605,7 @@ for mi = 1:6
                     fitResult(1) = 1;
                     
                     % Second run with ridge, with the coefficients selected from lasso (elastic-net 0.95)
-                    cvRidge = cvglmnet(input(:,coeffInds), spkTrain, 'poisson', partialGlmOpt, [], lamdbaCV);
+                    cvRidge = cvglmnet(input(:,coeffInds), spkTrain, 'poisson', partialGlmOpt, [], lambdaCV);
                     iLambda = find(cvRidge.lambda == cvRidge.lambda_1se);
                     modelRidge = exp([ones(length(finiteIndTest),1),testInputMat{planeInd}(finiteIndTest,coeffInds)]*[cvRidge.glmnet_fit.a0(iLambda); cvRidge.glmnet_fit.beta(:,iLambda)]);
                     ridgeLogLikelihood = sum(log(poisspdf(spkTest',modelRidge)));
