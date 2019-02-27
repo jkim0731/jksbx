@@ -403,7 +403,7 @@ for mi = 1:6
                         pTouchFramesMat = zeros(length(pTouchFrames),(posShift + 1) * (length(angles)+1));
                         pTouchDurationMat = zeros(length(pTouchDuration), (posShift + 1) * (length(angles)+1));
 
-                        scPiezoMat = scPiezo; % cannot have delay because of the timing with TPM imaging
+                        scPiezoMat = scPiezo'; % cannot have delay because of the timing with TPM imaging
                         scPoleUpMat = zeros(length(scPoleup), posShift + 1);
                         scPoleDownMat = zeros(length(scPoledown), posShift + 1);
                         drinkOnsetMat = zeros(length(drinkOnset), posShift + 1);
