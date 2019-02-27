@@ -651,7 +651,7 @@ for mi = 1:6
             end
             end % end of parfor cellnum
 
-            save(sprintf('%s_R%02d',savefnResult), 'fit*', 'allPredictors', '*InputMat', 'indPartial', '*Group', '*Tn', 'lambdaCV', '*Opt', 'done', 'pThreshold*', '*Shift', 'cellTime', 'testInd', 'trainingInd', 'cIDAll');
+            save(sprintf('%s_R%02d',savefnResult, ri), 'fit*', 'allPredictors', '*InputMat', 'indPartial', '*Group', '*Tn', 'lambdaCV', '*Opt', 'done', 'pThreshold*', '*Shift', 'cellTime', 'testInd', 'trainingInd', 'cIDAll');
 
         end % of ri. random group selection index
         push_myphone(sprintf('Lasso GLM done for JK%03d S%02d', mouse, session))
