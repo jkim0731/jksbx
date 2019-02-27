@@ -65,13 +65,15 @@ baseDir = 'C:\JK\';
 
 mice = [25,27,30,36,37,38,39,41,52,53,54,56];
 % sessions = {[4,19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]}; 
-sessions = {[19],[3,16],[3,21],[1,17],[7],[2],[22],[3],[3,21],[3],[3],[3]};
+
+            repetition = 10;
+sessions = {[4],[3,16],[3,21],[1,17],[7],[2],[],[],[3],[3],[3],[3]};
 %%
 % mice = [25,27,30];
 % sessions = {[17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]}; 
 % sessions = {[19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]}; 
-% for mi = 6 : length(mice)
-for mi = 8
+% for mi = 1 : length(mice)
+for mi = 1:4
     for si = 1:length(sessions{mi})
 %     for si = 1
         poolobj = gcp('nocreate');
@@ -88,7 +90,6 @@ for mi = 8
         pThresholdNull = 0.05;
         pThresholdPartial = 0.05;
         lickBoutInterval = 1; % licks separated by 1 s regarded as different licking bouts
-        numShuffle = 1000; % number of shuffling for testing r for ridge regression
 
         glmnetOpt = glmnetSet;
         glmnetOpt.standardize = 0; % do the standardization at the level of predictors, including both training and test
@@ -108,7 +109,7 @@ for mi = 8
         end
         frameRate = u.frameRate;
 
-        savefnResult = sprintf('glmResponseType_JK%03dS%02d_glmnet_m14',mouse, session); % m(n) meaining method(n)
+        savefnResult = sprintf('glmResponseType_JK%03dS%02d_glmnet_m16',mouse, session); % m(n) meaining method(n)
 
             %% pre-processing for lick onset and offset
             % regardless of licking alternating, each l and r has it's own lick onset and offset. both licking, just take the union
@@ -241,13 +242,13 @@ for mi = 8
 
 %             %% repetition test
 %     %         division = 20;
-%             repetition = 1;
-%             rtest = struct;
-%             for ri = 1 : repetition % repetition index
+
+
+            for ri = 1 : repetition % repetition index
                 %% divide into training set and test set (70%, 30%)
                 % based on the animal touched or not, the choice (same as the result since I'm going to mix the pole angles, so right, wrong, and miss), pole angles (2 or 7), and the distance (if there were multiple distances)
                 % in this order, make trees, and take 30% of the leaves (or equivalently, take all the possible intersections and take 30%)
-
+                
                 angles = unique(cellfun(@(x) x.angle, u.trials));
                 distances = unique(cellfun(@(x) x.distance, u.trials));
 
@@ -273,6 +274,8 @@ for mi = 8
                 for i = 1 : length(distances)
                     distanceGroup{i} = cellfun(@(x) x.trialNum, u.trials(find(cellfun(@(x) x.distance == distances(i), u.trials))));
                 end
+                
+                
                 %%
                 testTn = [];
                 for pti = 1 : length(ptouchGroup)
@@ -338,6 +341,7 @@ for mi = 8
                         pTouchDurationAngles{end} = pTouchDuration;
                         pTouchFramesAngles{end} = pTouchFrames;
 
+                        scPiezo = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.poleUpOnsetTime, [0, x.tpmTime{plane}]), nan(1,posShift)], u.trials(tind)','uniformoutput',false));
                         scPoleup = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.poleUpOnsetTime, [0, x.tpmTime{plane}]), nan(1,posShift)], u.trials(tind)','uniformoutput',false));
                         scPoledown = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.poleDownOnsetTime, [0, x.tpmTime{plane}]), nan(1,posShift)], u.trials(tind)','uniformoutput',false));
                         drinkOnset = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.drinkingOnsetTime, [0, x.tpmTime{plane}]), nan(1,posShift)], u.trials(tind)','uniformoutput',false));
@@ -397,6 +401,7 @@ for mi = 8
                         pTouchFramesMat = zeros(length(pTouchFrames),(posShift + 1) * (length(angles)+1));
                         pTouchDurationMat = zeros(length(pTouchDuration), (posShift + 1) * (length(angles)+1));
 
+                        scPiezoMat = scPiezo; % cannot have delay because of the timing with TPM imaging
                         scPoleUpMat = zeros(length(scPoleup), posShift + 1);
                         scPoleDownMat = zeros(length(scPoledown), posShift + 1);
                         drinkOnsetMat = zeros(length(drinkOnset), posShift + 1);
@@ -455,7 +460,7 @@ for mi = 8
                         end
 %                         touchMat = [tTouchCountMat, pTouchCountMat, rTouchCountMat, tTouchFramesMat, pTouchFramesMat, rTouchFramesMat, tTouchDurationMat, pTouchDurationMat, rTouchDurationMat];
                         touchMat = [pTouchCountMat, pTouchFramesMat, pTouchDurationMat];                        
-                        soundMat = [scPoleUpMat, scPoleDownMat];
+                        soundMat = [scPiezoMat, scPoleUpMat, scPoleDownMat];
                         drinkMat = drinkOnsetMat;
                         whiskingMat = [whiskingOnsetMat, whiskingAmpMat, whiskingOAMat, whiskingMidpointMat];
                         lickingMat = [bLickMat, lLickMat, rLickMat, bLickOnsetMat, lLickOnsetMat, rLickOnsetMat, bLickOffsetMat, lLickOffsetMat, rLickOffsetMat, ...
@@ -508,7 +513,6 @@ for mi = 8
             started = zeros(length(cIDAll),1);
             done = zeros(length(cIDAll),1);
             cellTime = zeros(length(cIDAll),1);
-            
             
             numCell = length(cIDAll);            
             tindcellAll = cell(numCell,1);
@@ -620,23 +624,9 @@ for mi = 8
                 cellTime(cellnum) = toc(cellTimeStart);
             end % end of parfor cellnum
 
-            %%
-%             rtest(ri).fitInd = fitInd; % parameters surviving lasso in training set
-%             rtest(ri).fitCoeffs = fitCoeffs;
-%             rtest(ri).fitCoeffInds = fitCoeffInds; % first column is dummy
-%             
-%             rtest(ri).fitResults = fitResults;        
-%             % fitResult(:,1) if full fitting is significant (compared to null model), 0 if not
-%             % fitResult(:,2) for touchInd, compared to full fitting. if excluding touch
-%             % is significantly less fit, then 1, 0 otherwise
-%             % fitResult(:,3) for sound, (:,4) for reward, (:,5) for whisking, and (:,6) for licking
-%     
-%             rtest(ri).devExplained = devExplained;
-%             rtest(ri).cvDev = cvDev;
+            save(sprintf('%s_R%02d',savefnResult), 'fit*', 'allPredictors', '*InputMat', 'indPartial', '*Group', '*Tn', 'lambdaCV', '*Opt', 'done', 'pThreshold*', '*Shift', 'cellTime', 'testInd', 'trainingInd', 'cIDAll');
 
-            save(savefnResult, 'fit*', 'allPredictors', '*InputMat', 'indPartial', '*Group', '*Tn', 'lambdaCV', '*Opt', 'done', 'pThreshold*', '*Shift', 'cellTime', 'testInd', 'trainingInd', 'cIDAll');
-%%
-%         end % of ri. random group selection index
+        end % of ri. random group selection index
         push_myphone(sprintf('Lasso GLM done for JK%03d S%02d', mouse, session))
 
     end

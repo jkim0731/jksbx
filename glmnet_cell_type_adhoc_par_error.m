@@ -79,7 +79,7 @@ if poolobj.SpmdEnabled == 0
     error('SpmdEnabled changed to false')
 end
 
-for cellnumInd = restartingNum : length(remainingCell)
+parfor cellnumInd = restartingNum : length(remainingCell)
     celltic = tic;
 %     poolobj = gcp('nocreate')
     
@@ -106,7 +106,7 @@ for cellnumInd = restartingNum : length(remainingCell)
     input = trainingInputMat{planeInd}(finiteIndTrain,:);
     spkTrain = spkTrain(finiteIndTrain)';
 
-    cv = cvglmnet(input, spkTrain, 'poisson', glmnetOpt, [], lambdaCV, [], true);
+    cv = cvglmnet(input, spkTrain, 'poisson', glmnetOpt, [], lambdaCV);
     
     %% survived coefficients
     fitLambdaRe(cellnumInd) = cv.lambda_1se;
@@ -154,7 +154,7 @@ for cellnumInd = restartingNum : length(remainingCell)
                 else
                     tempTrainInput = trainingInputMat{planeInd}(:,setdiff(coeffInds,indPartial{pi}));
                     tempTestInput = testInputMat{planeInd}(finiteIndTest,setdiff(coeffInds,indPartial{pi}));
-                    cvPartial = cvglmnet(tempTrainInput(finiteIndTrain,:), spkTrain, 'poisson', partialGlmOpt, [], lambdaCV, [], true);
+                    cvPartial = cvglmnet(tempTrainInput(finiteIndTrain,:), spkTrain, 'poisson', partialGlmOpt, [], lambdaCV);
                     
                     iLambda = find(cvPartial.lambda == cvPartial.lambda_1se);
                     partialLogLikelihood = sum(log(poisspdf(spkTest', exp([ones(length(finiteIndTest),1), tempTestInput] * [cvPartial.glmnet_fit.a0(iLambda); cvPartial.glmnet_fit.beta(:,iLambda)]))));
