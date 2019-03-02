@@ -88,7 +88,7 @@ end
 if glmPar
     for cellnumInd = restartingNum : length(remainingCell)
         cellnum = remainingCell(cellnumInd);
-        if cellnum > 1748
+        
             celltic = tic;
         %     poolobj = gcp('nocreate')
 
@@ -201,12 +201,12 @@ if glmPar
             fitCoeffIndsRe(cellnumInd,:) = fitCoeffInd;
             doneRe(cellnumInd) = cellnum;
             cellTimeRe(cellnumInd) = toc(celltic);
-        end
+        
     end % end of for cellnum
 else
     parfor cellnumInd = restartingNum : length(remainingCell)
         cellnum = remainingCell(cellnumInd);
-        if cellnum > 1748
+        
             celltic = tic;
         %     poolobj = gcp('nocreate')
 
@@ -319,7 +319,7 @@ else
             fitCoeffIndsRe(cellnumInd,:) = fitCoeffInd;
             doneRe(cellnumInd) = cellnum;
             cellTimeRe(cellnumInd) = toc(celltic);
-        end
+        
     end % end of parfor cellnum
 end
 %%
