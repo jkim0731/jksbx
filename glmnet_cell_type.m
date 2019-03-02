@@ -70,7 +70,7 @@ errorCell = {{[],[]},{[],[]},{[],[]},{[],[]},{[]},{[]},{[],[]},{[]},{[],[]},{[]}
 % sessions = {[17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]}; 
 % sessions = {[19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]}; 
 % for mi = 1 : length(mice)
-for mi = 7
+for mi = 4
 %     for si = 1:length(sessions{mi})
     for si = 1
         errorCellSession = errorCell{mi}{si};
@@ -243,7 +243,7 @@ for mi = 7
 %     %         division = 20;
 
 
-            for ri = 2 : repetition % repetition index
+            for ri = 7 : repetition % repetition index
                 %% divide into training set and test set (70%, 30%)
                 % based on the animal touched or not, the choice (same as the result since I'm going to mix the pole angles, so right, wrong, and miss), pole angles (2 or 7), and the distance (if there were multiple distances)
                 % in this order, make trees, and take 30% of the leaves (or equivalently, take all the possible intersections and take 30%)

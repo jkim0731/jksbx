@@ -31,13 +31,13 @@ end
 trainingTn = setdiff(totalTn, testTn);
 [~,trainingInd] = ismember(trainingTn, totalTn);
 
-mouse = 39;
+mouse = 36;
 session = 1;
 restartingNum = 1;
-glmPar = true;
+glmPar = false;
 savefnResult = sprintf('glmResponseType_JK%03dS%02d_glmnet_m16_R01',mouse, session);
 
-savefnResultRe = [savefnResult, '_09'];
+savefnResultRe = [savefnResult, '_02'];
 
 previousDone = done(find(done));
 
@@ -204,7 +204,7 @@ if glmPar
         
     end % end of for cellnum
 else
-    parfor cellnumInd = restartingNum : length(remainingCell)
+    parfor cellnumInd = 1 : length(remainingCell)
         cellnum = remainingCell(cellnumInd);
         
             celltic = tic;
@@ -281,8 +281,8 @@ else
                 ridgeLogLikelihood = sum(log(poisspdf(spkTest',modelRidge)));
                 saturatedLogLikelihood = sum(log(poisspdf(spkTest,spkTest)));
                 devianceRidgeNull = 2*(ridgeLogLikelihood - nullLogLikelihood);
-                fitDevExplainedRidgeRe(cellnum) = 1 - (saturatedLogLikelihood - ridgeLogLikelihood)/(saturatedLogLikelihood - nullLogLikelihood);
-                fitCvDevRidgeRe(cellnum) = cvRidge.glmnet_fit.dev(iLambda);
+                fitDevExplainedRidgeRe(cellnumInd) = 1 - (saturatedLogLikelihood - ridgeLogLikelihood)/(saturatedLogLikelihood - nullLogLikelihood);
+                fitCvDevRidgeRe(cellnumInd) = cvRidge.glmnet_fit.dev(iLambda);
                 if devianceRidgeNull > chi2inv(1-pThresholdNull, dfFullNull)
                     fitResultRidge(1) = 1;
                 end
