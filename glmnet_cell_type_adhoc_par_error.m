@@ -37,7 +37,7 @@ restartingNum = 1;
 glmPar = true;
 savefnResult = sprintf('glmResponseType_JK%03dS%02d_glmnet_m16_R01',mouse, session);
 
-savefnResultRe = [savefnResult, '_08'];
+savefnResultRe = [savefnResult, '_09'];
 
 previousDone = done(find(done));
 
@@ -331,7 +331,7 @@ fitDF(remainingCell) = fitDFRe;
 fitDevExplained(remainingCell) = fitDevExplainedRe;
 fitCvDev(remainingCell) = fitCvDevRe;
 fitResults(remainingCell,:) = fitResultsRe;
-fitResultsRidge(remainingCell,:) = fitResultRidgeRe;
+fitResultsRidge(remainingCell,:) = fitResultsRidgeRe;
 fitCoeffInds(remainingCell,:) = fitCoeffIndsRe;
 done(remainingCell) = doneRe;
 cellTime(remainingCell) = cellTimeRe;
