@@ -70,7 +70,7 @@ sessions = {[19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]};
 % mice = [25,27,30];
 % sessions = {[17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]}; 
 % sessions = {[19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]}; 
-for mi = 8 : length(mice)
+for mi = 9 : length(mice)
 % for mi = 1
     for si = 1:length(sessions{mi})
 %     for si = 2
@@ -490,17 +490,16 @@ for mi = 8 : length(mice)
 %                 % fitResult(:,3) for sound, (:,4) for reward, (:,5) for whisking, and (:,6) for licking    
 %             rtest(ri).devExplained = zeros(length(u.cellNums),1);            
     
-            fitInd = cell(length(u.cellNums),1); % parameters surviving lasso in training set
-            fitCoeffs = cell(length(u.cellNums),1); % intercept + coefficients of the parameters in training set
-            fitCoeffInds = nan(length(u.cellNums),6); % first column is a dummy
-            
-            fitResults = zeros(length(u.cellNums), 6); % fitting result from test set
-            fitDevExplained = zeros(length(u.cellNums),1); % deviance explained from test set
-            fitCvDev = zeros(length(u.cellNums),1); % deviance explained from training set
-            fitLambda = zeros(length(u.cellNums),1);
-            fitDF = zeros(length(u.cellNums),1);
-            started = zeros(length(u.cellNums),1);
-            done = zeros(length(u.cellNums),1);
+%             fitInd = cell(length(u.cellNums),1); % parameters surviving lasso in training set
+%             fitCoeffs = cell(length(u.cellNums),1); % intercept + coefficients of the parameters in training set
+%             fitCoeffInds = nan(length(u.cellNums),6); % first column is a dummy
+%             
+%             fitResults = zeros(length(u.cellNums), 6); % fitting result from test set
+%             fitDevExplained = zeros(length(u.cellNums),1); % deviance explained from test set
+%             fitCvDev = zeros(length(u.cellNums),1); % deviance explained from training set
+%             fitLambda = zeros(length(u.cellNums),1);
+%             fitDF = zeros(length(u.cellNums),1);
+
 
             % Adjustment for techila
             numCell = length(u.cellNums);
@@ -519,91 +518,15 @@ for mi = 8 : length(mice)
             end
             spikeAll = cellfun(@(x) x.spk, u.trials, 'uniformoutput', false);
             
-            %% Techila loop
-            cloudfor cellnum = 1 : numCell
-            %cloudfor('force:largedata')
-            %cloudfor('inputparam', numCell, cIDAll, tindcellAll, cindAll, planeIndAll, iTrainAll, iTestAll, spikeAll, fitInd, fitCoeffs, fitCoeffInds, fitResults, fitDevExplained, fitCvDev, fitLambda, fitDF, started, done, indPartial, trainingInputMat, testInputMat, lambdaCV, glmnetOpt, posShift, pThresholdNull, pThresholdPartial, partialGlmOpt)
-            %cloudfor('stepsperjob',1)
             
+%             copyfile(which('glmnetMex.F'), pwd);
+            cd(fileparts(which('glmnetMex.F')))
+            [fitInd, fitCoeffs, fitCoeffInds, fitResults, fitDevExplained, fitCvDev, fitLambda, fitDF] = ...
+                peach('peach_dist_glm_lasso', {cIDAll, iTrainAll, cindAll, planeIndAll, posShift, spikeAll, trainingInputMat, glmnetOpt, lambdaCV, indPartial, ...
+                iTestAll, testInputMat, pThresholdNull, partialGlmOpt, pThresholdPartial, '<param>'}, 1:numCell);
+            %%
 
-                fitCoeffInd = zeros(1,6);
-                started(cellnum) = cellnum;
-               
-                cID = cIDAll(cellnum);
-    
-                iTrain = iTrainAll{cellnum};
-                cind = cindAll(cellnum);
-                planeInd = planeIndAll(cellnum);
-    
-                spkTrain = cell2mat(cellfun(@(x) [nan(1,posShift), x(cind,:), nan(1,posShift)], spikeAll(iTrain)','uniformoutput',false));                
-                finiteIndTrain = intersect(find(isfinite(spkTrain)), find(isfinite(sum(trainingInputMat{planeInd},2))));
-                input = trainingInputMat{planeInd}(finiteIndTrain,:);
-                spkTrain = spkTrain(finiteIndTrain)';
-    
-                cv = cvglmnet(input, spkTrain, 'poisson', glmnetOpt, [], lambdaCV);
-                %% survived coefficients
-                fitLambda(cellnum) = cv.lambda_1se;
-                iLambda = find(cv.lambda == cv.lambda_1se);
-                fitCoeffs{cellnum} = [cv.glmnet_fit.a0(iLambda);cv.glmnet_fit.beta(:,iLambda)];
-                coeffInds = find(cv.glmnet_fit.beta(:,iLambda));
-    %             rtest(ri).fitInd{cellnum} = coeffInds;
-                fitInd{cellnum} = coeffInds;
-                for i = 1 : length(indPartial)
-                    if sum(ismember(indPartial{i},coeffInds)>0)
-                        fitCoeffInd(i + 1) = 1;
-                    else
-                        fitCoeffInd(i + 1) = 0;
-                    end
-                end
 
-                %% test
-                iTest = iTestAll{cellnum};                
-                spkTest = cell2mat(cellfun(@(x) [nan(1,posShift), x(cind,:), nan(1,posShift)], spikeAll(iTest)','uniformoutput',false));
-                spkTest = spkTest';
-                finiteIndTest = intersect(find(isfinite(spkTest)), find(isfinite(sum(testInputMat{planeInd},2))));
-                spkTest = spkTest(finiteIndTest)';
-                %% (1) if the full model is significant
-                fitResult = zeros(1,6);
-    
-                model = exp([ones(length(finiteIndTest),1),testInputMat{planeInd}(finiteIndTest,:)]*[cv.glmnet_fit.a0(iLambda); cv.glmnet_fit.beta(:,iLambda)]);
-                mu = mean(spkTest); % null poisson parameter
-                nullLogLikelihood = sum(log(poisspdf(spkTest,mu)));
-                fullLogLikelihood = sum(log(poisspdf(spkTest',model)));
-                saturatedLogLikelihood = sum(log(poisspdf(spkTest,spkTest)));
-                devianceFullNull = 2*(fullLogLikelihood - nullLogLikelihood);
-                dfFullNull = length(coeffInds);
-                fitDF(cellnum) = dfFullNull;
-                fitDevExplained(cellnum) = 1 - (saturatedLogLikelihood - fullLogLikelihood)/(saturatedLogLikelihood - nullLogLikelihood);
-                fitCvDev(cellnum) = cv.glmnet_fit.dev(iLambda);
-
-                if devianceFullNull > chi2inv(1-pThresholdNull, dfFullNull)
-                    fitResult(1) = 1;
-                    %% (2) test without each parameter (as a group)                
-                    for pi = 1 : 5
-                        if find(ismember(coeffInds, indPartial{pi}))
-                            if all(ismember(coeffInds, indPartial{pi}))
-                                fitResult(pi+1) = 1;
-                                break
-                            else
-                                tempTrainInput = trainingInputMat{planeInd}(:,setdiff(coeffInds,indPartial{pi}));
-                                tempTestInput = testInputMat{planeInd}(finiteIndTest,setdiff(coeffInds,indPartial{pi}));
-                                cvPartial = cvglmnet(tempTrainInput(finiteIndTrain,:), spkTrain, 'poisson', partialGlmOpt, [], lambdaCV);
-                                iLambda = find(cvPartial.lambda == cvPartial.lambda_1se);
-                                partialLogLikelihood = sum(log(poisspdf(spkTest', exp([ones(length(finiteIndTest),1), tempTestInput] * [cvPartial.glmnet_fit.a0(iLambda); cvPartial.glmnet_fit.beta(:,iLambda)]))));
-                                devianceFullPartial = 2*(fullLogLikelihood - partialLogLikelihood);
-                                dfFullPartial = dfFullNull - cvPartial.glmnet_fit.df(iLambda);
-                                if devianceFullPartial > chi2inv(1-pThresholdPartial, dfFullPartial)
-                                    fitResult(pi+1) = 1;
-                                end
-                            end
-                        end
-                    end
-                end
-                
-                fitResults(cellnum,:) = fitResult;
-                fitCoeffInds(cellnum,:) = fitCoeffInd;
-                done(cellnum) = cellnum;
-            cloudend % end of parfor cellnum
             
 %             rtest(ri).fitInd = fitInd; % parameters surviving lasso in training set
 %             rtest(ri).fitCoeffs = fitCoeffs;
