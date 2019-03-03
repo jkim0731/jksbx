@@ -42,44 +42,39 @@
 %     - whiskingOA: whisking onset & amplitude. maximum amplitude where there was whisking onset (>= 1)
 %     - whiskingMidpoint: whisking midpoint(parameter; from whisker decomposition)
 %
+%
+%     - bLick: total licks within the frame (parameter; # of licks in each frame)
 %     - lLick: left licks within the frame (parameter)
 %     - rLick: right licks within the frame (parameter)
 %     
-%     - lLickOnset: the frame where left lick onset happened (binary; each bout is calculated as 1 s interval)
-%     - lLickOffset: the frame where left lick offset happened (binary; each bout is calculated as 1 s interval)
+%     - bLickOnset: the frame where lick onset happened (binary; each bout is calculated as 1 s interval)
+%     - bLickOffset: the frame where lick offset happened (binary; each bout is calculated as 1 s interval)
+%     - lLickOnset
+%     - lLickOffset
 %     - rLickOnset
 %     - rLickoffset
 % 
-%     - firstLick: 
-%     - firstLeftLick: the frame where the first lick of the trial happened (binary)
-%     - lastLeftLick: the frame where the last lick of the trial happened (binary)
+%     - firstLick: the frame where the first lick of the trial happened (binary)
+%     - lastLick: the frame where the last lick of the trial happened (binary)
+%     - firstLeftLick
+%     - lastLeftLick
 %     - firstRightLick
 %     - lastRightLick
 
-baseDir = 'D:\TPM\JK\suite2p\';
+baseDir = 'C:\Data\suite2p\';
 
 mice = [25,27,30,36,37,38,39,41,52,53,54,56];
-sessions = {[4,19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]}; 
-
-            repetition = 10;
-% sessions = {[4,19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]};
-% errorCell = {{[],[224]},{[],[]},{[],[]},{[],[]},{[]},{[]},{[1211,1972],[1286]},{[]},{[],[605, 676, 740, 755, 811]},{[]},{[]},{[]}};
-errorCell = {{[],[]},{[],[]},{[],[]},{[],[]},{[]},{[]},{[2042,2059],[]},{[]},{[],[]},{[]},{[]},{[]}};
+% sessions = {[4,19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]}; 
+sessions = {[19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]};
 %%
 % mice = [25,27,30];
 % sessions = {[17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]}; 
 % sessions = {[19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]}; 
-% for mi = 1 : length(mice)
-for mi = 4
-%     for si = 1:length(sessions{mi})
-    for si = 1
-        errorCellSession = errorCell{mi}{si};
-    
-        poolobj = gcp('nocreate');
-        if poolobj.SpmdEnabled == 0
-            error('SpmdEnabled turned to false at #1');
-        end
-        
+for mi = 9 : length(mice)
+% for mi = 1
+    for si = 1:length(sessions{mi})
+%     for si = 2
+
         mouse = mice(mi);
         session = sessions{mi}(si);
 
@@ -89,6 +84,7 @@ for mi = 4
         pThresholdNull = 0.05;
         pThresholdPartial = 0.05;
         lickBoutInterval = 1; % licks separated by 1 s regarded as different licking bouts
+        numShuffle = 1000; % number of shuffling for testing r for ridge regression
 
         glmnetOpt = glmnetSet;
         glmnetOpt.standardize = 0; % do the standardization at the level of predictors, including both training and test
@@ -108,7 +104,7 @@ for mi = 4
         end
         frameRate = u.frameRate;
 
-        savefnResult = sprintf('glmResponseType_JK%03dS%02d_glmnet_m16',mouse, session); % m(n) meaining method(n)
+        savefnResult = sprintf('glmResponseType_JK%03dS%02d_glmnet_m14',mouse, session); % m(n) meaining method(n)
 
             %% pre-processing for lick onset and offset
             % regardless of licking alternating, each l and r has it's own lick onset and offset. both licking, just take the union
@@ -241,13 +237,13 @@ for mi = 4
 
 %             %% repetition test
 %     %         division = 20;
-
-
-            for ri = 7 : repetition % repetition index
+%             repetition = 1;
+%             rtest = struct;
+%             for ri = 1 : repetition % repetition index
                 %% divide into training set and test set (70%, 30%)
                 % based on the animal touched or not, the choice (same as the result since I'm going to mix the pole angles, so right, wrong, and miss), pole angles (2 or 7), and the distance (if there were multiple distances)
                 % in this order, make trees, and take 30% of the leaves (or equivalently, take all the possible intersections and take 30%)
-                
+
                 angles = unique(cellfun(@(x) x.angle, u.trials));
                 distances = unique(cellfun(@(x) x.distance, u.trials));
 
@@ -273,8 +269,6 @@ for mi = 4
                 for i = 1 : length(distances)
                     distanceGroup{i} = cellfun(@(x) x.trialNum, u.trials(find(cellfun(@(x) x.distance == distances(i), u.trials))));
                 end
-                
-                
                 %%
                 testTn = [];
                 for pti = 1 : length(ptouchGroup)
@@ -293,11 +287,10 @@ for mi = 4
                     end
                 end
                 %
-                totalTn = u.trialNums;
-                [~,testInd] = ismember(testTn, totalTn);
+                [~,testInd] = ismember(testTn, u.trialNums);
 
-                trainingTn = setdiff(totalTn, testTn);
-                [~,trainingInd] = ismember(trainingTn, totalTn);
+                trainingTn = setdiff(u.trialNums, testTn);
+                [~,trainingInd] = ismember(trainingTn, u.trialNums);
                 %% Design matrices
                 % standardized using all the trials
                 allPredictors = cell(8,1);
@@ -340,7 +333,6 @@ for mi = 4
                         pTouchDurationAngles{end} = pTouchDuration;
                         pTouchFramesAngles{end} = pTouchFrames;
 
-                        scPiezo = cell2mat(cellfun(@(x) [nan(1,posShift), [1, zeros(1,length(x.tpmTime{plane})-1), nan(1,posShift)], u.trials(tind)','uniformoutput',false));
                         scPoleup = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.poleUpOnsetTime, [0, x.tpmTime{plane}]), nan(1,posShift)], u.trials(tind)','uniformoutput',false));
                         scPoledown = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.poleDownOnsetTime, [0, x.tpmTime{plane}]), nan(1,posShift)], u.trials(tind)','uniformoutput',false));
                         drinkOnset = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.drinkingOnsetTime, [0, x.tpmTime{plane}]), nan(1,posShift)], u.trials(tind)','uniformoutput',false));
@@ -400,20 +392,18 @@ for mi = 4
                         pTouchFramesMat = zeros(length(pTouchFrames),(posShift + 1) * (length(angles)+1));
                         pTouchDurationMat = zeros(length(pTouchDuration), (posShift + 1) * (length(angles)+1));
 
-                        scPiezoMat = zeros(length(scPiezo), posShift + 1);
                         scPoleUpMat = zeros(length(scPoleup), posShift + 1);
                         scPoleDownMat = zeros(length(scPoledown), posShift + 1);
                         drinkOnsetMat = zeros(length(drinkOnset), posShift + 1);
                         for i = 1 : posShift + 1
                             for ai = 1 : length(angles) + 1
-                                pTouchCountMat(:,(i-1)*(length(angles)+1) + ai) = circshift(pTouchCountAngles{ai}, [0 i-1])';
-                                pTouchFramesMat(:,(i-1)*(length(angles)+1) + ai) = circshift(pTouchFramesAngles{ai}, [0 i-1])';
-                                pTouchDurationMat(:,(i-1)*(length(angles)+1) + ai) = circshift(pTouchDurationAngles{ai}, [0 i-1])';
+                                pTouchCountMat(:,(i-1)*(length(angles)+1) + ai) = circshift(pTouchCountAngles{ai}, [0 -i+1])';
+                                pTouchFramesMat(:,(i-1)*(length(angles)+1) + ai) = circshift(pTouchFramesAngles{ai}, [0 -i+1])';
+                                pTouchDurationMat(:,(i-1)*(length(angles)+1) + ai) = circshift(pTouchDurationAngles{ai}, [0 -i+1])';
                             end
-                            scPiezoMat(:,i) = circshift(scPiezo, [0 i-1])';
-                            scPoleUpMat(:,i) = circshift(scPoleup, [0 i-1])';
-                            scPoleDownMat(:,i) = circshift(scPoledown, [0 i-1])';
-                            drinkOnsetMat(:,i) = circshift(drinkOnset, [0 i-1])';
+                            scPoleUpMat(:,i) = circshift(scPoleup, [0 -i+1])';
+                            scPoleDownMat(:,i) = circshift(scPoledown, [0 -i+1])';
+                            drinkOnsetMat(:,i) = circshift(drinkOnset, [0 -i+1])';
                         end
 
                         whiskingOnsetMat = zeros(length(whiskingOnset), negShift + posShift + 1);
@@ -421,46 +411,54 @@ for mi = 4
                         whiskingOAMat = zeros(length(whiskingOA), negShift + posShift + 1);
                         whiskingMidpointMat = zeros(length(whiskingMidpoint), negShift + posShift + 1);
 
-                        
+                        bLickMat = zeros(length(bLick), negShift + posShift + 1);
                         lLickMat = zeros(length(lLick), negShift + posShift + 1);
                         rLickMat = zeros(length(rLick), negShift + posShift + 1);
+                        bLickOnsetMat = zeros(length(bLickOnset), negShift + posShift + 1);
                         lLickOnsetMat = zeros(length(lLickOnset), negShift + posShift + 1);
                         rLickOnsetMat = zeros(length(rLickOnset), negShift + posShift + 1);
+                        bLickOffsetMat = zeros(length(bLickOffset), negShift + posShift + 1);
                         lLickOffsetMat = zeros(length(lLickOffset), negShift + posShift + 1);
                         rLickOffsetMat = zeros(length(rLickOffset), negShift + posShift + 1);
+                        firstLickMat = zeros(length(firstLick), negShift + posShift + 1);
+                        lastLickMat = zeros(length(lastLick), negShift + posShift + 1);
                         firstLeftLickMat = zeros(length(firstLeftLick), negShift + posShift + 1);
                         lastLeftLickMat = zeros(length(lastLeftLick), negShift + posShift + 1);
                         firstRightLickMat = zeros(length(firstRightLick), negShift + posShift + 1);
                         lastRightLickMat = zeros(length(lastRightLick), negShift + posShift + 1);
                         for i = 1 : negShift + posShift + 1
-                            whiskingOnsetMat(:,i) = circshift(whiskingOnset, [0 -negShift + i - 1])';
-                            whiskingAmpMat(:,i) = circshift(whiskingAmp, [0 -negShift + i - 1])';
-                            whiskingOAMat(:,i) = circshift(whiskingOA, [0 -negShift + i - 1])';
-                            whiskingMidpointMat(:,i) = circshift(whiskingMidpoint, [0 -negShift + i - 1])';
-                            
-                            lLickMat(:,i) = circshift(lLick, [0 -negShift + i - 1])';
-                            rLickMat(:,i) = circshift(rLick, [0 -negShift + i - 1])';
-                            lLickOnsetMat(:,i) = circshift(lLickOnset, [0 -negShift + i - 1])';
-                            rLickOnsetMat(:,i) = circshift(rLickOnset, [0 -negShift + i - 1])';
-                            lLickOffsetMat(:,i) = circshift(lLickOffset, [0 -negShift + i - 1])';
-                            rLickOffsetMat(:,i) = circshift(rLickOffset, [0 -negShift + i - 1])';
-                            firstLeftLickMat(:,i) = circshift(firstLeftLick, [0 -negShift + i - 1])';
-                            lastLeftLickMat(:,i) = circshift(lastLeftLick, [0 -negShift + i - 1])';
-                            firstRightLickMat(:,i) = circshift(firstRightLick, [0 -negShift + i - 1])';
-                            lastRightLickMat(:,i) = circshift(lastRightLick, [0 -negShift + i - 1])';
+                            whiskingOnsetMat(:,i) = circshift(whiskingOnset, [0 negShift - i + 1])';
+                            whiskingAmpMat(:,i) = circshift(whiskingAmp, [0 negShift - i + 1])';
+                            whiskingOAMat(:,i) = circshift(whiskingOA, [0 negShift - i + 1])';
+                            whiskingMidpointMat(:,i) = circshift(whiskingMidpoint, [0 negShift - i + 1])';
+
+                            bLickMat(:,i) = circshift(bLick, [0 negShift - i + 1])';
+                            lLickMat(:,i) = circshift(lLick, [0 negShift - i + 1])';
+                            rLickMat(:,i) = circshift(rLick, [0 negShift - i + 1])';
+                            bLickOnsetMat(:,i) = circshift(bLickOnset, [0 negShift - i + 1])';
+                            lLickOnsetMat(:,i) = circshift(lLickOnset, [0 negShift - i + 1])';
+                            rLickOnsetMat(:,i) = circshift(rLickOnset, [0 negShift - i + 1])';
+                            bLickOffsetMat(:,i) = circshift(bLickOffset, [0 negShift - i + 1])';
+                            lLickOffsetMat(:,i) = circshift(lLickOffset, [0 negShift - i + 1])';
+                            rLickOffsetMat(:,i) = circshift(rLickOffset, [0 negShift - i + 1])';
+                            firstLickMat(:,i) = circshift(firstLick, [0 negShift - i + 1])';
+                            lastLickMat(:,i) = circshift(lastLick, [0 negShift - i + 1])';
+                            firstLeftLickMat(:,i) = circshift(firstLeftLick, [0 negShift - i + 1])';
+                            lastLeftLickMat(:,i) = circshift(lastLeftLick, [0 negShift - i + 1])';
+                            firstRightLickMat(:,i) = circshift(firstRightLick, [0 negShift - i + 1])';
+                            lastRightLickMat(:,i) = circshift(lastRightLick, [0 negShift - i + 1])';
                         end
 %                         touchMat = [tTouchCountMat, pTouchCountMat, rTouchCountMat, tTouchFramesMat, pTouchFramesMat, rTouchFramesMat, tTouchDurationMat, pTouchDurationMat, rTouchDurationMat];
                         touchMat = [pTouchCountMat, pTouchFramesMat, pTouchDurationMat];                        
-                        soundMat = [scPiezoMat, scPoleUpMat, scPoleDownMat];
+                        soundMat = [scPoleUpMat, scPoleDownMat];
                         drinkMat = drinkOnsetMat;
                         whiskingMat = [whiskingOnsetMat, whiskingAmpMat, whiskingOAMat, whiskingMidpointMat];
-                        lickingMat = [lLickMat, rLickMat, lLickOnsetMat, rLickOnsetMat, lLickOffsetMat, rLickOffsetMat, ...
-                                firstLeftLickMat, lastLeftLickMat, firstRightLickMat, lastRightLickMat];
+                        lickingMat = [bLickMat, lLickMat, rLickMat, bLickOnsetMat, lLickOnsetMat, rLickOnsetMat, bLickOffsetMat, lLickOffsetMat, rLickOffsetMat, ...
+                                firstLickMat, lastLickMat, firstLeftLickMat, lastLeftLickMat, firstRightLickMat, lastRightLickMat];
                         allPredictors{(cgi-1)*4 + plane} = [touchMat, soundMat, drinkMat, whiskingMat, lickingMat];
                         nani{(cgi-1)*4 + plane} = find(nanstd(allPredictors{(cgi-1)*4 + plane})==0);
                         allPredictorsMean{(cgi-1)*4 + plane} = nanmean(allPredictors{(cgi-1)*4 + plane});
                         allPredictorsStd{(cgi-1)*4 + plane} = nanstd(allPredictors{(cgi-1)*4 + plane});
-                        % normalization of all predictors
                         allPredictors{(cgi-1)*4 + plane} = (allPredictors{(cgi-1)*4 + plane} - nanmean(allPredictors{(cgi-1)*4 + plane})) ./ nanstd(allPredictors{(cgi-1)*4 + plane});
                         allPredictors{(cgi-1)*4 + plane}(:,nani{(cgi-1)*4 + plane}) = deal(0);
                         trainingInputMat{(cgi-1)*4 + plane} = allPredictors{(cgi-1)*4 + plane}(find(trainingPredictorInd{(cgi-1)*4 + plane}),:);
@@ -492,24 +490,20 @@ for mi = 4
 %                 % fitResult(:,3) for sound, (:,4) for reward, (:,5) for whisking, and (:,6) for licking    
 %             rtest(ri).devExplained = zeros(length(u.cellNums),1);            
     
+%             fitInd = cell(length(u.cellNums),1); % parameters surviving lasso in training set
+%             fitCoeffs = cell(length(u.cellNums),1); % intercept + coefficients of the parameters in training set
+%             fitCoeffInds = nan(length(u.cellNums),6); % first column is a dummy
+%             
+%             fitResults = zeros(length(u.cellNums), 6); % fitting result from test set
+%             fitDevExplained = zeros(length(u.cellNums),1); % deviance explained from test set
+%             fitCvDev = zeros(length(u.cellNums),1); % deviance explained from training set
+%             fitLambda = zeros(length(u.cellNums),1);
+%             fitDF = zeros(length(u.cellNums),1);
+
+
+            % Adjustment for techila
+            numCell = length(u.cellNums);
             cIDAll = u.cellNums;
-            fitInd = cell(length(cIDAll),1); % parameters surviving lasso in training set
-            fitCoeffs = cell(length(cIDAll),1); % intercept + coefficients of the parameters in training set
-            fitCoeffInds = nan(length(cIDAll),6); % first column is a dummy
-            
-            fitResults = zeros(length(cIDAll), 6); % fitting result from test set
-            fitResultsRidge = zeros(length(cIDAll), 6); % fitting result from test set, with second ridge regression 
-            fitDevExplained = zeros(length(cIDAll),1); % deviance explained from test set
-            fitDevExplainedRidge = zeros(length(cIDAll),1); % deviance explained from test set, with second ridge regression
-            fitCvDev = zeros(length(cIDAll),1); % deviance explained from training set
-            fitCvDevRidge = zeros(length(cIDAll),1); % deviance explained from training set, with second ridge regression
-            fitLambda = zeros(length(cIDAll),1);
-            fitDF = zeros(length(cIDAll),1);
-            started = zeros(length(cIDAll),1);
-            done = zeros(length(cIDAll),1);
-            cellTime = zeros(length(cIDAll),1);
-            
-            numCell = length(cIDAll);            
             tindcellAll = cell(numCell,1);
             cindAll = zeros(numCell,1);
             planeIndAll = zeros(numCell,1);
@@ -522,128 +516,34 @@ for mi = 4
                 iTrainAll{i} = intersect(tindcellAll{i}, trainingInd);
                 iTestAll{i} = intersect(tindcellAll{i}, testInd);
             end
-            spikeAll = cellfun(@(x) x.spk, u.trials, 'uniformoutput', false);            
+            spikeAll = cellfun(@(x) x.spk, u.trials, 'uniformoutput', false);
+            
+            
+%             copyfile(which('glmnetMex.F'), pwd);
+            cd(fileparts(which('glmnetMex.F')))
+            [fitInd, fitCoeffs, fitCoeffInds, fitResults, fitDevExplained, fitCvDev, fitLambda, fitDF] = ...
+                peach('peach_dist_glm_lasso', {cIDAll, iTrainAll, cindAll, planeIndAll, posShift, spikeAll, trainingInputMat, glmnetOpt, lambdaCV, indPartial, ...
+                iTestAll, testInputMat, pThresholdNull, partialGlmOpt, pThresholdPartial, '<param>'}, 1:numCell);
+            %%
+
 
             
-            poolobj = gcp('nocreate');
-            if poolobj.SpmdEnabled == 0
-                error('SpmdEnabled turned to false at #2');
-            end
+%             rtest(ri).fitInd = fitInd; % parameters surviving lasso in training set
+%             rtest(ri).fitCoeffs = fitCoeffs;
+%             rtest(ri).fitCoeffInds = fitCoeffInds; % first column is dummy
+%             
+%             rtest(ri).fitResults = fitResults;        
+%             % fitResult(:,1) if full fitting is significant (compared to null model), 0 if not
+%             % fitResult(:,2) for touchInd, compared to full fitting. if excluding touch
+%             % is significantly less fit, then 1, 0 otherwise
+%             % fitResult(:,3) for sound, (:,4) for reward, (:,5) for whisking, and (:,6) for licking
+%     
+%             rtest(ri).devExplained = devExplained;
+%             rtest(ri).cvDev = cvDev;
             
-            parfor cellnum = 1 : numCell
-%             for cellnum = 102, 127, (212 convergence error), 221, 658
-    %         ci = 0;
-    %         for cellnum = 1:division:length(u.cellNums)
-    %             ci = ci + 1;
-    %         for cellnum = 1
-            %     cellnum = 1;
-            if ~ismember(numCell, errorCellSession)
-                cellTimeStart = tic;
-                fitCoeffInd = zeros(1,6);
-                
-                fprintf('Mouse JK%03d session S%02d Loop %d: Running cell %d/%d \n', mouse, session, ri, cellnum, numCell);
-%                 fprintf('Mouse JK%03d session S%02d: Running cell %d/%d \n', mouse, session,cellnum, numCell);
-                started(cellnum) = cellnum;
-                
-                iTrain = iTrainAll{cellnum};
-                cind = cindAll(cellnum);
-                planeInd = planeIndAll(cellnum);
-    
-                spkTrain = cell2mat(cellfun(@(x) [nan(1,posShift), x(cind,:), nan(1,posShift)], spikeAll(iTrain)','uniformoutput',false));                
-                finiteIndTrain = intersect(find(isfinite(spkTrain)), find(isfinite(sum(trainingInputMat{planeInd},2))));
-                input = trainingInputMat{planeInd}(finiteIndTrain,:);
-                spkTrain = spkTrain(finiteIndTrain)';
-    
-                cv = cvglmnet(input, spkTrain, 'poisson', glmnetOpt, [], lambdaCV);
-                %% survived coefficients
-                fitLambda(cellnum) = cv.lambda_1se;
-                iLambda = find(cv.lambda == cv.lambda_1se);
-                fitCoeffs{cellnum} = [cv.glmnet_fit.a0(iLambda);cv.glmnet_fit.beta(:,iLambda)];
-                coeffInds = find(cv.glmnet_fit.beta(:,iLambda));                
-    %             rtest(ri).fitInd{cellnum} = coeffInds;
-                fitInd{cellnum} = coeffInds;
-                for i = 1 : length(indPartial)
-                    if sum(ismember(indPartial{i},coeffInds)>0)
-                        fitCoeffInd(i + 1) = 1;
-                    else
-                        fitCoeffInd(i + 1) = 0;
-                    end
-                end
+            save(savefnResult, 'fit*', 'allPredictors', '*InputMat', 'indPartial', '*Group', '*Tn', 'lambdaCV', '*Opt', 'done');
 
-                %% test
-                iTest = iTestAll{cellnum};                
-                spkTest = cell2mat(cellfun(@(x) [nan(1,posShift), x(cind,:), nan(1,posShift)], spikeAll(iTest)','uniformoutput',false));
-                spkTest = spkTest';
-                finiteIndTest = intersect(find(isfinite(spkTest)), find(isfinite(sum(testInputMat{planeInd},2))));
-                spkTest = spkTest(finiteIndTest)';
-                %% (1) if the full model is significant
-                fitResult = zeros(1,6);
-                fitResultRidge = zeros(1,6);
-    
-                model = exp([ones(length(finiteIndTest),1),testInputMat{planeInd}(finiteIndTest,:)]*[cv.glmnet_fit.a0(iLambda); cv.glmnet_fit.beta(:,iLambda)]);
-                mu = mean(spkTest); % null poisson parameter
-                nullLogLikelihood = sum(log(poisspdf(spkTest,mu)));
-                fullLogLikelihood = sum(log(poisspdf(spkTest',model)));
-                saturatedLogLikelihood = sum(log(poisspdf(spkTest,spkTest)));
-                devianceFullNull = 2*(fullLogLikelihood - nullLogLikelihood);
-                dfFullNull = length(coeffInds);                
-                fitDF(cellnum) = dfFullNull;
-                fitDevExplained(cellnum) = 1 - (saturatedLogLikelihood - fullLogLikelihood)/(saturatedLogLikelihood - nullLogLikelihood);
-                fitCvDev(cellnum) = cv.glmnet_fit.dev(iLambda);
-
-                if devianceFullNull > chi2inv(1-pThresholdNull, dfFullNull)
-                    fitResult(1) = 1;
-                    
-                    % Second run with ridge, with the coefficients selected from lasso (elastic-net 0.95)
-                    cvRidge = cvglmnet(input(:,coeffInds), spkTrain, 'poisson', partialGlmOpt, [], lambdaCV);
-                    iLambda = find(cvRidge.lambda == cvRidge.lambda_1se);
-                    modelRidge = exp([ones(length(finiteIndTest),1),testInputMat{planeInd}(finiteIndTest,coeffInds)]*[cvRidge.glmnet_fit.a0(iLambda); cvRidge.glmnet_fit.beta(:,iLambda)]);
-                    ridgeLogLikelihood = sum(log(poisspdf(spkTest',modelRidge)));
-                    saturatedLogLikelihood = sum(log(poisspdf(spkTest,spkTest)));
-                    devianceRidgeNull = 2*(ridgeLogLikelihood - nullLogLikelihood);
-                    fitDevExplainedRidge(cellnum) = 1 - (saturatedLogLikelihood - ridgeLogLikelihood)/(saturatedLogLikelihood - nullLogLikelihood);
-                    fitCvDevRidge(cellnum) = cvRidge.glmnet_fit.dev(iLambda);
-                    if devianceRidgeNull > chi2inv(1-pThresholdNull, dfFullNull)
-                        fitResultRidge(1) = 1;
-                    end
-                    %% (2) test without each parameter (as a group)                
-                    for pi = 1 : 5
-                        if find(ismember(coeffInds, indPartial{pi}))
-                            if all(ismember(coeffInds, indPartial{pi}))
-                                fitResult(pi+1) = 1;
-                                break
-                            else
-                                tempTrainInput = trainingInputMat{planeInd}(:,setdiff(coeffInds,indPartial{pi}));
-                                tempTestInput = testInputMat{planeInd}(finiteIndTest,setdiff(coeffInds,indPartial{pi}));
-                                cvPartial = cvglmnet(tempTrainInput(finiteIndTrain,:), spkTrain, 'poisson', partialGlmOpt, [], lambdaCV);
-                                iLambda = find(cvPartial.lambda == cvPartial.lambda_1se);
-                                partialLogLikelihood = sum(log(poisspdf(spkTest', exp([ones(length(finiteIndTest),1), tempTestInput] * [cvPartial.glmnet_fit.a0(iLambda); cvPartial.glmnet_fit.beta(:,iLambda)]))));
-                                devianceFullPartial = 2*(fullLogLikelihood - partialLogLikelihood);
-                                dfFullPartial = dfFullNull - length(setdiff(coeffInds, indPartial{pi}));
-                                if devianceFullPartial > chi2inv(1-pThresholdPartial, dfFullPartial)
-                                    fitResult(pi+1) = 1;
-                                end
-                                
-                                devianceRidgePartial = 2*(ridgeLogLikelihood - partialLogLikelihood);
-                                if devianceRidgePartial > chi2inv(1-pThresholdPartial, dfFullPartial)
-                                    fitResultRidge(pi+1) = 1;
-                                end
-                            end
-                        end
-                    end
-                end
-                
-                fitResults(cellnum,:) = fitResult;
-                fitResultsRidge(cellnum,:) = fitResultRidge;
-                fitCoeffInds(cellnum,:) = fitCoeffInd;
-                done(cellnum) = cellnum;
-                cellTime(cellnum) = toc(cellTimeStart);
-            end
-            end % end of parfor cellnum
-%%
-            save(sprintf('%s_R%02d',savefnResult, ri), 'fit*', 'allPredictors', '*InputMat', 'indPartial', '*Group', '*Tn', 'lambdaCV', '*Opt', 'done', 'pThreshold*', '*Shift', 'cellTime', 'testInd', 'trainingInd', 'cIDAll');
-
-        end % of ri. random group selection index
+%         end % of ri. random group selection index
         push_myphone(sprintf('Lasso GLM done for JK%03d S%02d', mouse, session))
 
     end
