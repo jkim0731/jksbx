@@ -64,7 +64,8 @@ sessions = {[4,19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]};
             repetition = 10;
 % sessions = {[4,19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]};
 % errorCell = {{[],[224]},{[],[]},{[],[]},{[],[]},{[]},{[]},{[1211,1972],[1286]},{[]},{[],[605, 676, 740, 755, 811]},{[]},{[]},{[]}};
-errorCell = {{[],[]},{[],[]},{[],[]},{[],[]},{[]},{[]},{[2042,2059],[]},{[]},{[],[]},{[]},{[]},{[]}};
+% errorCell = {{[],[]},{[],[]},{[],[]},{[],[]},{[]},{[]},{[2042,2059],[]},{[]},{[],[]},{[]},{[]},{[]}};
+errorCell = {{[],[]},{[],[]},{[],[]},{[],[]},{[]},{[]},{[],[]},{[]},{[],[]},{[]},{[]},{[]}};
 %%
 % mice = [25,27,30];
 % sessions = {[17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]}; 
@@ -108,7 +109,7 @@ for mi = 4
         end
         frameRate = u.frameRate;
 
-        savefnResult = sprintf('glmResponseType_JK%03dS%02d_glmnet_m16',mouse, session); % m(n) meaining method(n)
+        savefnResult = sprintf('glmResponseType_JK%03dS%02d_glmnet_m17',mouse, session); % m(n) meaining method(n)
 
             %% pre-processing for lick onset and offset
             % regardless of licking alternating, each l and r has it's own lick onset and offset. both licking, just take the union
@@ -243,7 +244,7 @@ for mi = 4
 %     %         division = 20;
 
 
-            for ri = 7 : repetition % repetition index
+        for ri = 1 : repetition % repetition index
                 %% divide into training set and test set (70%, 30%)
                 % based on the animal touched or not, the choice (same as the result since I'm going to mix the pole angles, so right, wrong, and miss), pole angles (2 or 7), and the distance (if there were multiple distances)
                 % in this order, make trees, and take 30% of the leaves (or equivalently, take all the possible intersections and take 30%)
@@ -320,53 +321,31 @@ for mi = 4
                         testPredictorInd{(cgi-1)*4 + plane} = cell2mat(cellfun(@(x) (ones(1,length(x.tpmTime{plane})+posShift*2)) * ismember(x.trialNum, testTn), u.trials(tind)','uniformoutput',false));
                         
                         pTouchCount = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(cellfun(@(y) y(1), x.protractionTouchChunks), [0, x.tpmTime{plane}]), nan(1,posShift)], u.trials(tind)','uniformoutput',false));
-                        
-                        pTouchFrames = pTouchCount;
-                        pTouchFrames(pTouchCount > 0) = 1;
-
                         pTouchDuration = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(cell2mat(cellfun(@(y) y', x.protractionTouchChunks, 'uniformoutput', false)), [0, x.tpmTime{plane}]), nan(1,posShift)], ...
                             u.trials(tind)','uniformoutput',false));
                         
                         pTouchCountAngles = cell(length(angles)+1,1);
                         pTouchDurationAngles = cell(length(angles)+1,1);
-                        pTouchFramesAngles = cell(length(angles)+1,1);
                         for ai = 1 : length(angles)
                             tempAngleBinary = cell2mat(cellfun(@(x) ones(length(x.tpmTime{plane}) + 2 * posShift, 1) * (x.angle == angles(ai)), u.trials(tind), 'uniformoutput', false));
                             pTouchCountAngles{ai} = pTouchCount .* tempAngleBinary';
                             pTouchDurationAngles{ai} = pTouchDuration .* tempAngleBinary';
-                            pTouchFramesAngles{ai} = pTouchFrames .* tempAngleBinary';
-                        end
+                         end
                         pTouchCountAngles{end} = pTouchCount;
                         pTouchDurationAngles{end} = pTouchDuration;
-                        pTouchFramesAngles{end} = pTouchFrames;
 
-                        scPiezo = cell2mat(cellfun(@(x) [nan(1,posShift), [1, zeros(1,length(x.tpmTime{plane})-1), nan(1,posShift)], u.trials(tind)','uniformoutput',false));
+                        scPiezo = cell2mat(cellfun(@(x) [nan(1,posShift), 1, zeros(1,length(x.tpmTime{plane})-1), nan(1,posShift)], u.trials(tind)','uniformoutput',false));
                         scPoleup = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.poleUpOnsetTime, [0, x.tpmTime{plane}]), nan(1,posShift)], u.trials(tind)','uniformoutput',false));
                         scPoledown = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.poleDownOnsetTime, [0, x.tpmTime{plane}]), nan(1,posShift)], u.trials(tind)','uniformoutput',false));
                         drinkOnset = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.drinkingOnsetTime, [0, x.tpmTime{plane}]), nan(1,posShift)], u.trials(tind)','uniformoutput',false));
 
-                        bLick = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(union(x.leftLickTime, x.rightLickTime), [0, x.tpmTime{plane}]), nan(1,posShift)], u.trials(tind)','uniformoutput',false));
                         lLick = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.leftLickTime, [0, x.tpmTime{plane}]), nan(1,posShift)], u.trials(tind)','uniformoutput',false));
                         rLick = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.rightLickTime, [0, x.tpmTime{plane}]), nan(1,posShift)], u.trials(tind)','uniformoutput',false));
 
-                        bLickOnset = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.bothLickOnset, [0, x.tpmTime{plane}]), nan(1,posShift)], v(tind)','uniformoutput',false));
-                        lLickOnset = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.leftLickOnset, [0, x.tpmTime{plane}]), nan(1,posShift)], v(tind)','uniformoutput',false));
-                        rLickOnset = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.rightLickOnset, [0, x.tpmTime{plane}]), nan(1,posShift)], v(tind)','uniformoutput',false));
-
-                        bLickOffset = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.bothLickOffset, [0, x.tpmTime{plane}]), nan(1,posShift)], v(tind)','uniformoutput',false));
-                        lLickOffset = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.leftLickOffset, [0, x.tpmTime{plane}]), nan(1,posShift)], v(tind)','uniformoutput',false));
-                        rLickOffset = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.rightLickOffset, [0, x.tpmTime{plane}]), nan(1,posShift)], v(tind)','uniformoutput',false));
-
-                        firstLick = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.firstLick, [0, x.tpmTime{plane}]), nan(1,posShift)], v(tind)','uniformoutput',false));
-                        lastLick = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.lastLick, [0, x.tpmTime{plane}]), nan(1,posShift)], v(tind)','uniformoutput',false));
-                        firstLeftLick = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.firstLeftLick, [0, x.tpmTime{plane}]), nan(1,posShift)], v(tind)','uniformoutput',false));
                         lastLeftLick = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.lastLeftLick, [0, x.tpmTime{plane}]), nan(1,posShift)], v(tind)','uniformoutput',false));
-                        firstRightLick = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.firstRightLick, [0, x.tpmTime{plane}]), nan(1,posShift)], v(tind)','uniformoutput',false));
                         lastRightLick = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.lastRightLick, [0, x.tpmTime{plane}]), nan(1,posShift)], v(tind)','uniformoutput',false));
                         %%
                         whiskingOnsetCell = cell(1,length(tind));
-                        whiskingAmpCell = cell(1,length(tind));
-                        whiskingMaxAmpCell = cell(1,length(tind));
                         whiskingMidpointCell = cell(1,length(tind));
 
                         for ti = 1 : length(tind)
@@ -378,26 +357,20 @@ for mi = 4
                             onsetTimes = onsetFrame*whiskerVideoFrameDuration; % back to s
                             whiskingOnsetCell{ti} = [nan(1,posShift), histcounts(onsetTimes, time), nan(1,posShift)];
 
-                            tempAmp = zeros(1,length(time)-1);        
                             tempMid = zeros(1,length(time)-1);
-                            for i = 1 : length(tempAmp)
+                            for i = 1 : length(tempMid)
                                 startInd = find(wtimes >= time(i), 1, 'first');
                                 endInd = find(wtimes < time(i+1), 1, 'last');
-                                tempAmp(i) = max(amplitude(startInd:endInd));
                                 tempMid(i) = mean(midpoint(startInd:endInd));
                             end
                             tempMid(isnan(tempMid)) = deal(mode(tempMid(isfinite(tempMid))));
-                            whiskingAmpCell{ti} = [nan(1,posShift), tempAmp, nan(1,posShift)];
                             whiskingMidpointCell{ti} = [nan(1,posShift), tempMid, nan(1,posShift)];
                         end
                         whiskingOnset = cell2mat(whiskingOnsetCell);
-                        whiskingAmp = cell2mat(whiskingAmpCell);
-                        whiskingOA = (whiskingOnset > 0).*whiskingAmp;
                         whiskingMidpoint = cell2mat(whiskingMidpointCell);    
 
                         %%
                         pTouchCountMat = zeros(length(pTouchCount), (posShift + 1) * (length(angles)+1));
-                        pTouchFramesMat = zeros(length(pTouchFrames),(posShift + 1) * (length(angles)+1));
                         pTouchDurationMat = zeros(length(pTouchDuration), (posShift + 1) * (length(angles)+1));
 
                         scPiezoMat = zeros(length(scPiezo), posShift + 1);
@@ -407,7 +380,6 @@ for mi = 4
                         for i = 1 : posShift + 1
                             for ai = 1 : length(angles) + 1
                                 pTouchCountMat(:,(i-1)*(length(angles)+1) + ai) = circshift(pTouchCountAngles{ai}, [0 i-1])';
-                                pTouchFramesMat(:,(i-1)*(length(angles)+1) + ai) = circshift(pTouchFramesAngles{ai}, [0 i-1])';
                                 pTouchDurationMat(:,(i-1)*(length(angles)+1) + ai) = circshift(pTouchDurationAngles{ai}, [0 i-1])';
                             end
                             scPiezoMat(:,i) = circshift(scPiezo, [0 i-1])';
@@ -417,45 +389,28 @@ for mi = 4
                         end
 
                         whiskingOnsetMat = zeros(length(whiskingOnset), negShift + posShift + 1);
-                        whiskingAmpMat = zeros(length(whiskingAmp), negShift + posShift + 1);
-                        whiskingOAMat = zeros(length(whiskingOA), negShift + posShift + 1);
                         whiskingMidpointMat = zeros(length(whiskingMidpoint), negShift + posShift + 1);
 
                         
                         lLickMat = zeros(length(lLick), negShift + posShift + 1);
                         rLickMat = zeros(length(rLick), negShift + posShift + 1);
-                        lLickOnsetMat = zeros(length(lLickOnset), negShift + posShift + 1);
-                        rLickOnsetMat = zeros(length(rLickOnset), negShift + posShift + 1);
-                        lLickOffsetMat = zeros(length(lLickOffset), negShift + posShift + 1);
-                        rLickOffsetMat = zeros(length(rLickOffset), negShift + posShift + 1);
-                        firstLeftLickMat = zeros(length(firstLeftLick), negShift + posShift + 1);
                         lastLeftLickMat = zeros(length(lastLeftLick), negShift + posShift + 1);
-                        firstRightLickMat = zeros(length(firstRightLick), negShift + posShift + 1);
                         lastRightLickMat = zeros(length(lastRightLick), negShift + posShift + 1);
                         for i = 1 : negShift + posShift + 1
                             whiskingOnsetMat(:,i) = circshift(whiskingOnset, [0 -negShift + i - 1])';
-                            whiskingAmpMat(:,i) = circshift(whiskingAmp, [0 -negShift + i - 1])';
-                            whiskingOAMat(:,i) = circshift(whiskingOA, [0 -negShift + i - 1])';
                             whiskingMidpointMat(:,i) = circshift(whiskingMidpoint, [0 -negShift + i - 1])';
                             
                             lLickMat(:,i) = circshift(lLick, [0 -negShift + i - 1])';
                             rLickMat(:,i) = circshift(rLick, [0 -negShift + i - 1])';
-                            lLickOnsetMat(:,i) = circshift(lLickOnset, [0 -negShift + i - 1])';
-                            rLickOnsetMat(:,i) = circshift(rLickOnset, [0 -negShift + i - 1])';
-                            lLickOffsetMat(:,i) = circshift(lLickOffset, [0 -negShift + i - 1])';
-                            rLickOffsetMat(:,i) = circshift(rLickOffset, [0 -negShift + i - 1])';
-                            firstLeftLickMat(:,i) = circshift(firstLeftLick, [0 -negShift + i - 1])';
                             lastLeftLickMat(:,i) = circshift(lastLeftLick, [0 -negShift + i - 1])';
-                            firstRightLickMat(:,i) = circshift(firstRightLick, [0 -negShift + i - 1])';
                             lastRightLickMat(:,i) = circshift(lastRightLick, [0 -negShift + i - 1])';
                         end
 %                         touchMat = [tTouchCountMat, pTouchCountMat, rTouchCountMat, tTouchFramesMat, pTouchFramesMat, rTouchFramesMat, tTouchDurationMat, pTouchDurationMat, rTouchDurationMat];
-                        touchMat = [pTouchCountMat, pTouchFramesMat, pTouchDurationMat];                        
+                        touchMat = [pTouchCountMat, pTouchDurationMat];                        
                         soundMat = [scPiezoMat, scPoleUpMat, scPoleDownMat];
                         drinkMat = drinkOnsetMat;
-                        whiskingMat = [whiskingOnsetMat, whiskingAmpMat, whiskingOAMat, whiskingMidpointMat];
-                        lickingMat = [lLickMat, rLickMat, lLickOnsetMat, rLickOnsetMat, lLickOffsetMat, rLickOffsetMat, ...
-                                firstLeftLickMat, lastLeftLickMat, firstRightLickMat, lastRightLickMat];
+                        whiskingMat = [whiskingOnsetMat, whiskingMidpointMat];
+                        lickingMat = [lLickMat, rLickMat, lastLeftLickMat, lastRightLickMat];
                         allPredictors{(cgi-1)*4 + plane} = [touchMat, soundMat, drinkMat, whiskingMat, lickingMat];
                         nani{(cgi-1)*4 + plane} = find(nanstd(allPredictors{(cgi-1)*4 + plane})==0);
                         allPredictorsMean{(cgi-1)*4 + plane} = nanmean(allPredictors{(cgi-1)*4 + plane});
