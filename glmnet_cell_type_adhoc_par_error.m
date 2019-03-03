@@ -163,8 +163,8 @@ if glmPar
                 ridgeLogLikelihood = sum(log(poisspdf(spkTest',modelRidge)));
                 saturatedLogLikelihood = sum(log(poisspdf(spkTest,spkTest)));
                 devianceRidgeNull = 2*(ridgeLogLikelihood - nullLogLikelihood);
-                fitDevExplainedRidgeRe(cellnum) = 1 - (saturatedLogLikelihood - ridgeLogLikelihood)/(saturatedLogLikelihood - nullLogLikelihood);
-                fitCvDevRidgeRe(cellnum) = cvRidge.glmnet_fit.dev(iLambda);
+                fitDevExplainedRidgeRe(cellnumInd) = 1 - (saturatedLogLikelihood - ridgeLogLikelihood)/(saturatedLogLikelihood - nullLogLikelihood);
+                fitCvDevRidgeRe(cellnumInd) = cvRidge.glmnet_fit.dev(iLambda);
                 if devianceRidgeNull > chi2inv(1-pThresholdNull, dfFullNull)
                     fitResultRidge(1) = 1;
                 end
@@ -281,8 +281,8 @@ else
                 ridgeLogLikelihood = sum(log(poisspdf(spkTest',modelRidge)));
                 saturatedLogLikelihood = sum(log(poisspdf(spkTest,spkTest)));
                 devianceRidgeNull = 2*(ridgeLogLikelihood - nullLogLikelihood);
-                fitDevExplainedRidgeRe(cellnum) = 1 - (saturatedLogLikelihood - ridgeLogLikelihood)/(saturatedLogLikelihood - nullLogLikelihood);
-                fitCvDevRidgeRe(cellnum) = cvRidge.glmnet_fit.dev(iLambda);
+                fitDevExplainedRidgeRe(cellnumInd) = 1 - (saturatedLogLikelihood - ridgeLogLikelihood)/(saturatedLogLikelihood - nullLogLikelihood);
+                fitCvDevRidgeRe(cellnumInd) = cvRidge.glmnet_fit.dev(iLambda);
                 if devianceRidgeNull > chi2inv(1-pThresholdNull, dfFullNull)
                     fitResultRidge(1) = 1;
                 end
