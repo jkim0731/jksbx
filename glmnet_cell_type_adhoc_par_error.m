@@ -33,11 +33,11 @@ trainingTn = setdiff(totalTn, testTn);
 
 mouse = 39;
 session = 1;
-restartingNum = 1;
+restartingNum = 3;
 glmPar = true;
 savefnResult = sprintf('glmResponseType_JK%03dS%02d_glmnet_m16_R01',mouse, session);
 
-savefnResultRe = [savefnResult, '_09'];
+savefnResultRe = [savefnResult, '_10'];
 
 previousDone = done(find(done));
 
@@ -204,7 +204,7 @@ if glmPar
         
     end % end of for cellnum
 else
-    parfor cellnumInd = restartingNum : length(remainingCell)
+    parfor cellnumInd = 1 : length(remainingCell)
         cellnum = remainingCell(cellnumInd);
         
             celltic = tic;
