@@ -34,11 +34,11 @@ trainingTn = setdiff(totalTn, testTn);
 mouse = 39;
 session = 1;
 repeat = 1;
-restartingNum = 4;
+restartingNum = 1;
 glmPar = true;
-savefnResult = sprintf('glmResponseType_JK%03dS%02d_glmnet_m17_R%02d',mouse, session, repeat);
+savefnResult = sprintf('glmResponseType_JK%03dS%02d_glmnet_m18_R%02d',mouse, session, repeat);
 
-savefnResultRe = [savefnResult, '_06'];
+savefnResultRe = [savefnResult, '_02'];
 
 previousDone = done(find(done));
 

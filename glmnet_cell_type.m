@@ -62,7 +62,7 @@ mice = [25,27,30,36,37,38,39,41,52,53,54,56];
 sessions = {[4,19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]}; 
 
             repetition = 10;
-            startRepetition = 2;
+            startRepetition = 1;
 % sessions = {[4,19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]};
 % errorCell = {{[],[224]},{[],[]},{[],[]},{[],[]},{[]},{[]},{[1211,1972],[1286]},{[]},{[],[605, 676, 740, 755, 811]},{[]},{[]},{[]}};
 % errorCell = {{[],[]},{[],[]},{[],[]},{[],[]},{[]},{[]},{[2042,2059],[]},{[]},{[],[]},{[]},{[]},{[]}};
@@ -71,10 +71,10 @@ errorCell = {{[],[]},{[],[]},{[],[]},{[],[]},{[]},{[]},{[],[]},{[]},{[],[]},{[]}
 % mice = [25,27,30];
 % sessions = {[17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]}; 
 % sessions = {[19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]}; 
-% for mi = 1 : length(mice)
-for mi = 7
-%     for si = 1:length(sessions{mi})
-    for si = 1
+for mi = 1 : length(mice)
+% for mi = 7
+    for si = 1:length(sessions{mi})
+%     for si = 1
         errorCellSession = errorCell{mi}{si};
     
         poolobj = gcp('nocreate');
@@ -84,8 +84,12 @@ for mi = 7
         
         mouse = mice(mi);
         session = sessions{mi}(si);
-
-        posShift = 4;
+        
+        posShiftTouch = 2;
+        posShiftSound = 4;
+        posShiftReward = 4;
+        posShiftMotor = 3;
+        posShift = 4; % maximum posShift
         negShift = 2;
         testPortion = 0.3; % 30 % test set
         pThresholdNull = 0.05;
@@ -371,33 +375,37 @@ for mi = 7
                         whiskingMidpoint = cell2mat(whiskingMidpointCell);    
 
                         %%
-                        pTouchCountMat = zeros(length(pTouchCount), (posShift + 1) * (length(angles)+1));
-                        pTouchDurationMat = zeros(length(pTouchDuration), (posShift + 1) * (length(angles)+1));
+                        pTouchCountMat = zeros(length(pTouchCount), (posShiftTouch + 1) * (length(angles)+1));
+                        pTouchDurationMat = zeros(length(pTouchDuration), (posShiftTouch + 1) * (length(angles)+1));
 
-                        scPiezoMat = zeros(length(scPiezo), posShift + 1);
-                        scPoleUpMat = zeros(length(scPoleup), posShift + 1);
-                        scPoleDownMat = zeros(length(scPoledown), posShift + 1);
-                        drinkOnsetMat = zeros(length(drinkOnset), posShift + 1);
-                        for i = 1 : posShift + 1
+                        scPiezoMat = zeros(length(scPiezo), posShiftSound + 1);
+                        scPoleUpMat = zeros(length(scPoleup), posShiftSound + 1);
+                        scPoleDownMat = zeros(length(scPoledown), posShiftSound + 1);
+                        drinkOnsetMat = zeros(length(drinkOnset), posShiftReward + 1);
+                        for i = 1 : posShiftTouch + 1
                             for ai = 1 : length(angles) + 1
                                 pTouchCountMat(:,(i-1)*(length(angles)+1) + ai) = circshift(pTouchCountAngles{ai}, [0 i-1])';
                                 pTouchDurationMat(:,(i-1)*(length(angles)+1) + ai) = circshift(pTouchDurationAngles{ai}, [0 i-1])';
                             end
+                        end
+                        for i = 1 : posShiftSound
                             scPiezoMat(:,i) = circshift(scPiezo, [0 i-1])';
                             scPoleUpMat(:,i) = circshift(scPoleup, [0 i-1])';
                             scPoleDownMat(:,i) = circshift(scPoledown, [0 i-1])';
+                        end
+                        for i = 1 : posShiftReward
                             drinkOnsetMat(:,i) = circshift(drinkOnset, [0 i-1])';
                         end
 
-                        whiskingOnsetMat = zeros(length(whiskingOnset), negShift + posShift + 1);
-                        whiskingMidpointMat = zeros(length(whiskingMidpoint), negShift + posShift + 1);
+                        whiskingOnsetMat = zeros(length(whiskingOnset), negShift + posShiftMotor + 1);
+                        whiskingMidpointMat = zeros(length(whiskingMidpoint), negShift + posShiftMotor + 1);
 
                         
-                        lLickMat = zeros(length(lLick), negShift + posShift + 1);
-                        rLickMat = zeros(length(rLick), negShift + posShift + 1);
-                        lastLeftLickMat = zeros(length(lastLeftLick), negShift + posShift + 1);
-                        lastRightLickMat = zeros(length(lastRightLick), negShift + posShift + 1);
-                        for i = 1 : negShift + posShift + 1
+                        lLickMat = zeros(length(lLick), negShift + posShiftMotor + 1);
+                        rLickMat = zeros(length(rLick), negShift + posShiftMotor + 1);
+                        lastLeftLickMat = zeros(length(lastLeftLick), negShift + posShiftMotor + 1);
+                        lastRightLickMat = zeros(length(lastRightLick), negShift + posShiftMotor + 1);
+                        for i = 1 : negShift + posShiftMotor + 1
                             whiskingOnsetMat(:,i) = circshift(whiskingOnset, [0 -negShift + i - 1])';
                             whiskingMidpointMat(:,i) = circshift(whiskingMidpoint, [0 -negShift + i - 1])';
                             
@@ -534,7 +542,6 @@ for mi = 7
                 spkTest = spkTest(finiteIndTest)';
                 %% (1) if the full model is significant
                 fitResult = zeros(1,6);
-                fitResultRidge = zeros(1,6);
     
                 model = exp([ones(length(finiteIndTest),1),testInputMat{planeInd}(finiteIndTest,:)]*[cv.glmnet_fit.a0(iLambda); cv.glmnet_fit.beta(:,iLambda)]);
                 mu = mean(spkTest); % null poisson parameter
@@ -550,18 +557,6 @@ for mi = 7
                 if devianceFullNull > chi2inv(1-pThresholdNull, dfFullNull)
                     fitResult(1) = 1;
                     
-                    % Second run with ridge, with the coefficients selected from lasso (elastic-net 0.95)
-                    cvRidge = cvglmnet(input(:,coeffInds), spkTrain, 'poisson', partialGlmOpt, [], lambdaCV);
-                    iLambda = find(cvRidge.lambda == cvRidge.lambda_1se);
-                    modelRidge = exp([ones(length(finiteIndTest),1),testInputMat{planeInd}(finiteIndTest,coeffInds)]*[cvRidge.glmnet_fit.a0(iLambda); cvRidge.glmnet_fit.beta(:,iLambda)]);
-                    ridgeLogLikelihood = sum(log(poisspdf(spkTest',modelRidge)));
-                    saturatedLogLikelihood = sum(log(poisspdf(spkTest,spkTest)));
-                    devianceRidgeNull = 2*(ridgeLogLikelihood - nullLogLikelihood);
-                    fitDevExplainedRidge(cellnum) = 1 - (saturatedLogLikelihood - ridgeLogLikelihood)/(saturatedLogLikelihood - nullLogLikelihood);
-                    fitCvDevRidge(cellnum) = cvRidge.glmnet_fit.dev(iLambda);
-                    if devianceRidgeNull > chi2inv(1-pThresholdNull, dfFullNull)
-                        fitResultRidge(1) = 1;
-                    end
                     %% (2) test without each parameter (as a group)                
                     for pi = 1 : 5
                         if find(ismember(coeffInds, indPartial{pi}))
@@ -579,11 +574,6 @@ for mi = 7
                                 if devianceFullPartial > chi2inv(1-pThresholdPartial, dfFullPartial)
                                     fitResult(pi+1) = 1;
                                 end
-                                
-                                devianceRidgePartial = 2*(ridgeLogLikelihood - partialLogLikelihood);
-                                if devianceRidgePartial > chi2inv(1-pThresholdPartial, dfFullPartial)
-                                    fitResultRidge(pi+1) = 1;
-                                end
                             end
                         end
                     end
@@ -598,7 +588,7 @@ for mi = 7
             end % end of parfor cellnum
 %%
             save(sprintf('%s_R%02d',savefnResult, ri), 'fit*', 'allPredictors', '*InputMat', 'indPartial', '*Group', '*Tn', 'lambdaCV', '*Opt', 'done', 'pThreshold*', '*Shift', 'cellTime', 'testInd', 'trainingInd', 'cIDAll');
-
+            push_myphone(sprintf('Lasso GLM done for JK%03d S%02d Loop #%03d', mouse, session, ri))
         end % of ri. random group selection index
         push_myphone(sprintf('Lasso GLM done for JK%03d S%02d', mouse, session))
 
