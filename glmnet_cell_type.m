@@ -462,11 +462,8 @@ for mi = 1 : length(mice)
             fitCoeffInds = nan(length(cIDAll),6); % first column is a dummy
             
             fitResults = zeros(length(cIDAll), 6); % fitting result from test set
-            fitResultsRidge = zeros(length(cIDAll), 6); % fitting result from test set, with second ridge regression 
             fitDevExplained = zeros(length(cIDAll),1); % deviance explained from test set
-            fitDevExplainedRidge = zeros(length(cIDAll),1); % deviance explained from test set, with second ridge regression
             fitCvDev = zeros(length(cIDAll),1); % deviance explained from training set
-            fitCvDevRidge = zeros(length(cIDAll),1); % deviance explained from training set, with second ridge regression
             fitLambda = zeros(length(cIDAll),1);
             fitDF = zeros(length(cIDAll),1);
             started = zeros(length(cIDAll),1);
@@ -580,7 +577,6 @@ for mi = 1 : length(mice)
                 end
                 
                 fitResults(cellnum,:) = fitResult;
-                fitResultsRidge(cellnum,:) = fitResultRidge;
                 fitCoeffInds(cellnum,:) = fitCoeffInd;
                 done(cellnum) = cellnum;
                 cellTime(cellnum) = toc(cellTimeStart);

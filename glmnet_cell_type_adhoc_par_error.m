@@ -52,16 +52,12 @@ fitCoeffsRe = cell(length(remainingCell),1);
 fitIndRe = cell(length(remainingCell),1);
 fitDFRe = zeros(length(remainingCell),1);
 fitDevExplainedRe = zeros(length(remainingCell),1);
-fitDevExplainedRidgeRe = zeros(length(remainingCell),1);
 
 fitCvDevRe = zeros(length(remainingCell),1);
-fitCvDevRidgeRe = zeros(length(remainingCell),1);
 fitResultsRe = zeros(length(remainingCell),6);
-fitResultsRidgeRe = zeros(length(remainingCell),6);
 fitCoeffIndsRe = zeros(length(remainingCell),6);
 doneRe = zeros(length(remainingCell),1);
 cellTimeRe = zeros(length(remainingCell),1);
-
 
 tindcellAll = cell(numCell,1);
 cindAll = zeros(numCell,1);
@@ -141,7 +137,6 @@ if glmPar
             spkTest = spkTest(finiteIndTest)';
             %% (1) if the full model is significant
             fitResult = zeros(1,6);
-            fitResultRidge = zeros(1,6);
 
             model = exp([ones(length(finiteIndTest),1),testInputMat{planeInd}(finiteIndTest,:)]*[cv.glmnet_fit.a0(iLambda); cv.glmnet_fit.beta(:,iLambda)]);
             mu = mean(spkTest); % null poisson parameter
@@ -157,18 +152,6 @@ if glmPar
             if devianceFullNull > chi2inv(1-pThresholdNull, dfFullNull)
                 fitResult(1) = 1;
 
-                % Second run with ridge, with the coefficients selected from lasso (elastic-net 0.95)
-                cvRidge = cvglmnet(input(:,coeffInds), spkTrain, 'poisson', partialGlmOpt, [], lambdaCV, [], glmPar);
-                iLambda = find(cvRidge.lambda == cvRidge.lambda_1se);
-                modelRidge = exp([ones(length(finiteIndTest),1),testInputMat{planeInd}(finiteIndTest,coeffInds)]*[cvRidge.glmnet_fit.a0(iLambda); cvRidge.glmnet_fit.beta(:,iLambda)]);
-                ridgeLogLikelihood = sum(log(poisspdf(spkTest',modelRidge)));
-                saturatedLogLikelihood = sum(log(poisspdf(spkTest,spkTest)));
-                devianceRidgeNull = 2*(ridgeLogLikelihood - nullLogLikelihood);
-                fitDevExplainedRidgeRe(cellnumInd) = 1 - (saturatedLogLikelihood - ridgeLogLikelihood)/(saturatedLogLikelihood - nullLogLikelihood);
-                fitCvDevRidgeRe(cellnumInd) = cvRidge.glmnet_fit.dev(iLambda);
-                if devianceRidgeNull > chi2inv(1-pThresholdNull, dfFullNull)
-                    fitResultRidge(1) = 1;
-                end
                 %% (2) test without each parameter (as a group)                
                 for pi = 1 : 5
                     if find(ismember(coeffInds, indPartial{pi}))
@@ -187,22 +170,15 @@ if glmPar
                             if devianceFullPartial > chi2inv(1-pThresholdPartial, dfFullPartial)
                                 fitResult(pi+1) = 1;
                             end
-
-                            devianceRidgePartial = 2*(ridgeLogLikelihood - partialLogLikelihood);
-                            if devianceRidgePartial > chi2inv(1-pThresholdPartial, dfFullPartial)
-                                fitResultRidge(pi+1) = 1;
-                            end
                         end
                     end
                 end
             end
 
             fitResultsRe(cellnumInd,:) = fitResult;
-            fitResultsRidgeRe(cellnumInd,:) = fitResultRidge;
             fitCoeffIndsRe(cellnumInd,:) = fitCoeffInd;
             doneRe(cellnumInd) = cellnum;
-            cellTimeRe(cellnumInd) = toc(celltic);
-        
+            cellTimeRe(cellnumInd) = toc(celltic);        
     end % end of for cellnum
 else
     parfor cellnumInd = 1 : length(remainingCell)
@@ -259,7 +235,6 @@ else
             spkTest = spkTest(finiteIndTest)';
             %% (1) if the full model is significant
             fitResult = zeros(1,6);
-            fitResultRidge = zeros(1,6);
 
             model = exp([ones(length(finiteIndTest),1),testInputMat{planeInd}(finiteIndTest,:)]*[cv.glmnet_fit.a0(iLambda); cv.glmnet_fit.beta(:,iLambda)]);
             mu = mean(spkTest); % null poisson parameter
@@ -275,18 +250,6 @@ else
             if devianceFullNull > chi2inv(1-pThresholdNull, dfFullNull)
                 fitResult(1) = 1;
 
-                % Second run with ridge, with the coefficients selected from lasso (elastic-net 0.95)
-                cvRidge = cvglmnet(input(:,coeffInds), spkTrain, 'poisson', partialGlmOpt, [], lambdaCV, [], glmPar);
-                iLambda = find(cvRidge.lambda == cvRidge.lambda_1se);
-                modelRidge = exp([ones(length(finiteIndTest),1),testInputMat{planeInd}(finiteIndTest,coeffInds)]*[cvRidge.glmnet_fit.a0(iLambda); cvRidge.glmnet_fit.beta(:,iLambda)]);
-                ridgeLogLikelihood = sum(log(poisspdf(spkTest',modelRidge)));
-                saturatedLogLikelihood = sum(log(poisspdf(spkTest,spkTest)));
-                devianceRidgeNull = 2*(ridgeLogLikelihood - nullLogLikelihood);
-                fitDevExplainedRidgeRe(cellnumInd) = 1 - (saturatedLogLikelihood - ridgeLogLikelihood)/(saturatedLogLikelihood - nullLogLikelihood);
-                fitCvDevRidgeRe(cellnumInd) = cvRidge.glmnet_fit.dev(iLambda);
-                if devianceRidgeNull > chi2inv(1-pThresholdNull, dfFullNull)
-                    fitResultRidge(1) = 1;
-                end
                 %% (2) test without each parameter (as a group)                
                 for pi = 1 : 5
                     if find(ismember(coeffInds, indPartial{pi}))
@@ -305,18 +268,12 @@ else
                             if devianceFullPartial > chi2inv(1-pThresholdPartial, dfFullPartial)
                                 fitResult(pi+1) = 1;
                             end
-
-                            devianceRidgePartial = 2*(ridgeLogLikelihood - partialLogLikelihood);
-                            if devianceRidgePartial > chi2inv(1-pThresholdPartial, dfFullPartial)
-                                fitResultRidge(pi+1) = 1;
-                            end
                         end
                     end
                 end
             end
 
             fitResultsRe(cellnumInd,:) = fitResult;
-            fitResultsRidgeRe(cellnumInd, :) = fitResultRidge;
             fitCoeffIndsRe(cellnumInd,:) = fitCoeffInd;
             doneRe(cellnumInd) = cellnum;
             cellTimeRe(cellnumInd) = toc(celltic);
@@ -332,7 +289,6 @@ fitDF(remainingCell) = fitDFRe;
 fitDevExplained(remainingCell) = fitDevExplainedRe;
 fitCvDev(remainingCell) = fitCvDevRe;
 fitResults(remainingCell,:) = fitResultsRe;
-fitResultsRidge(remainingCell,:) = fitResultsRidgeRe;
 fitCoeffInds(remainingCell,:) = fitCoeffIndsRe;
 done(remainingCell) = doneRe;
 cellTime(remainingCell) = cellTimeRe;
