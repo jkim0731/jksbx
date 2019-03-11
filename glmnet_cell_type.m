@@ -62,7 +62,7 @@ mice = [25,27,30,36,37,38,39,41,52,53,54,56];
 sessions = {[4,19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]}; 
 
             repetition = 10;
-            startRepetition = 1;
+            startRepetition = 10;
 % sessions = {[4,19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]};
 % errorCell = {{[],[224]},{[],[]},{[],[]},{[],[]},{[]},{[]},{[1211,1972],[1286]},{[]},{[],[605, 676, 740, 755, 811]},{[]},{[]},{[]}};
 % errorCell = {{[],[]},{[],[]},{[],[]},{[],[]},{[]},{[]},{[2042,2059],[]},{[]},{[],[]},{[]},{[]},{[]}};
@@ -71,8 +71,8 @@ errorCell = {{[],[]},{[],[]},{[],[]},{[],[]},{[]},{[]},{[],[]},{[]},{[],[]},{[]}
 % mice = [25,27,30];
 % sessions = {[17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]}; 
 % sessions = {[19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]}; 
-for mi = 1 : length(mice)
-% for mi = 7
+% for mi = 1 : length(mice)
+for mi = 6
     for si = 1:length(sessions{mi})
 %     for si = 1
         errorCellSession = errorCell{mi}{si};
@@ -457,20 +457,24 @@ for mi = 1 : length(mice)
 %             rtest(ri).devExplained = zeros(length(u.cellNums),1);            
     
             cIDAll = u.cellNums;
-            fitInd = cell(length(cIDAll),1); % parameters surviving lasso in training set
-            fitCoeffs = cell(length(cIDAll),1); % intercept + coefficients of the parameters in training set
-            fitCoeffInds = nan(length(cIDAll),6); % first column is a dummy
+            numCell = length(cIDAll); 
+            fitInd = cell(numCell,1); % parameters surviving lasso in training set
+            fitCoeffs = cell(numCell,1); % intercept + coefficients of the parameters in training set
+            fitCoeffInds = nan(numCell,6); % first column is a dummy
             
-            fitResults = zeros(length(cIDAll), 6); % fitting result from test set
-            fitDevExplained = zeros(length(cIDAll),1); % deviance explained from test set
-            fitCvDev = zeros(length(cIDAll),1); % deviance explained from training set
-            fitLambda = zeros(length(cIDAll),1);
-            fitDF = zeros(length(cIDAll),1);
-            started = zeros(length(cIDAll),1);
-            done = zeros(length(cIDAll),1);
-            cellTime = zeros(length(cIDAll),1);
-            
-            numCell = length(cIDAll);            
+            fitResults = zeros(numCell, 6); % fitting result from test set
+            fitDeviance = zeros(numCell,1);
+            fitCorrelation = zeros(numCell,1);
+            fitCorrPval = zeros(numCell,1);
+                
+            fitDevExplained = zeros(numCell,1); % deviance explained from test set
+            fitCvDev = zeros(numCell,1); % deviance explained from training set
+            fitLambda = zeros(numCell,1);
+            fitDF = zeros(numCell,1);
+            started = zeros(numCell,1);
+            done = zeros(numCell,1);
+            cellTime = zeros(numCell,1);
+          
             tindcellAll = cell(numCell,1);
             cindAll = zeros(numCell,1);
             planeIndAll = zeros(numCell,1);
@@ -546,6 +550,8 @@ for mi = 1 : length(mice)
                 fullLogLikelihood = sum(log(poisspdf(spkTest',model)));
                 saturatedLogLikelihood = sum(log(poisspdf(spkTest,spkTest)));
                 devianceFullNull = 2*(fullLogLikelihood - nullLogLikelihood);
+                fitDeviance(cellnum) = devianceFullNull;
+                [fitCorrelation(cellnum), fitCorrPval(cellnum)] = corr(spkTest', model);            
                 dfFullNull = length(coeffInds);                
                 fitDF(cellnum) = dfFullNull;
                 fitDevExplained(cellnum) = 1 - (saturatedLogLikelihood - fullLogLikelihood)/(saturatedLogLikelihood - nullLogLikelihood);
