@@ -71,8 +71,8 @@ errorCell = {{[],[]},{[],[]},{[],[]},{[],[]},{[]},{[]},{[],[]},{[]},{[],[]},{[]}
 % mice = [25,27,30];
 % sessions = {[17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]}; 
 % sessions = {[19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]}; 
-% for mi = 1 : length(mice)
-for mi = 6
+for mi = 1 : length(mice)
+% for mi = 6
     for si = 1:length(sessions{mi})
 %     for si = 1
         errorCellSession = errorCell{mi}{si};
@@ -114,7 +114,7 @@ for mi = 6
         end
         frameRate = u.frameRate;
 
-        savefnResult = sprintf('glmResponseType_JK%03dS%02d_glmnet_m18',mouse, session); % m(n) meaining method(n)
+        savefnResult = sprintf('glmResponseType_JK%03dS%02d_glmnet_m19',mouse, session); % m(n) meaining method(n)
 
             %% pre-processing for lick onset and offset
             % regardless of licking alternating, each l and r has it's own lick onset and offset. both licking, just take the union
@@ -261,6 +261,7 @@ for mi = 6
                 choiceGroup = cell(3,1);
                 angleGroup = cell(length(angles),1);
                 distanceGroup = cell(length(distances),1);
+                timeGroup = cell(3,1); % dividing whole session into 5 different time points
 
                 ptouchGroup{1} = cellfun(@(x) x.trialNum, u.trials(find(cellfun(@(x) length(x.protractionTouchChunks), u.trials))));
                 ptouchGroup{2} = setdiff(u.trialNums, ptouchGroup{1});
@@ -280,23 +281,27 @@ for mi = 6
                     distanceGroup{i} = cellfun(@(x) x.trialNum, u.trials(find(cellfun(@(x) x.distance == distances(i), u.trials))));
                 end
                 
-                
+                for i = 1 : length(timeGroup)
+                    timeGroup{i} = u.trialNums((i-1)*length(u.trialNums)/length(timeGroup)+1:(i-1)*length(u.trialNums)/length(timeGroup));
+                end
                 %%
                 testTn = [];
                 for pti = 1 : length(ptouchGroup)
-                    for rti = 1 : length(rtouchGroup)
+%                     for rti = 1 : length(rtouchGroup)
                         for ci = 1 : length(choiceGroup)
                             for ai = 1 : length(angleGroup)
                                 for di = 1 : length(distanceGroup)
-                                    tempTn = intersect(ptouchGroup{pti}, intersect(rtouchGroup{rti}, intersect(choiceGroup{ci}, intersect(angleGroup{ai}, distanceGroup{di}))));
-                                    if ~isempty(tempTn)
-                                        tempTn = tempTn(randperm(length(tempTn)));
-                                        testTn = [testTn; tempTn(1:round(length(tempTn)*0.3))];
-                                    end
+%                                     for ti = 1 : length(timeGroup)
+                                        tempTn = intersect(timeGroup{ti}, intersect(ptouchGroup{pti}, intersect(rtouchGroup{rti}, intersect(choiceGroup{ci}, intersect(angleGroup{ai}, distanceGroup{di})))));
+                                        if ~isempty(tempTn)
+                                            tempTn = tempTn(randperm(length(tempTn)));
+                                            testTn = [testTn; tempTn(1:round(length(tempTn)*0.3))];
+                                        end
+%                                     end
                                 end
                             end
                         end
-                    end
+%                     end
                 end
                 %
                 totalTn = u.trialNums;
@@ -357,7 +362,7 @@ for mi = 6
                             currTrial = u.trials{tind(ti)};
                             time = [0, currTrial.tpmTime{plane}];
                             wtimes = currTrial.whiskerTime;
-                            [onsetFrame, amplitude, midpoint] = jkWhiskerOnsetNAmplitude(currTrial.theta, 5);
+                            [onsetFrame, amplitude, midpoint] = jkWhiskerOnsetNAmplitude(currTrial.theta);
                             whiskerVideoFrameDuration = u.trials{tind(1)}.frameDuration; % in s
                             onsetTimes = onsetFrame*whiskerVideoFrameDuration; % back to s
                             whiskingOnsetCell{ti} = [nan(1,posShift), histcounts(onsetTimes, time), nan(1,posShift)];
@@ -376,7 +381,7 @@ for mi = 6
 
                         %%
                         pTouchCountMat = zeros(length(pTouchCount), (posShiftTouch + 1) * (length(angles)+1));
-                        pTouchDurationMat = zeros(length(pTouchDuration), (posShiftTouch + 1) * (length(angles)+1));
+%                         pTouchDurationMat = zeros(length(pTouchDuration), (posShiftTouch + 1) * (length(angles)+1));
 
                         scPiezoMat = zeros(length(scPiezo), posShiftSound + 1);
                         scPoleUpMat = zeros(length(scPoleup), posShiftSound + 1);
@@ -385,7 +390,7 @@ for mi = 6
                         for i = 1 : posShiftTouch + 1
                             for ai = 1 : length(angles) + 1
                                 pTouchCountMat(:,(i-1)*(length(angles)+1) + ai) = circshift(pTouchCountAngles{ai}, [0 i-1])';
-                                pTouchDurationMat(:,(i-1)*(length(angles)+1) + ai) = circshift(pTouchDurationAngles{ai}, [0 i-1])';
+%                                 pTouchDurationMat(:,(i-1)*(length(angles)+1) + ai) = circshift(pTouchDurationAngles{ai}, [0 i-1])';
                             end
                         end
                         for i = 1 : posShiftSound
@@ -415,7 +420,7 @@ for mi = 6
                             lastRightLickMat(:,i) = circshift(lastRightLick, [0 -negShift + i - 1])';
                         end
 %                         touchMat = [tTouchCountMat, pTouchCountMat, rTouchCountMat, tTouchFramesMat, pTouchFramesMat, rTouchFramesMat, tTouchDurationMat, pTouchDurationMat, rTouchDurationMat];
-                        touchMat = [pTouchCountMat, pTouchDurationMat];                        
+                        touchMat = [pTouchCountMat];
                         soundMat = [scPiezoMat, scPoleUpMat, scPoleDownMat];
                         drinkMat = drinkOnsetMat;
                         whiskingMat = [whiskingOnsetMat, whiskingMidpointMat];
@@ -495,7 +500,7 @@ for mi = 6
                 error('SpmdEnabled turned to false at #2');
             end
             
-            parfor cellnum = 1 : numCell
+            for cellnum = 1 : numCell
 %             for cellnum = 102, 127, (212 convergence error), 221, 658
     %         ci = 0;
     %         for cellnum = 1:division:length(u.cellNums)
@@ -561,25 +566,25 @@ for mi = 6
                     fitResult(1) = 1;
                     
                     %% (2) test without each parameter (as a group)                
-                    for pi = 1 : 5
-                        if find(ismember(coeffInds, indPartial{pi}))
-                            if all(ismember(coeffInds, indPartial{pi}))
-                                fitResult(pi+1) = 1;
-                                break
-                            else
-                                tempTrainInput = trainingInputMat{planeInd}(:,setdiff(coeffInds,indPartial{pi}));
-                                tempTestInput = testInputMat{planeInd}(finiteIndTest,setdiff(coeffInds,indPartial{pi}));
-                                cvPartial = cvglmnet(tempTrainInput(finiteIndTrain,:), spkTrain, 'poisson', partialGlmOpt, [], lambdaCV);
-                                iLambda = find(cvPartial.lambda == cvPartial.lambda_1se);
-                                partialLogLikelihood = sum(log(poisspdf(spkTest', exp([ones(length(finiteIndTest),1), tempTestInput] * [cvPartial.glmnet_fit.a0(iLambda); cvPartial.glmnet_fit.beta(:,iLambda)]))));
-                                devianceFullPartial = 2*(fullLogLikelihood - partialLogLikelihood);
-                                dfFullPartial = dfFullNull - length(setdiff(coeffInds, indPartial{pi}));
-                                if devianceFullPartial > chi2inv(1-pThresholdPartial, dfFullPartial)
-                                    fitResult(pi+1) = 1;
-                                end
-                            end
-                        end
-                    end
+%                     for pi = 1 : 5
+%                         if find(ismember(coeffInds, indPartial{pi}))
+%                             if all(ismember(coeffInds, indPartial{pi}))
+%                                 fitResult(pi+1) = 1;
+%                                 break
+%                             else
+%                                 tempTrainInput = trainingInputMat{planeInd}(:,setdiff(coeffInds,indPartial{pi}));
+%                                 tempTestInput = testInputMat{planeInd}(finiteIndTest,setdiff(coeffInds,indPartial{pi}));
+%                                 cvPartial = cvglmnet(tempTrainInput(finiteIndTrain,:), spkTrain, 'poisson', partialGlmOpt, [], lambdaCV);
+%                                 iLambda = find(cvPartial.lambda == cvPartial.lambda_1se);
+%                                 partialLogLikelihood = sum(log(poisspdf(spkTest', exp([ones(length(finiteIndTest),1), tempTestInput] * [cvPartial.glmnet_fit.a0(iLambda); cvPartial.glmnet_fit.beta(:,iLambda)]))));
+%                                 devianceFullPartial = 2*(fullLogLikelihood - partialLogLikelihood);
+%                                 dfFullPartial = dfFullNull - length(setdiff(coeffInds, indPartial{pi}));
+%                                 if devianceFullPartial > chi2inv(1-pThresholdPartial, dfFullPartial)
+%                                     fitResult(pi+1) = 1;
+%                                 end
+%                             end
+%                         end
+%                     end
                 end
                 
                 fitResults(cellnum,:) = fitResult;

@@ -5,7 +5,7 @@ sessions = {[4,19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]};
 
 repetition = 10;
 
-for mi = 1 : length(mice)
+for mi = 5 : length(mice)
     mouse = mice(mi);
     cd(sprintf('%s%03d', baseDir, mouse))
     for si = 1 : length(sessions{mi})
@@ -47,22 +47,24 @@ for mi = 1 : length(mice)
                 posShift = dat.posShift;
                 fitCoeffs = dat.fitCoeffs;
                 parfor cellnum = 1 : numCell
-                    iTrain = iTrainAll{cellnum};
-                    cind = cindAll(cellnum);
-                    planeInd = planeIndAll(cellnum);
+                    if ~isempty(fitCoeffs{cellnum})
+                        iTrain = iTrainAll{cellnum};
+                        cind = cindAll(cellnum);
+                        planeInd = planeIndAll(cellnum);
 
-                    iTest = iTestAll{cellnum};                
-                    spkTest = cell2mat(cellfun(@(x) [nan(1,posShift), x(cind,:), nan(1,posShift)], spikeAll(iTest)','uniformoutput',false));
-                    spkTest = spkTest';
-                    finiteIndTest = intersect(find(isfinite(spkTest)), find(isfinite(sum(testInputMat{planeInd},2))));
-                    spkTest = spkTest(finiteIndTest)';
-                    
-                    model = exp([ones(length(finiteIndTest),1),testInputMat{planeInd}(finiteIndTest,:)]*[fitCoeffs{cellnum}]);
-                    mu = mean(spkTest); % null poisson parameter
-                    nullLogLikelihood = sum(log(poisspdf(spkTest,mu)));
-                    fullLogLikelihood = sum(log(poisspdf(spkTest',model)));
-                    saturatedLogLikelihood = sum(log(poisspdf(spkTest,spkTest)));
-                    fitDeviance(cellnum) = 2*(fullLogLikelihood - nullLogLikelihood);                    
+                        iTest = iTestAll{cellnum};                
+                        spkTest = cell2mat(cellfun(@(x) [nan(1,posShift), x(cind,:), nan(1,posShift)], spikeAll(iTest)','uniformoutput',false));
+                        spkTest = spkTest';
+                        finiteIndTest = intersect(find(isfinite(spkTest)), find(isfinite(sum(testInputMat{planeInd},2))));
+                        spkTest = spkTest(finiteIndTest)';
+
+                        model = exp([ones(length(finiteIndTest),1),testInputMat{planeInd}(finiteIndTest,:)]*[fitCoeffs{cellnum}]);
+                        mu = mean(spkTest); % null poisson parameter
+                        nullLogLikelihood = sum(log(poisspdf(spkTest,mu)));
+                        fullLogLikelihood = sum(log(poisspdf(spkTest',model)));
+                        saturatedLogLikelihood = sum(log(poisspdf(spkTest,spkTest)));
+                        fitDeviance(cellnum) = 2*(fullLogLikelihood - nullLogLikelihood);
+                    end
                 end
                 save(fn, 'fitDeviance', '-append')
             end
@@ -90,17 +92,19 @@ for mi = 1 : length(mice)
                 posShift = dat.posShift;
                 fitCoeffs = dat.fitCoeffs;
                 parfor cellnum = 1 : numCell
-                    iTrain = iTrainAll{cellnum};
-                    cind = cindAll(cellnum);
-                    planeInd = planeIndAll(cellnum);
+                    if ~isempty(fitCoeffs{cellnum})
+                        iTrain = iTrainAll{cellnum};
+                        cind = cindAll(cellnum);
+                        planeInd = planeIndAll(cellnum);
 
-                    iTest = iTestAll{cellnum};                
-                    spkTest = cell2mat(cellfun(@(x) [nan(1,posShift), x(cind,:), nan(1,posShift)], spikeAll(iTest)','uniformoutput',false));
-                    spkTest = spkTest';
-                    finiteIndTest = intersect(find(isfinite(spkTest)), find(isfinite(sum(testInputMat{planeInd},2))));
-                    spkTest = spkTest(finiteIndTest)';                    
-                    model = exp([ones(length(finiteIndTest),1),testInputMat{planeInd}(finiteIndTest,:)]*[fitCoeffs{cellnum}]);
-                    [fitCorrelation(cellnum), fitCorrPval(cellnum)] = corr(spkTest', model);
+                        iTest = iTestAll{cellnum};                
+                        spkTest = cell2mat(cellfun(@(x) [nan(1,posShift), x(cind,:), nan(1,posShift)], spikeAll(iTest)','uniformoutput',false));
+                        spkTest = spkTest';
+                        finiteIndTest = intersect(find(isfinite(spkTest)), find(isfinite(sum(testInputMat{planeInd},2))));
+                        spkTest = spkTest(finiteIndTest)';                    
+                        model = exp([ones(length(finiteIndTest),1),testInputMat{planeInd}(finiteIndTest,:)]*[fitCoeffs{cellnum}]);
+                        [fitCorrelation(cellnum), fitCorrPval(cellnum)] = corr(spkTest', model);
+                    end
                 end
                 save(fn, 'fitCorrelation', 'fitCorrPval', '-append')
             end
