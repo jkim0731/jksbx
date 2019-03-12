@@ -72,9 +72,9 @@ errorCell = {{[],[]},{[],[]},{[],[]},{[],[]},{[]},{[]},{[],[]},{[]},{[],[]},{[]}
 % sessions = {[17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]}; 
 % sessions = {[19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]}; 
 % for mi = 1 : length(mice)
-for mi = 1:4
-    for si = 1:length(sessions{mi})
-%     for si = 1
+for mi = 9
+%     for si = 1:length(sessions{mi})
+    for si = 2
         errorCellSession = errorCell{mi}{si};
     
         poolobj = gcp('nocreate');
@@ -114,7 +114,7 @@ for mi = 1:4
         end
         frameRate = u.frameRate;
 
-        savefnResult = sprintf('glmResponseType_JK%03dS%02d_glmnet_m19',mouse, session); % m(n) meaining method(n)
+        savefnResult = sprintf('glmResponseType_JK%03dS%02d_repeatTest',mouse, session); % m(n) meaining method(n)
 
             %% pre-processing for lick onset and offset
             % regardless of licking alternating, each l and r has it's own lick onset and offset. both licking, just take the union
@@ -249,7 +249,7 @@ for mi = 1:4
 %     %         division = 20;
 
 
-        for ri = startRepetition : repetition % repetition index
+        
                 %% divide into training set and test set (70%, 30%)
                 % based on the animal touched or not, the choice (same as the result since I'm going to mix the pole angles, so right, wrong, and miss), pole angles (2 or 7), and the distance (if there were multiple distances)
                 % in this order, make trees, and take 30% of the leaves (or equivalently, take all the possible intersections and take 30%)
@@ -501,6 +501,7 @@ for mi = 1:4
                 error('SpmdEnabled turned to false at #2');
             end
             
+        for ri = startRepetition : repetition % repetition index
             parfor cellnum = 1 : numCell
 %             for cellnum = 102, 127, (212 convergence error), 221, 658
     %         ci = 0;
