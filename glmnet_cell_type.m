@@ -56,7 +56,7 @@
 %     - firstRightLick
 %     - lastRightLick
 
-baseDir = 'C:\JK\';
+baseDir = 'D:\JK\suite2p\';
 
 mice = [25,27,30,36,37,38,39,41,52,53,54,56];
 sessions = {[4,19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]}; 
@@ -72,7 +72,7 @@ errorCell = {{[],[]},{[],[]},{[],[]},{[],[]},{[]},{[]},{[],[]},{[]},{[],[]},{[]}
 % sessions = {[17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]}; 
 % sessions = {[19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]}; 
 % for mi = 1 : length(mice)
-for mi = 1:4
+for mi = 2:3
     for si = 1:length(sessions{mi})
 %     for si = 1
         errorCellSession = errorCell{mi}{si};

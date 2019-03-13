@@ -56,7 +56,7 @@
 %     - firstRightLick
 %     - lastRightLick
 
-baseDir = 'C:\JK\';
+baseDir = 'D:\JK\suite2p\';
 
 mice = [25,27,30,36,37,38,39,41,52,53,54,56];
 sessions = {[4,19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]}; 
@@ -72,9 +72,11 @@ errorCell = {{[],[]},{[],[]},{[],[]},{[],[]},{[]},{[]},{[],[]},{[]},{[],[]},{[]}
 % sessions = {[17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]}; 
 % sessions = {[19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]}; 
 % for mi = 1 : length(mice)
-for mi = 9
+for mi = 1
 %     for si = 1:length(sessions{mi})
-    for si = 2
+    for si = 1
+        
+        for loop = 1 : 10
         errorCellSession = errorCell{mi}{si};
     
         poolobj = gcp('nocreate');
@@ -114,7 +116,7 @@ for mi = 9
         end
         frameRate = u.frameRate;
 
-        savefnResult = sprintf('glmResponseType_JK%03dS%02d_repeatTest',mouse, session); % m(n) meaining method(n)
+        savefnResult = sprintf('glmRepeatTestJK%03dS%02dLoop%02d',mouse, session, loop); % m(n) meaining method(n)
 
             %% pre-processing for lick onset and offset
             % regardless of licking alternating, each l and r has it's own lick onset and offset. both licking, just take the union
@@ -597,10 +599,10 @@ for mi = 9
             end % end of parfor cellnum
 %%
             save(sprintf('%s_R%02d',savefnResult, ri), 'fit*', 'allPredictors', '*InputMat', 'indPartial', '*Group', '*Tn', 'lambdaCV', '*Opt', 'done', 'pThreshold*', '*Shift', 'cellTime', 'testInd', 'trainingInd', 'cIDAll');
-            push_myphone(sprintf('Lasso GLM done for JK%03d S%02d Loop #%03d', mouse, session, ri))
+            push_myphone(sprintf('Lasso GLM done for JK%03d S%02d Loop %02d repeat %02d', mouse, session, loop, ri))
         end % of ri. random group selection index
-        push_myphone(sprintf('Lasso GLM done for JK%03d S%02d', mouse, session))
-
+        push_myphone(sprintf('Lasso GLM done for JK%03d S%02d, Big loop %02d', mouse, session, loop))
+        end
     end
 end
 
