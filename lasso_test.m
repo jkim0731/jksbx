@@ -56,7 +56,7 @@
 %     - firstRightLick
 %     - lastRightLick
 
-baseDir = 'D:\JK\suite2p\';
+baseDir = 'C:\JK\';
 
 mice = [25,27,30,36,37,38,39,41,52,53,54,56];
 sessions = {[4,19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]}; 
@@ -72,11 +72,11 @@ errorCell = {{[],[]},{[],[]},{[],[]},{[],[]},{[]},{[]},{[],[]},{[]},{[],[]},{[]}
 % sessions = {[17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]}; 
 % sessions = {[19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]}; 
 % for mi = 1 : length(mice)
-for mi = 1
+for mi = 4
 %     for si = 1:length(sessions{mi})
     for si = 1
         
-        for loop = 1 : 10
+        for loop = 3 : 10
         errorCellSession = errorCell{mi}{si};
     
         poolobj = gcp('nocreate');
@@ -515,7 +515,7 @@ for mi = 1
                 cellTimeStart = tic;
                 fitCoeffInd = zeros(1,6);
                 
-                fprintf('Mouse JK%03d session S%02d Loop %d: Running cell %d/%d \n', mouse, session, ri, cellnum, numCell);
+                fprintf('Mouse JK%03d session S%02d Loop %02d Repeat %02d: Running cell %d/%d \n', mouse, session, loop, ri, cellnum, numCell);
 %                 fprintf('Mouse JK%03d session S%02d: Running cell %d/%d \n', mouse, session,cellnum, numCell);
                 started(cellnum) = cellnum;
                 

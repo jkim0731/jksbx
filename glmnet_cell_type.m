@@ -56,7 +56,7 @@
 %     - firstRightLick
 %     - lastRightLick
 
-baseDir = 'D:\JK\suite2p\';
+baseDir = 'C:\JK\';
 
 mice = [25,27,30,36,37,38,39,41,52,53,54,56];
 sessions = {[4,19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]}; 
@@ -71,8 +71,8 @@ errorCell = {{[],[]},{[],[]},{[],[]},{[],[]},{[]},{[]},{[],[]},{[]},{[],[]},{[]}
 % mice = [25,27,30];
 % sessions = {[17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]}; 
 % sessions = {[19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]}; 
-% for mi = 1 : length(mice)
-for mi = 2:3
+for mi = 1 : length(mice)
+% for mi = 2:3
     for si = 1:length(sessions{mi})
 %     for si = 1
         errorCellSession = errorCell{mi}{si};
@@ -98,7 +98,7 @@ for mi = 2:3
 
         glmnetOpt = glmnetSet;
         glmnetOpt.standardize = 0; % do the standardization at the level of predictors, including both training and test
-        glmnetOpt.alpha = 0.95;
+        glmnetOpt.alpha = 0;
         
         partialGlmOpt = glmnetOpt;
         partialGlmOpt.alpha = 0;
@@ -114,7 +114,7 @@ for mi = 2:3
         end
         frameRate = u.frameRate;
 
-        savefnResult = sprintf('glmResponseType_JK%03dS%02d_glmnet_m19',mouse, session); % m(n) meaining method(n)
+        savefnResult = sprintf('glmResponseType_JK%03dS%02d_glmnet_m20',mouse, session); % m(n) meaining method(n)
 
             %% pre-processing for lick onset and offset
             % regardless of licking alternating, each l and r has it's own lick onset and offset. both licking, just take the union
@@ -280,10 +280,7 @@ for mi = 2:3
                 for i = 1 : length(distances)
                     distanceGroup{i} = cellfun(@(x) x.trialNum, u.trials(find(cellfun(@(x) x.distance == distances(i), u.trials))));
                 end
-                
-                for i = 1 : length(timeGroup)
-                    timeGroup{i} = u.trialNums((i-1)*length(u.trialNums)/length(timeGroup)+1:(i-1)*length(u.trialNums)/length(timeGroup));
-                end
+
                 %%
                 testTn = [];
                 for pti = 1 : length(ptouchGroup)
@@ -291,14 +288,11 @@ for mi = 2:3
                         for ci = 1 : length(choiceGroup)
                             for ai = 1 : length(angleGroup)
                                 for di = 1 : length(distanceGroup)
-%                                     for ti = 1 : length(timeGroup)
-%                                         tempTn = intersect(timeGroup{ti}, intersect(ptouchGroup{pti}, intersect(rtouchGroup{rti}, intersect(choiceGroup{ci}, intersect(angleGroup{ai}, distanceGroup{di})))));
                                         tempTn = intersect(ptouchGroup{pti}, intersect(choiceGroup{ci}, intersect(angleGroup{ai}, distanceGroup{di})));
                                         if ~isempty(tempTn)
                                             tempTn = tempTn(randperm(length(tempTn)));
                                             testTn = [testTn; tempTn(1:round(length(tempTn)*0.3))];
                                         end
-%                                     end
                                 end
                             end
                         end
@@ -494,7 +488,8 @@ for mi = 2:3
                 iTestAll{i} = intersect(tindcellAll{i}, testInd);
             end
             spikeAll = cellfun(@(x) x.spk, u.trials, 'uniformoutput', false);
-
+            
+            
             
             poolobj = gcp('nocreate');
             if poolobj.SpmdEnabled == 0
@@ -520,7 +515,8 @@ for mi = 2:3
                 cind = cindAll(cellnum);
                 planeInd = planeIndAll(cellnum);
     
-                spkTrain = cell2mat(cellfun(@(x) [nan(1,posShift), x(cind,:), nan(1,posShift)], spikeAll(iTrain)','uniformoutput',false));                
+                spkTrain = cell2mat(cellfun(@(x) [nan(1,posShift), x(cind,:), nan(1,posShift)], spikeAll(iTrain)','uniformoutput',false));
+
                 finiteIndTrain = intersect(find(isfinite(spkTrain)), find(isfinite(sum(trainingInputMat{planeInd},2))));
                 input = trainingInputMat{planeInd}(finiteIndTrain,:);
                 spkTrain = spkTrain(finiteIndTrain)';
