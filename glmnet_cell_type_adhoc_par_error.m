@@ -31,14 +31,14 @@ end
 trainingTn = setdiff(totalTn, testTn);
 [~,trainingInd] = ismember(trainingTn, totalTn);
 
-mouse = 38;
-session = 2;
-repeat = 10;
+mouse = 27;
+session = 3;
+repeat = 2;
 restartingNum = 2;
 glmPar = true;
-savefnResult = sprintf('glmResponseType_JK%03dS%02d_glmnet_m18_R%02d',mouse, session, repeat);
+savefnResult = sprintf('glmResponseType_JK%03dS%02d_glmnet_m21_R%02d',mouse, session, repeat);
 
-savefnResultRe = [savefnResult, '_06'];
+savefnResultRe = [savefnResult, '_02'];
 
 previousDone = done(find(done));
 
