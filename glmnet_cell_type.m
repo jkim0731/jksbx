@@ -331,17 +331,17 @@ for mi = 1 : length(mice)
 %                         pTouchDuration = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(cell2mat(cellfun(@(y) y', x.protractionTouchChunks, 'uniformoutput', false)), [0, x.tpmTime{plane}]), nan(1,posShift)], ...
 %                             u.trials(tind)','uniformoutput',false));
                         
-%                         pTouchCountAngles = cell(length(angles)+1,1);
+                        pTouchCountAngles = cell(length(angles)+1,1);
 %                         pTouchDurationAngles = cell(length(angles)+1,1);
                         pTouchFrameAngles = cell(length(angles)+1,1);
                         for ai = 1 : length(angles)
                             tempAngleBinary = cell2mat(cellfun(@(x) ones(length(x.tpmTime{plane}) + 2 * posShift, 1) * (x.angle == angles(ai)), u.trials(tind), 'uniformoutput', false));
                             pTouchFrameAngles{ai} = pTouchFrame .* tempAngleBinary';
-%                             pTouchCountAngles{ai} = pTouchCount .* tempAngleBinary';
+                            pTouchCountAngles{ai} = pTouchCount .* tempAngleBinary';
 %                             pTouchDurationAngles{ai} = pTouchDuration .* tempAngleBinary';
                         end
                         pTouchFrameAngles{end} = pTouchFrame;
-%                         pTouchCountAngles{end} = pTouchCount;
+                        pTouchCountAngles{end} = pTouchCount;
 %                         pTouchDurationAngles{end} = pTouchDuration;
 
                         scPiezo = cell2mat(cellfun(@(x) [nan(1,posShift), 1, zeros(1,length(x.tpmTime{plane})-1), nan(1,posShift)], u.trials(tind)','uniformoutput',false));
@@ -395,7 +395,7 @@ for mi = 1 : length(mice)
                         whiskingAmplitude = cell2mat(whiskingAmplitudeCell);
 
                         %%
-%                         pTouchCountMat = zeros(length(pTouchCount), (posShiftTouch + 1) * (length(angles)+1));
+                        pTouchCountMat = zeros(length(pTouchCount), (posShiftTouch + 1) * (length(angles)+1));
                         pTouchFrameMat = zeros(length(pTouchFrame), (posShiftTouch + 1) * (length(angles)+1));
 %                         pTouchDurationMat = zeros(length(pTouchDuration), (posShiftTouch + 1) * (length(angles)+1));
 
@@ -405,7 +405,7 @@ for mi = 1 : length(mice)
                         drinkOnsetMat = zeros(length(drinkOnset), posShiftReward + 1);
                         for i = 1 : posShiftTouch + 1
                             for ai = 1 : length(angles) + 1
-%                                 pTouchCountMat(:,(i-1)*(length(angles)+1) + ai) = circshift(pTouchCountAngles{ai}, [0 i-1])';
+                                pTouchCountMat(:,(i-1)*(length(angles)+1) + ai) = circshift(pTouchCountAngles{ai}, [0 i-1])';
                                 pTouchFrameMat(:,(i-1)*(length(angles)+1) + ai) = circshift(pTouchFrameAngles{ai}, [0 i-1])';
 %                                 pTouchDurationMat(:,(i-1)*(length(angles)+1) + ai) = circshift(pTouchDurationAngles{ai}, [0 i-1])';
                             end
@@ -454,7 +454,7 @@ for mi = 1 : length(mice)
                             lastRightLickMat(:,i) = circshift(lastRightLick, [0 -negShift + i - 1])';
                         end
 %                         touchMat = [tTouchCountMat, pTouchCountMat, rTouchCountMat, tTouchFramesMat, pTouchFramesMat, rTouchFramesMat, tTouchDurationMat, pTouchDurationMat, rTouchDurationMat];
-                        touchMat = [pTouchFrameMat];
+                        touchMat = [pTouchCountMat, pTouchFrameMat];
                         soundMat = [scPiezoMat, scPoleUpMat, scPoleDownMat];
                         drinkMat = drinkOnsetMat;
                         whiskingMat = [whiskingOnsetMat, whiskingAmplitudeMat, whiskingMidpointMat];
