@@ -31,11 +31,11 @@ end
 trainingTn = setdiff(totalTn, testTn);
 [~,trainingInd] = ismember(trainingTn, totalTn);
 
-mouse = 27;
-session = 3;
-repeat = 2;
-restartingNum = 2;
-glmPar = true;
+mouse = 25;
+session = 19;
+repeat = 1;
+restartingNum = 1;
+glmPar = false;
 savefnResult = sprintf('glmResponseType_JK%03dS%02d_glmnet_m21_R%02d',mouse, session, repeat);
 
 savefnResultRe = [savefnResult, '_02'];
@@ -308,7 +308,7 @@ cellTime(remainingCell) = cellTimeRe;
 save(savefnResultRe, 'fit*', 'allPredictors', '*InputMat', 'indPartial', '*Group', '*Tn', 'lambdaCV', '*Opt', 'done', '*Re', 'remainingCell', 'pThreshold*', '*Shift', 'testInd', 'trainingInd', 'cIDAll', 'cellTime');
 %%
 %         end % of ri. random group selection index
-push_myphone(sprintf('GLM done for JK%03d S%02d', mouse, session))
+% push_myphone(sprintf('GLM done for JK%03d S%02d', mouse, session))
 
 
 %%

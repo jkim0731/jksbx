@@ -71,10 +71,10 @@ errorCell = {{[],[]},{[],[]},{[],[]},{[],[]},{[]},{[]},{[],[]},{[]},{[],[]},{[]}
 % mice = [25,27,30];
 % sessions = {[17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]}; 
 % sessions = {[19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]}; 
-for mi = 1 : length(mice)
-% for mi = 2
+% for mi = 1 : length(mice)
+for mi = [1:4,7,9]
     for si = 1:length(sessions{mi})
-%     for si = 1
+%     for si = 2
         errorCellSession = errorCell{mi}{si};
     
         poolobj = gcp('nocreate');
@@ -410,12 +410,12 @@ for mi = 1 : length(mice)
 %                                 pTouchDurationMat(:,(i-1)*(length(angles)+1) + ai) = circshift(pTouchDurationAngles{ai}, [0 i-1])';
                             end
                         end
-                        for i = 1 : posShiftSound
+                        for i = 1 : posShiftSound + 1
                             scPiezoMat(:,i) = circshift(scPiezo, [0 i-1])';
                             scPoleUpMat(:,i) = circshift(scPoleup, [0 i-1])';
                             scPoleDownMat(:,i) = circshift(scPoledown, [0 i-1])';
                         end
-                        for i = 1 : posShiftReward
+                        for i = 1 : posShiftReward + 1
                             drinkOnsetMat(:,i) = circshift(drinkOnset, [0 i-1])';
                         end
 
