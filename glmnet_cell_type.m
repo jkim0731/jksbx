@@ -114,7 +114,7 @@ for mi = [1:4,7,9]
         end
         frameRate = u.frameRate;
 
-        savefnResult = sprintf('glmResponseType_JK%03dS%02d_glmnet_m26',mouse, session); % m(n) meaining method(n)
+        savefnResult = sprintf('glmResponseType_JK%03dS%02d_glmnet_m27',mouse, session); % m(n) meaining method(n)
 
 %             %% pre-processing for lick onset and offset
 %             % regardless of licking alternating, each l and r has it's own lick onset and offset. both licking, just take the union
@@ -365,7 +365,7 @@ for mi = [1:4,7,9]
 %                         lastRightLick = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.lastRightLick, [0, x.tpmTime{plane}]), nan(1,posShift)], v(tind)','uniformoutput',false));
                         %%
                         whiskingOnsetCell = cell(1,length(tind));
-                        whiskingFrameCell = cell(1,length(tind));
+%                         whiskingFrameCell = cell(1,length(tind));
                         whiskingAmplitudeCell = cell(1,length(tind));
                         whiskingMidpointCell = cell(1,length(tind));
 
@@ -377,10 +377,10 @@ for mi = [1:4,7,9]
                             whiskerVideoFrameDuration = u.trials{tind(1)}.frameDuration; % in s
                             onsetTimes = onsetFrame*whiskerVideoFrameDuration; % back to s
                             tempOnset = histcounts(onsetTimes, time);
-                            tempFrame = tempOnset;
-                            tempFrame(tempFrame > 0) = 1;
+%                             tempFrame = tempOnset;
+%                             tempFrame(tempFrame > 0) = 1;
                             whiskingOnsetCell{ti} = [nan(1,posShift), tempOnset, nan(1,posShift)];
-                            whiskingFrameCell{ti} = [nan(1,posShift), tempFrame, nan(1,posShift)];
+%                             whiskingFrameCell{ti} = [nan(1,posShift), tempFrame, nan(1,posShift)];
 
                             tempMid = zeros(1,length(time)-1);
                             tempAmp = zeros(1,length(time)-1);
@@ -396,7 +396,7 @@ for mi = [1:4,7,9]
                             whiskingAmplitudeCell{ti} = [nan(1,posShift), tempAmp, nan(1,posShift)];
                         end
                         whiskingOnset = cell2mat(whiskingOnsetCell);
-                        whiskingFrame = cell2mat(whiskingFrameCell);
+%                         whiskingFrame = cell2mat(whiskingFrameCell);
                         whiskingMidpoint = cell2mat(whiskingMidpointCell);
                         whiskingAmplitude = cell2mat(whiskingAmplitudeCell);
 
@@ -426,7 +426,7 @@ for mi = [1:4,7,9]
                         end
 
                         whiskingOnsetMat = zeros(length(whiskingOnset), negShift + posShiftMotor + 1);
-                        whiskingFrameMat = zeros(length(whiskingOnset), negShift + posShiftMotor + 1);
+%                         whiskingFrameMat = zeros(length(whiskingOnset), negShift + posShiftMotor + 1);
                         
                         whiskingAmplitudeMat = zeros(length(whiskingAmplitude), negShift + posShiftMotor + 1);
                         whiskingMidpointMat = zeros(length(whiskingMidpoint), negShift + posShiftMotor + 1);
@@ -443,7 +443,7 @@ for mi = [1:4,7,9]
 %                         lastRightLickMat = zeros(length(lastRightLick), negShift + posShiftMotor + 1);
                         for i = 1 : negShift + posShiftMotor + 1
                             whiskingOnsetMat(:,i) = circshift(whiskingOnset, [0 -negShift + i - 1])';
-                            whiskingFrameMat(:,i) = circshift(whiskingFrame, [0 -negShift + i - 1])';
+%                             whiskingFrameMat(:,i) = circshift(whiskingFrame, [0 -negShift + i - 1])';
                             whiskingMidpointMat(:,i) = circshift(whiskingMidpoint, [0 -negShift + i - 1])';
                             whiskingAmplitudeMat(:,i) = circshift(whiskingAmplitude, [0 -negShift + i - 1])';
                             
@@ -467,8 +467,7 @@ for mi = [1:4,7,9]
 %                         soundMat = [scPiezoMat, scPoleUpMat, scPoleDownMat];
                         soundMat = [scPoleUpMat];
                         drinkMat = drinkOnsetMat;
-%                         whiskingMat = [whiskingOnsetMat, whiskingAmplitudeMat, whiskingMidpointMat];
-                        whiskingMat = [whiskingFrameMat];
+                        whiskingMat = [whiskingOnsetMat, whiskingMidpointMat];
 %                         lickingMat = [lLickMat, rLickMat, lLickOnsetMat, rLickOnsetMat, lLickOffsetMat, rLickOffsetMat, firstLeftLickMat, firstRightLickMat, lastLeftLickMat, lastRightLickMat];
                         lickingMat = [lLickMat, rLickMat];
                         allPredictors{(cgi-1)*4 + plane} = [touchMat, soundMat, drinkMat, whiskingMat, lickingMat];
