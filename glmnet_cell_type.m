@@ -56,7 +56,7 @@
 %     - firstRightLick
 %     - lastRightLick
 
-baseDir = 'D:\2p\JK\suite2p\';
+baseDir = 'D:\JK\suite2p\';
 
 mice = [25,27,30,36,37,38,39,41,52,53,54,56];
 sessions = {[4,19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]}; 
@@ -85,7 +85,7 @@ for mi = [1:4,7,9]
         mouse = mice(mi);
         session = sessions{mi}(si);
         
-        posShiftTouch = 4;
+        posShiftTouch = 2;
         posShiftSound = 4;
         posShiftReward = 4;
         posShiftMotor = 4;
@@ -94,7 +94,7 @@ for mi = [1:4,7,9]
         testPortion = 0.3; % 30 % test set
         pThresholdNull = 0.05;
         pThresholdPartial = 0.05;
-        lickBoutInterval = 1; % licks separated by 1 s regarded as different licking bouts
+%         lickBoutInterval = 1; % licks separated by 1 s regarded as different licking bouts
 
         glmnetOpt = glmnetSet;
         glmnetOpt.standardize = 0; % do the standardization at the level of predictors, including both training and test
@@ -114,135 +114,135 @@ for mi = [1:4,7,9]
         end
         frameRate = u.frameRate;
 
-        savefnResult = sprintf('glmResponseType_JK%03dS%02d_glmnet_m23',mouse, session); % m(n) meaining method(n)
+        savefnResult = sprintf('glmResponseType_JK%03dS%02d_glmnet_m24',mouse, session); % m(n) meaining method(n)
 
-            %% pre-processing for lick onset and offset
-            % regardless of licking alternating, each l and r has it's own lick onset and offset. both licking, just take the union
-
-            v = cell(length(u.trials),1);
-
-            for ui = 1 : length(u.trials)
-                bothLickTime = union(u.trials{ui}.leftLickTime, u.trials{ui}.rightLickTime);
-                if length(bothLickTime) == 1
-                    v{ui}.bothLickOnset = bothLickTime;
-                    v{ui}.bothLickOffset = bothLickTime;
-                    v{ui}.firstLick = bothLickTime;
-                    if u.trials{ui}.response < 1
-                        v{ui}.lastLick = bothLickTime;
-                    else
-                        v{ui}.lastLick = [];
-                    end
-                elseif length(bothLickTime) > 1
-                    onsets = find(diff(bothLickTime) > lickBoutInterval);
-                    if isempty(onsets)
-                        v{ui}.bothLickOnset = bothLickTime(1);
-                        v{ui}.bothLickOffset = bothLickTime(end);
-                    else
-                        v{ui}.bothLickOnset = bothLickTime([1; onsets+1]);
-                        v{ui}.bothLickOffset = bothLickTime([onsets; end]);
-                    end
-                    v{ui}.firstLick = bothLickTime(1);
-                    if u.trials{ui}.response < 1
-                        v{ui}.lastLick = bothLickTime(end);
-                    else
-                        v{ui}.lastLick = [];
-                    end
-                else
-                    v{ui}.bothLickOnset = [];
-                    v{ui}.bothLickOffset = [];
-                    v{ui}.firstLick = [];
-                    v{ui}.lastLick = [];
-                end
-
-
-                if length(u.trials{ui}.leftLickTime) == 1
-                    v{ui}.leftLickOnset = u.trials{ui}.leftLickTime;
-                    v{ui}.leftLickOffset = u.trials{ui}.leftLickTime;
-                    v{ui}.firstLeftLick = u.trials{ui}.leftLickTime;
-                    if u.trials{ui}.response < 1 
-                        if isempty(u.trials{ui}.rightLickTime)
-                            v{ui}.lastLeftLick = u.trials{ui}.leftLickTime;
-                        elseif u.trials{ui}.rightLickTime(end) < u.trials{ui}.leftLickTime(end)
-                            v{ui}.lastLeftLick = u.trials{ui}.leftLickTime;
-                        else
-                            v{ui}.lastLeftLick = [];
-                        end
-                    else
-                        v{ui}.lastLeftLick = [];
-                    end
-                elseif length(u.trials{ui}.leftLickTime) > 1        
-                    onsets = find(diff(u.trials{ui}.leftLickTime) > lickBoutInterval);
-                    if isempty(onsets)
-                        v{ui}.leftLickOnset = u.trials{ui}.leftLickTime(1);
-                        v{ui}.leftLickOffset = u.trials{ui}.leftLickTime(end);                    
-                    else
-                        v{ui}.leftLickOnset = u.trials{ui}.leftLickTime([1; onsets+1]);
-                        v{ui}.leftLickOffset = u.trials{ui}.leftLickTime([onsets; end]);
-                    end
-                    v{ui}.firstLeftLick = u.trials{ui}.leftLickTime(1);
-                    if u.trials{ui}.response < 1 
-                        if isempty(u.trials{ui}.rightLickTime)
-                            v{ui}.lastLeftLick = u.trials{ui}.leftLickTime;
-                        elseif u.trials{ui}.rightLickTime(end) < u.trials{ui}.leftLickTime(end)
-                            v{ui}.lastLeftLick = u.trials{ui}.leftLickTime;
-                        else
-                            v{ui}.lastLeftLick = [];
-                        end
-                    else
-                        v{ui}.lastLeftLick = [];
-                    end
-                else
-                    v{ui}.leftLickOnset = [];
-                    v{ui}.leftLickOffset = [];
-                    v{ui}.firstLeftLick = [];
-                    v{ui}.lastLeftLick = [];
-                end
-
-
-                if length(u.trials{ui}.rightLickTime) == 1
-                    v{ui}.rightLickOnset = u.trials{ui}.rightLickTime;
-                    v{ui}.rightLickOffset = u.trials{ui}.rightLickTime;
-                    v{ui}.firstRightLick = u.trials{ui}.rightLickTime;
-                    if u.trials{ui}.response < 1 
-                        if isempty(u.trials{ui}.leftLickTime)
-                            v{ui}.lastRightLick = u.trials{ui}.rightLickTime;
-                        elseif u.trials{ui}.leftLickTime(end) < u.trials{ui}.rightLickTime(end)
-                            v{ui}.lastRightLick = u.trials{ui}.rightLickTime;
-                        else
-                            v{ui}.lastRightLick = [];
-                        end
-                    else
-                        v{ui}.lastRightLick = [];
-                    end
-                elseif length(u.trials{ui}.rightLickTime) > 1        
-                    onsets = find(diff(u.trials{ui}.rightLickTime) > lickBoutInterval);
-                    if isempty(onsets)
-                        v{ui}.rightLickOnset = u.trials{ui}.rightLickTime(1);
-                        v{ui}.rightLickOffset = u.trials{ui}.rightLickTime(end);
-                    else
-                        v{ui}.rightLickOnset = u.trials{ui}.rightLickTime([1; onsets+1]);
-                        v{ui}.rightLickOffset = u.trials{ui}.rightLickTime([onsets; end]);
-                    end
-                    v{ui}.firstRightLick = u.trials{ui}.rightLickTime(1);
-                    if u.trials{ui}.response < 1 
-                        if isempty(u.trials{ui}.leftLickTime)
-                            v{ui}.lastRightLick = u.trials{ui}.rightLickTime;
-                        elseif u.trials{ui}.leftLickTime(end) < u.trials{ui}.rightLickTime(end)
-                            v{ui}.lastRightLick = u.trials{ui}.rightLickTime;
-                        else
-                            v{ui}.lastRightLick = [];
-                        end
-                    else
-                        v{ui}.lastRightLick = [];
-                    end
-                else
-                    v{ui}.rightLickOnset = [];
-                    v{ui}.rightLickOffset = [];
-                    v{ui}.firstRightLick = [];
-                    v{ui}.lastRightLick = [];
-                end
-                v{ui}.tpmTime = u.trials{ui}.tpmTime;
-            end
+%             %% pre-processing for lick onset and offset
+%             % regardless of licking alternating, each l and r has it's own lick onset and offset. both licking, just take the union
+% 
+%             v = cell(length(u.trials),1);
+% 
+%             for ui = 1 : length(u.trials)
+%                 bothLickTime = union(u.trials{ui}.leftLickTime, u.trials{ui}.rightLickTime);
+%                 if length(bothLickTime) == 1
+%                     v{ui}.bothLickOnset = bothLickTime;
+%                     v{ui}.bothLickOffset = bothLickTime;
+%                     v{ui}.firstLick = bothLickTime;
+%                     if u.trials{ui}.response < 1
+%                         v{ui}.lastLick = bothLickTime;
+%                     else
+%                         v{ui}.lastLick = [];
+%                     end
+%                 elseif length(bothLickTime) > 1
+%                     onsets = find(diff(bothLickTime) > lickBoutInterval);
+%                     if isempty(onsets)
+%                         v{ui}.bothLickOnset = bothLickTime(1);
+%                         v{ui}.bothLickOffset = bothLickTime(end);
+%                     else
+%                         v{ui}.bothLickOnset = bothLickTime([1; onsets+1]);
+%                         v{ui}.bothLickOffset = bothLickTime([onsets; end]);
+%                     end
+%                     v{ui}.firstLick = bothLickTime(1);
+%                     if u.trials{ui}.response < 1
+%                         v{ui}.lastLick = bothLickTime(end);
+%                     else
+%                         v{ui}.lastLick = [];
+%                     end
+%                 else
+%                     v{ui}.bothLickOnset = [];
+%                     v{ui}.bothLickOffset = [];
+%                     v{ui}.firstLick = [];
+%                     v{ui}.lastLick = [];
+%                 end
+% 
+% 
+%                 if length(u.trials{ui}.leftLickTime) == 1
+%                     v{ui}.leftLickOnset = u.trials{ui}.leftLickTime;
+%                     v{ui}.leftLickOffset = u.trials{ui}.leftLickTime;
+%                     v{ui}.firstLeftLick = u.trials{ui}.leftLickTime;
+%                     if u.trials{ui}.response < 1 
+%                         if isempty(u.trials{ui}.rightLickTime)
+%                             v{ui}.lastLeftLick = u.trials{ui}.leftLickTime;
+%                         elseif u.trials{ui}.rightLickTime(end) < u.trials{ui}.leftLickTime(end)
+%                             v{ui}.lastLeftLick = u.trials{ui}.leftLickTime;
+%                         else
+%                             v{ui}.lastLeftLick = [];
+%                         end
+%                     else
+%                         v{ui}.lastLeftLick = [];
+%                     end
+%                 elseif length(u.trials{ui}.leftLickTime) > 1        
+%                     onsets = find(diff(u.trials{ui}.leftLickTime) > lickBoutInterval);
+%                     if isempty(onsets)
+%                         v{ui}.leftLickOnset = u.trials{ui}.leftLickTime(1);
+%                         v{ui}.leftLickOffset = u.trials{ui}.leftLickTime(end);                    
+%                     else
+%                         v{ui}.leftLickOnset = u.trials{ui}.leftLickTime([1; onsets+1]);
+%                         v{ui}.leftLickOffset = u.trials{ui}.leftLickTime([onsets; end]);
+%                     end
+%                     v{ui}.firstLeftLick = u.trials{ui}.leftLickTime(1);
+%                     if u.trials{ui}.response < 1 
+%                         if isempty(u.trials{ui}.rightLickTime)
+%                             v{ui}.lastLeftLick = u.trials{ui}.leftLickTime;
+%                         elseif u.trials{ui}.rightLickTime(end) < u.trials{ui}.leftLickTime(end)
+%                             v{ui}.lastLeftLick = u.trials{ui}.leftLickTime;
+%                         else
+%                             v{ui}.lastLeftLick = [];
+%                         end
+%                     else
+%                         v{ui}.lastLeftLick = [];
+%                     end
+%                 else
+%                     v{ui}.leftLickOnset = [];
+%                     v{ui}.leftLickOffset = [];
+%                     v{ui}.firstLeftLick = [];
+%                     v{ui}.lastLeftLick = [];
+%                 end
+% 
+% 
+%                 if length(u.trials{ui}.rightLickTime) == 1
+%                     v{ui}.rightLickOnset = u.trials{ui}.rightLickTime;
+%                     v{ui}.rightLickOffset = u.trials{ui}.rightLickTime;
+%                     v{ui}.firstRightLick = u.trials{ui}.rightLickTime;
+%                     if u.trials{ui}.response < 1 
+%                         if isempty(u.trials{ui}.leftLickTime)
+%                             v{ui}.lastRightLick = u.trials{ui}.rightLickTime;
+%                         elseif u.trials{ui}.leftLickTime(end) < u.trials{ui}.rightLickTime(end)
+%                             v{ui}.lastRightLick = u.trials{ui}.rightLickTime;
+%                         else
+%                             v{ui}.lastRightLick = [];
+%                         end
+%                     else
+%                         v{ui}.lastRightLick = [];
+%                     end
+%                 elseif length(u.trials{ui}.rightLickTime) > 1        
+%                     onsets = find(diff(u.trials{ui}.rightLickTime) > lickBoutInterval);
+%                     if isempty(onsets)
+%                         v{ui}.rightLickOnset = u.trials{ui}.rightLickTime(1);
+%                         v{ui}.rightLickOffset = u.trials{ui}.rightLickTime(end);
+%                     else
+%                         v{ui}.rightLickOnset = u.trials{ui}.rightLickTime([1; onsets+1]);
+%                         v{ui}.rightLickOffset = u.trials{ui}.rightLickTime([onsets; end]);
+%                     end
+%                     v{ui}.firstRightLick = u.trials{ui}.rightLickTime(1);
+%                     if u.trials{ui}.response < 1 
+%                         if isempty(u.trials{ui}.leftLickTime)
+%                             v{ui}.lastRightLick = u.trials{ui}.rightLickTime;
+%                         elseif u.trials{ui}.leftLickTime(end) < u.trials{ui}.rightLickTime(end)
+%                             v{ui}.lastRightLick = u.trials{ui}.rightLickTime;
+%                         else
+%                             v{ui}.lastRightLick = [];
+%                         end
+%                     else
+%                         v{ui}.lastRightLick = [];
+%                     end
+%                 else
+%                     v{ui}.rightLickOnset = [];
+%                     v{ui}.rightLickOffset = [];
+%                     v{ui}.firstRightLick = [];
+%                     v{ui}.lastRightLick = [];
+%                 end
+%                 v{ui}.tpmTime = u.trials{ui}.tpmTime;
+%             end
 
 
 %             %% repetition test
@@ -331,38 +331,38 @@ for mi = [1:4,7,9]
 %                         pTouchDuration = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(cell2mat(cellfun(@(y) y', x.protractionTouchChunks, 'uniformoutput', false)), [0, x.tpmTime{plane}]), nan(1,posShift)], ...
 %                             u.trials(tind)','uniformoutput',false));
                         
-                        pTouchCountAngles = cell(length(angles)+1,1);
+%                         pTouchCountAngles = cell(length(angles)+1,1);
 %                         pTouchDurationAngles = cell(length(angles)+1,1);
                         pTouchFrameAngles = cell(length(angles)+1,1);
                         for ai = 1 : length(angles)
                             tempAngleBinary = cell2mat(cellfun(@(x) ones(length(x.tpmTime{plane}) + 2 * posShift, 1) * (x.angle == angles(ai)), u.trials(tind), 'uniformoutput', false));
                             pTouchFrameAngles{ai} = pTouchFrame .* tempAngleBinary';
-                            pTouchCountAngles{ai} = pTouchCount .* tempAngleBinary';
+%                             pTouchCountAngles{ai} = pTouchCount .* tempAngleBinary';
 %                             pTouchDurationAngles{ai} = pTouchDuration .* tempAngleBinary';
                         end
                         pTouchFrameAngles{end} = pTouchFrame;
-                        pTouchCountAngles{end} = pTouchCount;
+%                         pTouchCountAngles{end} = pTouchCount;
 %                         pTouchDurationAngles{end} = pTouchDuration;
 
-                        scPiezo = cell2mat(cellfun(@(x) [nan(1,posShift), 1, zeros(1,length(x.tpmTime{plane})-1), nan(1,posShift)], u.trials(tind)','uniformoutput',false));
+%                         scPiezo = cell2mat(cellfun(@(x) [nan(1,posShift), 1, zeros(1,length(x.tpmTime{plane})-1), nan(1,posShift)], u.trials(tind)','uniformoutput',false));
                         scPoleup = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.poleUpOnsetTime, [0, x.tpmTime{plane}]), nan(1,posShift)], u.trials(tind)','uniformoutput',false));
-                        scPoledown = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.poleDownOnsetTime, [0, x.tpmTime{plane}]), nan(1,posShift)], u.trials(tind)','uniformoutput',false));
+%                         scPoledown = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.poleDownOnsetTime, [0, x.tpmTime{plane}]), nan(1,posShift)], u.trials(tind)','uniformoutput',false));
                         drinkOnset = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.drinkingOnsetTime, [0, x.tpmTime{plane}]), nan(1,posShift)], u.trials(tind)','uniformoutput',false));
 
                         lLick = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.leftLickTime, [0, x.tpmTime{plane}]), nan(1,posShift)], u.trials(tind)','uniformoutput',false));
                         rLick = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.rightLickTime, [0, x.tpmTime{plane}]), nan(1,posShift)], u.trials(tind)','uniformoutput',false));
 
-                        lLickOnset = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.leftLickOnset, [0, x.tpmTime{plane}]), nan(1,posShift)], v(tind)','uniformoutput',false));
-                        rLickOnset = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.rightLickOnset, [0, x.tpmTime{plane}]), nan(1,posShift)], v(tind)','uniformoutput',false));
+%                         lLickOnset = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.leftLickOnset, [0, x.tpmTime{plane}]), nan(1,posShift)], v(tind)','uniformoutput',false));
+%                         rLickOnset = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.rightLickOnset, [0, x.tpmTime{plane}]), nan(1,posShift)], v(tind)','uniformoutput',false));
                         
-                        lLickOffset = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.leftLickOffset, [0, x.tpmTime{plane}]), nan(1,posShift)], v(tind)','uniformoutput',false));
-                        rLickOffset = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.rightLickOffset, [0, x.tpmTime{plane}]), nan(1,posShift)], v(tind)','uniformoutput',false));
+%                         lLickOffset = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.leftLickOffset, [0, x.tpmTime{plane}]), nan(1,posShift)], v(tind)','uniformoutput',false));
+%                         rLickOffset = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.rightLickOffset, [0, x.tpmTime{plane}]), nan(1,posShift)], v(tind)','uniformoutput',false));
                         
-                        firstLeftLick = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.firstLeftLick, [0, x.tpmTime{plane}]), nan(1,posShift)], v(tind)','uniformoutput',false));
-                        firstRightLick = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.firstRightLick, [0, x.tpmTime{plane}]), nan(1,posShift)], v(tind)','uniformoutput',false));
+%                         firstLeftLick = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.firstLeftLick, [0, x.tpmTime{plane}]), nan(1,posShift)], v(tind)','uniformoutput',false));
+%                         firstRightLick = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.firstRightLick, [0, x.tpmTime{plane}]), nan(1,posShift)], v(tind)','uniformoutput',false));
                         
-                        lastLeftLick = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.lastLeftLick, [0, x.tpmTime{plane}]), nan(1,posShift)], v(tind)','uniformoutput',false));
-                        lastRightLick = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.lastRightLick, [0, x.tpmTime{plane}]), nan(1,posShift)], v(tind)','uniformoutput',false));
+%                         lastLeftLick = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.lastLeftLick, [0, x.tpmTime{plane}]), nan(1,posShift)], v(tind)','uniformoutput',false));
+%                         lastRightLick = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.lastRightLick, [0, x.tpmTime{plane}]), nan(1,posShift)], v(tind)','uniformoutput',false));
                         %%
                         whiskingOnsetCell = cell(1,length(tind));
                         whiskingAmplitudeCell = cell(1,length(tind));
@@ -395,25 +395,25 @@ for mi = [1:4,7,9]
                         whiskingAmplitude = cell2mat(whiskingAmplitudeCell);
 
                         %%
-                        pTouchCountMat = zeros(length(pTouchCount), (posShiftTouch + 1) * (length(angles)+1));
+%                         pTouchCountMat = zeros(length(pTouchCount), (posShiftTouch + 1) * (length(angles)+1));
                         pTouchFrameMat = zeros(length(pTouchFrame), (posShiftTouch + 1) * (length(angles)+1));
 %                         pTouchDurationMat = zeros(length(pTouchDuration), (posShiftTouch + 1) * (length(angles)+1));
 
-                        scPiezoMat = zeros(length(scPiezo), posShiftSound + 1);
+%                         scPiezoMat = zeros(length(scPiezo), posShiftSound + 1);
                         scPoleUpMat = zeros(length(scPoleup), posShiftSound + 1);
-                        scPoleDownMat = zeros(length(scPoledown), posShiftSound + 1);
+%                         scPoleDownMat = zeros(length(scPoledown), posShiftSound + 1);
                         drinkOnsetMat = zeros(length(drinkOnset), posShiftReward + 1);
                         for i = 1 : posShiftTouch + 1
                             for ai = 1 : length(angles) + 1
-                                pTouchCountMat(:,(i-1)*(length(angles)+1) + ai) = circshift(pTouchCountAngles{ai}, [0 i-1])';
+%                                 pTouchCountMat(:,(i-1)*(length(angles)+1) + ai) = circshift(pTouchCountAngles{ai}, [0 i-1])';
                                 pTouchFrameMat(:,(i-1)*(length(angles)+1) + ai) = circshift(pTouchFrameAngles{ai}, [0 i-1])';
 %                                 pTouchDurationMat(:,(i-1)*(length(angles)+1) + ai) = circshift(pTouchDurationAngles{ai}, [0 i-1])';
                             end
                         end
                         for i = 1 : posShiftSound + 1
-                            scPiezoMat(:,i) = circshift(scPiezo, [0 i-1])';
+%                             scPiezoMat(:,i) = circshift(scPiezo, [0 i-1])';
                             scPoleUpMat(:,i) = circshift(scPoleup, [0 i-1])';
-                            scPoleDownMat(:,i) = circshift(scPoledown, [0 i-1])';
+%                             scPoleDownMat(:,i) = circshift(scPoledown, [0 i-1])';
                         end
                         for i = 1 : posShiftReward + 1
                             drinkOnsetMat(:,i) = circshift(drinkOnset, [0 i-1])';
@@ -425,14 +425,14 @@ for mi = [1:4,7,9]
 
                         lLickMat = zeros(length(lLick), negShift + posShiftMotor + 1);
                         rLickMat = zeros(length(rLick), negShift + posShiftMotor + 1);
-                        lLickOnsetMat = zeros(length(lLickOnset), negShift + posShiftMotor + 1);
-                        rLickOnsetMat = zeros(length(rLickOnset), negShift + posShiftMotor + 1);
-                        lLickOffsetMat = zeros(length(lLickOffset), negShift + posShiftMotor + 1);
-                        rLickOffsetMat = zeros(length(rLickOnset), negShift + posShiftMotor + 1);
-                        firstLeftLickMat = zeros(length(firstLeftLick), negShift + posShiftMotor + 1);
-                        firstRightLickMat = zeros(length(firstRightLick), negShift + posShiftMotor + 1);
-                        lastLeftLickMat = zeros(length(lastLeftLick), negShift + posShiftMotor + 1);
-                        lastRightLickMat = zeros(length(lastRightLick), negShift + posShiftMotor + 1);
+%                         lLickOnsetMat = zeros(length(lLickOnset), negShift + posShiftMotor + 1);
+%                         rLickOnsetMat = zeros(length(rLickOnset), negShift + posShiftMotor + 1);
+%                         lLickOffsetMat = zeros(length(lLickOffset), negShift + posShiftMotor + 1);
+%                         rLickOffsetMat = zeros(length(rLickOnset), negShift + posShiftMotor + 1);
+%                         firstLeftLickMat = zeros(length(firstLeftLick), negShift + posShiftMotor + 1);
+%                         firstRightLickMat = zeros(length(firstRightLick), negShift + posShiftMotor + 1);
+%                         lastLeftLickMat = zeros(length(lastLeftLick), negShift + posShiftMotor + 1);
+%                         lastRightLickMat = zeros(length(lastRightLick), negShift + posShiftMotor + 1);
                         for i = 1 : negShift + posShiftMotor + 1
                             whiskingOnsetMat(:,i) = circshift(whiskingOnset, [0 -negShift + i - 1])';
                             whiskingMidpointMat(:,i) = circshift(whiskingMidpoint, [0 -negShift + i - 1])';
@@ -441,24 +441,26 @@ for mi = [1:4,7,9]
                             lLickMat(:,i) = circshift(lLick, [0 -negShift + i - 1])';
                             rLickMat(:,i) = circshift(rLick, [0 -negShift + i - 1])';
                             
-                            lLickOnsetMat(:,i) = circshift(lLickOnset, [0 -negShift + i - 1])';
-                            rLickOnsetMat(:,i) = circshift(rLickOnset, [0 -negShift + i - 1])';
-                            
-                            lLickOffsetMat(:,i) = circshift(lLickOffset, [0 -negShift + i - 1])';
-                            rLickOffsetMat(:,i) = circshift(rLickOffset, [0 -negShift + i - 1])';
-                            
-                            firstLeftLickMat(:,i) = circshift(firstLeftLick, [0 -negShift + i - 1])';
-                            firstRightLickMat(:,i) = circshift(firstRightLick, [0 -negShift + i - 1])';
-                            
-                            lastLeftLickMat(:,i) = circshift(lastLeftLick, [0 -negShift + i - 1])';
-                            lastRightLickMat(:,i) = circshift(lastRightLick, [0 -negShift + i - 1])';
+%                             lLickOnsetMat(:,i) = circshift(lLickOnset, [0 -negShift + i - 1])';
+%                             rLickOnsetMat(:,i) = circshift(rLickOnset, [0 -negShift + i - 1])';
+%                             
+%                             lLickOffsetMat(:,i) = circshift(lLickOffset, [0 -negShift + i - 1])';
+%                             rLickOffsetMat(:,i) = circshift(rLickOffset, [0 -negShift + i - 1])';
+%                             
+%                             firstLeftLickMat(:,i) = circshift(firstLeftLick, [0 -negShift + i - 1])';
+%                             firstRightLickMat(:,i) = circshift(firstRightLick, [0 -negShift + i - 1])';
+%                             
+%                             lastLeftLickMat(:,i) = circshift(lastLeftLick, [0 -negShift + i - 1])';
+%                             lastRightLickMat(:,i) = circshift(lastRightLick, [0 -negShift + i - 1])';
                         end
 %                         touchMat = [tTouchCountMat, pTouchCountMat, rTouchCountMat, tTouchFramesMat, pTouchFramesMat, rTouchFramesMat, tTouchDurationMat, pTouchDurationMat, rTouchDurationMat];
-                        touchMat = [pTouchCountMat];
-                        soundMat = [scPiezoMat, scPoleUpMat, scPoleDownMat];
+                        touchMat = [pTouchFrameMat];
+%                         soundMat = [scPiezoMat, scPoleUpMat, scPoleDownMat];
+                        soundMat = [scPoleUpMat];
                         drinkMat = drinkOnsetMat;
                         whiskingMat = [whiskingOnsetMat, whiskingAmplitudeMat, whiskingMidpointMat];
-                        lickingMat = [lLickMat, rLickMat, lLickOnsetMat, rLickOnsetMat, lLickOffsetMat, rLickOffsetMat, firstLeftLickMat, firstRightLickMat, lastLeftLickMat, lastRightLickMat];
+%                         lickingMat = [lLickMat, rLickMat, lLickOnsetMat, rLickOnsetMat, lLickOffsetMat, rLickOffsetMat, firstLeftLickMat, firstRightLickMat, lastLeftLickMat, lastRightLickMat];
+                        lickingMat = [lLickMat, rLickMat];
                         allPredictors{(cgi-1)*4 + plane} = [touchMat, soundMat, drinkMat, whiskingMat, lickingMat];
                         nani{(cgi-1)*4 + plane} = find(nanstd(allPredictors{(cgi-1)*4 + plane})==0);
                         allPredictorsMean{(cgi-1)*4 + plane} = nanmean(allPredictors{(cgi-1)*4 + plane});
