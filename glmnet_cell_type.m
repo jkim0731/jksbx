@@ -485,16 +485,17 @@ for mi = [1:4,7,9]
 
                 %%
                 touchInd = 1 : size(touchMat,2);
-                soundInd = max(touchInd) + 1 : max(touchInd) + size(soundMat,2);
-                rewardInd = max(soundInd) + 1 : max(soundInd) + size(drinkMat,2);
+%                 soundInd = max(touchInd) + 1 : max(touchInd) + size(soundMat,2);
+%                 rewardInd = max(soundInd) + 1 : max(soundInd) + size(drinkMat,2);
+                rewardInd = max(touchInd) + 1 : max(touchInd) + size(drinkMat,2);
                 whiskingInd = max(rewardInd) + 1 : max(rewardInd) + size(whiskingMat,2);
                 lickInd = max(whiskingInd) + 1 : max(whiskingInd) + size(lickingMat,2);
 
                 indPartial{1} = touchInd;
-                indPartial{2} = soundInd;
-                indPartial{3} = rewardInd;
-                indPartial{4} = whiskingInd;
-                indPartial{5} = lickInd;
+%                 indPartial{2} = soundInd;
+                indPartial{2} = rewardInd;
+                indPartial{3} = whiskingInd;
+                indPartial{4} = lickInd;
         %%
 %             rtest(ri).fitInd = cell(length(u.cellNums),1); % parameters surviving lasso in training set
 %             rtest(ri).fitCoeffs = cell(length(u.cellNums),1); % intercept + coefficients of the parameters in training set
