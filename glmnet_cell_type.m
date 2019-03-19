@@ -56,7 +56,7 @@
 %     - firstRightLick
 %     - lastRightLick
 
-baseDir = 'D:\JK\suite2p\';
+baseDir = 'C:\JK\';
 
 mice = [25,27,30,36,37,38,39,41,52,53,54,56];
 sessions = {[4,19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]}; 
@@ -114,7 +114,7 @@ for mi = [1:4,7,9]
         end
         frameRate = u.frameRate;
 
-        savefnResult = sprintf('glmResponseType_JK%03dS%02d_glmnet_m28',mouse, session); % m(n) meaining method(n)
+        savefnResult = sprintf('glmResponseType_JK%03dS%02d_glmnet_m29',mouse, session); % m(n) meaining method(n)
 
 %             %% pre-processing for lick onset and offset
 %             % regardless of licking alternating, each l and r has it's own lick onset and offset. both licking, just take the union
@@ -470,7 +470,8 @@ for mi = [1:4,7,9]
                         whiskingMat = [whiskingOnsetMat, whiskingAmplitudeMat];
 %                         lickingMat = [lLickMat, rLickMat, lLickOnsetMat, rLickOnsetMat, lLickOffsetMat, rLickOffsetMat, firstLeftLickMat, firstRightLickMat, lastLeftLickMat, lastRightLickMat];
                         lickingMat = [lLickMat, rLickMat];
-                        allPredictors{(cgi-1)*4 + plane} = [touchMat, soundMat, drinkMat, whiskingMat, lickingMat];
+%                         allPredictors{(cgi-1)*4 + plane} = [touchMat, soundMat, drinkMat, whiskingMat, lickingMat];
+                        allPredictors{(cgi-1)*4 + plane} = [touchMat, drinkMat, whiskingMat, lickingMat];
                         nani{(cgi-1)*4 + plane} = find(nanstd(allPredictors{(cgi-1)*4 + plane})==0);
                         allPredictorsMean{(cgi-1)*4 + plane} = nanmean(allPredictors{(cgi-1)*4 + plane});
                         allPredictorsStd{(cgi-1)*4 + plane} = nanstd(allPredictors{(cgi-1)*4 + plane});
