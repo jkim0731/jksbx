@@ -56,7 +56,7 @@
 %     - firstRightLick
 %     - lastRightLick
 
-baseDir = 'D:\2p\JK\suite2p\';
+baseDir = 'C:\JK\';
 
 mice = [25,27,30,36,37,38,39,41,52,53,54,56];
 sessions = {[4,19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]}; 
@@ -86,9 +86,10 @@ for mi = [1:4,7,9]
         session = sessions{mi}(si);
         
         posShiftTouch = 2;
-        posShiftSound = 4;
-        posShiftReward = 4;
-        posShiftMotor = 4;
+        posShiftSound = 3;
+%         posShiftReward = 4;
+        posShiftWhisking = 4;
+        posShiftLicking = 1;
         posShift = 4; % maximum posShift
         negShift = 2;
         testPortion = 0.3; % 30 % test set
@@ -114,7 +115,7 @@ for mi = [1:4,7,9]
         end
         frameRate = u.frameRate;
 
-        savefnResult = sprintf('glmResponseType_JK%03dS%02d_glmnet_m34',mouse, session); % m(n) meaining method(n)
+        savefnResult = sprintf('glmResponseType_JK%03dS%02d_glmnet_m35',mouse, session); % m(n) meaining method(n)
 
 %             %% pre-processing for lick onset and offset
 %             % regardless of licking alternating, each l and r has it's own lick onset and offset. both licking, just take the union
@@ -464,12 +465,14 @@ for mi = [1:4,7,9]
 %                         firstRightLickMat = zeros(length(firstRightLick), negShift + posShiftMotor + 1);
 %                         lastLeftLickMat = zeros(length(lastLeftLick), negShift + posShiftMotor + 1);
 %                         lastRightLickMat = zeros(length(lastRightLick), negShift + posShiftMotor + 1);
-                        for i = 1 : negShift + posShiftMotor + 1
+                        for i = 1 : negShift + posShiftWhisking + 1
                             whiskingOnsetMat(:,i) = circshift(whiskingOnset, [0 -negShift + i - 1])';
 %                             whiskingFrameMat(:,i) = circshift(whiskingFrame, [0 -negShift + i - 1])';
                             whiskingMidpointMat(:,i) = circshift(whiskingMidpoint, [0 -negShift + i - 1])';
-                            whiskingAmplitudeMat(:,i) = circshift(whiskingAmplitude, [0 -negShift + i - 1])';
-                            
+                            whiskingAmplitudeMat(:,i) = circshift(whiskingAmplitude, [0 -negShift + i - 1])';                            
+                        end
+                        
+                        for i = 1 : negShift + posShiftLicking + 1
                             lLickMat(:,i) = circshift(lLick, [0 -negShift + i - 1])';
                             rLickMat(:,i) = circshift(rLick, [0 -negShift + i - 1])';
                             
@@ -485,17 +488,18 @@ for mi = [1:4,7,9]
 %                             lastLeftLickMat(:,i) = circshift(lastLeftLick, [0 -negShift + i - 1])';
 %                             lastRightLickMat(:,i) = circshift(lastRightLick, [0 -negShift + i - 1])';
                         end
+                        
 %                         touchMat = [tTouchCountMat, pTouchCountMat, rTouchCountMat, tTouchFramesMat, pTouchFramesMat, rTouchFramesMat, tTouchDurationMat, pTouchDurationMat, rTouchDurationMat];
                         touchMat = [pTouchFrameMat];
 %                         soundMat = [scPiezoMat, scPoleUpMat, scPoleDownMat];
                         soundMat = [scPoleUpMat];
 %                         drinkMat = drinkOnsetMat;
-                        drinkMat = [drinkLMat, drinkRMat];
-                        whiskingMat = [whiskingOnsetMat, whiskingAmplitudeMat];
+%                         drinkMat = [drinkLMat, drinkRMat];
+                        whiskingMat = [whiskingOnsetMat, whiskingAmplitudeMat, whiskingMidpointMat];
 %                         lickingMat = [lLickMat, rLickMat, lLickOnsetMat, rLickOnsetMat, lLickOffsetMat, rLickOffsetMat, firstLeftLickMat, firstRightLickMat, lastLeftLickMat, lastRightLickMat];
                         lickingMat = [lLickMat, rLickMat];
 %                         allPredictors{(cgi-1)*4 + plane} = [touchMat, soundMat, drinkMat, whiskingMat, lickingMat];
-                        allPredictors{(cgi-1)*4 + plane} = [touchMat, soundMat, drinkMat, whiskingMat];
+                        allPredictors{(cgi-1)*4 + plane} = [touchMat, soundMat, whiskingMat, lickingMat];
                         nani{(cgi-1)*4 + plane} = find(nanstd(allPredictors{(cgi-1)*4 + plane})==0);
                         allPredictorsMean{(cgi-1)*4 + plane} = nanmean(allPredictors{(cgi-1)*4 + plane});
                         allPredictorsStd{(cgi-1)*4 + plane} = nanstd(allPredictors{(cgi-1)*4 + plane});
@@ -510,16 +514,16 @@ for mi = [1:4,7,9]
                 %%
                 touchInd = 1 : size(touchMat,2);
                 soundInd = max(touchInd) + 1 : max(touchInd) + size(soundMat,2);
-                rewardInd = max(soundInd) + 1 : max(soundInd) + size(drinkMat,2);
+%                 rewardInd = max(soundInd) + 1 : max(soundInd) + size(drinkMat,2);
 %                 rewardInd = max(touchInd) + 1 : max(touchInd) + size(drinkMat,2);
                 whiskingInd = max(soundInd) + 1 : max(soundInd) + size(whiskingMat,2);
-%                 lickInd = max(whiskingInd) + 1 : max(whiskingInd) + size(lickingMat,2);
+                lickInd = max(whiskingInd) + 1 : max(whiskingInd) + size(lickingMat,2);
 
                 indPartial{1} = touchInd;
                 indPartial{2} = soundInd;
-                indPartial{3} = rewardInd;
-                indPartial{4} = whiskingInd;
-%                 indPartial{4} = lickInd;
+%                 indPartial{3} = rewardInd;
+                indPartial{3} = whiskingInd;
+                indPartial{4} = lickInd;
         %%
 %             rtest(ri).fitInd = cell(length(u.cellNums),1); % parameters surviving lasso in training set
 %             rtest(ri).fitCoeffs = cell(length(u.cellNums),1); % intercept + coefficients of the parameters in training set
