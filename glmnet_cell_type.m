@@ -361,16 +361,16 @@ for mi = [1:4,7,9]
                         rLickFrame = rLick;
                         rLickFrame(rLickFrame>0) = 1;
                         
-                        drinkL = drink + lLickFrame;
-                        drinkL(drinkL<2) = 0;
-                        drinkL(drinkL>0) = 1;
-                        
-                        drinkR = drink + rLickFrame;
-                        drinkR(drinkR<2) = 0;
-                        drinkR(drinkR>0) = 1;
-                        
-                        lLick(drink>0) = 0;
-                        rLick(drink>0) = 0;
+%                         drinkL = drink + lLickFrame;
+%                         drinkL(drinkL<2) = 0;
+%                         drinkL(drinkL>0) = 1;
+%                         
+%                         drinkR = drink + rLickFrame;
+%                         drinkR(drinkR<2) = 0;
+%                         drinkR(drinkR>0) = 1;
+%                         
+%                         lLick(drink>0) = 0;
+%                         rLick(drink>0) = 0;
 
 %                         lLickOnset = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.leftLickOnset, [0, x.tpmTime{plane}]), nan(1,posShift)], v(tind)','uniformoutput',false));
 %                         rLickOnset = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.rightLickOnset, [0, x.tpmTime{plane}]), nan(1,posShift)], v(tind)','uniformoutput',false));
