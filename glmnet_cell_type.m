@@ -56,7 +56,7 @@
 %     - firstRightLick
 %     - lastRightLick
 
-baseDir = 'D:\2p\JK\suite2p\';
+baseDir = 'D:\JK\suite2p\';
 
 mice = [25,27,30,36,37,38,39,41,52,53,54,56];
 sessions = {[4,19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]}; 
@@ -99,7 +99,7 @@ for mi = [1:4,7,9]
 
         glmnetOpt = glmnetSet;
         glmnetOpt.standardize = 0; % do the standardization at the level of predictors, including both training and test
-        glmnetOpt.alpha = 0;
+        glmnetOpt.alpha = 0.95;
         
         partialGlmOpt = glmnetOpt;
         partialGlmOpt.alpha = 0;
@@ -115,7 +115,7 @@ for mi = [1:4,7,9]
         end
         frameRate = u.frameRate;
 
-        savefnResult = sprintf('glmResponseType_JK%03dS%02d_glmnet_m37',mouse, session); % m(n) meaining method(n)
+        savefnResult = sprintf('glmResponseType_JK%03dS%02d_glmnet_m36',mouse, session); % m(n) meaining method(n)
 
 %             %% pre-processing for lick onset and offset
 %             % regardless of licking alternating, each l and r has it's own lick onset and offset. both licking, just take the union
@@ -455,8 +455,8 @@ for mi = [1:4,7,9]
                         whiskingAmplitudeMat = zeros(length(whiskingAmplitude), negShift + posShiftMotor + 1);
                         whiskingMidpointMat = zeros(length(whiskingMidpoint), negShift + posShiftMotor + 1);
 
-                        lLickMat = zeros(length(lLick), negShift + posShiftMotor + 1);
-                        rLickMat = zeros(length(rLick), negShift + posShiftMotor + 1);
+                        lLickMat = zeros(length(lLickFrame), negShift + posShiftMotor + 1);
+                        rLickMat = zeros(length(rLickFrame), negShift + posShiftMotor + 1);
 %                         lLickOnsetMat = zeros(length(lLickOnset), negShift + posShiftMotor + 1);
 %                         rLickOnsetMat = zeros(length(rLickOnset), negShift + posShiftMotor + 1);
 %                         lLickOffsetMat = zeros(length(lLickOffset), negShift + posShiftMotor + 1);
@@ -473,8 +473,8 @@ for mi = [1:4,7,9]
                         end
                         
                         for i = 1 : negShift + posShiftLicking + 1
-                            lLickMat(:,i) = circshift(lLick, [0 -negShift + i - 1])';
-                            rLickMat(:,i) = circshift(rLick, [0 -negShift + i - 1])';
+                            lLickMat(:,i) = circshift(lLickFrame, [0 -negShift + i - 1])';
+                            rLickMat(:,i) = circshift(rLickFrame, [0 -negShift + i - 1])';
                             
 %                             lLickOnsetMat(:,i) = circshift(lLickOnset, [0 -negShift + i - 1])';
 %                             rLickOnsetMat(:,i) = circshift(rLickOnset, [0 -negShift + i - 1])';
