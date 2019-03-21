@@ -87,7 +87,7 @@ for mi = [1:4,7,9]
         
         posShiftTouch = 2;
         posShiftSound = 3;
-%         posShiftReward = 4;
+        posShiftReward = 4;
         posShiftWhisking = 4;
         posShiftLicking = 1;
         posShift = 4; % maximum posShift
@@ -361,13 +361,13 @@ for mi = [1:4,7,9]
                         rLickFrame = rLick;
                         rLickFrame(rLickFrame>0) = 1;
                         
-%                         drinkL = drink + lLickFrame;
-%                         drinkL(drinkL<2) = 0;
-%                         drinkL(drinkL>0) = 1;
-%                         
-%                         drinkR = drink + rLickFrame;
-%                         drinkR(drinkR<2) = 0;
-%                         drinkR(drinkR>0) = 1;
+                        drinkL = drink + lLickFrame;
+                        drinkL(drinkL<2) = 0;
+                        drinkL(drinkL>0) = 1;
+                        
+                        drinkR = drink + rLickFrame;
+                        drinkR(drinkR<2) = 0;
+                        drinkR(drinkR>0) = 1;
 %                         
 %                         lLick(drink>0) = 0;
 %                         rLick(drink>0) = 0;
@@ -451,14 +451,14 @@ for mi = [1:4,7,9]
                             drinkMat(:,i) = circshift(drink, [0 i-1])';
                         end
 
-                        whiskingOnsetMat = zeros(length(whiskingOnset), negShift + posShiftMotor + 1);
+                        whiskingOnsetMat = zeros(length(whiskingOnset), negShift + posShiftWhisking + 1);
 %                         whiskingFrameMat = zeros(length(whiskingOnset), negShift + posShiftMotor + 1);
                         
-                        whiskingAmplitudeMat = zeros(length(whiskingAmplitude), negShift + posShiftMotor + 1);
-                        whiskingMidpointMat = zeros(length(whiskingMidpoint), negShift + posShiftMotor + 1);
+                        whiskingAmplitudeMat = zeros(length(whiskingAmplitude), negShift + posShiftWhisking + 1);
+                        whiskingMidpointMat = zeros(length(whiskingMidpoint), negShift + posShiftWhisking + 1);
 
-                        lLickMat = zeros(length(lLick), negShift + posShiftMotor + 1);
-                        rLickMat = zeros(length(rLick), negShift + posShiftMotor + 1);
+                        lLickMat = zeros(length(lLick), negShift + posShiftLicking + 1);
+                        rLickMat = zeros(length(rLick), negShift + posShiftLicking + 1);
 %                         lLickOnsetMat = zeros(length(lLickOnset), negShift + posShiftMotor + 1);
 %                         rLickOnsetMat = zeros(length(rLickOnset), negShift + posShiftMotor + 1);
 %                         lLickOffsetMat = zeros(length(lLickOffset), negShift + posShiftMotor + 1);
