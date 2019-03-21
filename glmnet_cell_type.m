@@ -56,7 +56,7 @@
 %     - firstRightLick
 %     - lastRightLick
 
-baseDir = 'C:\JK\';
+baseDir = 'D:\JK\suite2p\';
 
 mice = [25,27,30,36,37,38,39,41,52,53,54,56];
 sessions = {[4,19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]}; 
@@ -115,7 +115,7 @@ for mi = [1:4,7,9]
         end
         frameRate = u.frameRate;
 
-        savefnResult = sprintf('glmResponseType_JK%03dS%02d_glmnet_m39',mouse, session); % m(n) meaining method(n)
+        savefnResult = sprintf('glmResponseType_JK%03dS%02d_glmnet_m40',mouse, session); % m(n) meaining method(n)
 
 %             %% pre-processing for lick onset and offset
 %             % regardless of licking alternating, each l and r has it's own lick onset and offset. both licking, just take the union
@@ -352,12 +352,18 @@ for mi = [1:4,7,9]
                         drink = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.drinkingOnsetTime:0.03:x.drinkingOnsetTime+1, [0, x.tpmTime{plane}]), nan(1,posShift)], u.trials(tind)','uniformoutput',false));
                         drink(drink>0) = 1;
                         
-                        drinkL = cell2mat(cellfun(@(x) [nan(1,posShift), (x.trialType(1) == 'l') * histcounts(x.drinkingOnsetTime:0.03:x.drinkingOnsetTime+1, [0, x.tpmTime{plane}]), nan(1,posShift)], u.trials(tind)','uniformoutput',false));
-                        drinkL(drinkL>0) = 1;
+%                         drinkL = cell2mat(cellfun(@(x) [nan(1,posShift), (x.trialType(1) == 'l') * histcounts(x.drinkingOnsetTime:0.03:x.drinkingOnsetTime+1, [0, x.tpmTime{plane}]), nan(1,posShift)], u.trials(tind)','uniformoutput',false));
+%                         drinkL(drinkL>0) = 1;
+%                         
+%                         drinkR = cell2mat(cellfun(@(x) [nan(1,posShift), (x.trialType(1) == 'r') * histcounts(x.drinkingOnsetTime:0.03:x.drinkingOnsetTime+1, [0, x.tpmTime{plane}]), nan(1,posShift)], u.trials(tind)','uniformoutput',false));
+%                         drinkR(drinkR>0) = 1;
                         
-                        drinkR = cell2mat(cellfun(@(x) [nan(1,posShift), (x.trialType(1) == 'r') * histcounts(x.drinkingOnsetTime:0.03:x.drinkingOnsetTime+1, [0, x.tpmTime{plane}]), nan(1,posShift)], u.trials(tind)','uniformoutput',false));
-                        drinkR(drinkR>0) = 1;
-                        
+                        drinkAngles = cell(length(angles)+1,1);
+                        for ai = 1 : length(angles)
+                            tempAngleBinary = cell2mat(cellfun(@(x) ones(length(x.tpmTime{plane}) + 2 * posShift, 1) * (x.angle == angles(ai)), u.trials(tind), 'uniformoutput', false));
+                            drinkAngles{ai} = drink .* tempAngleBinary';
+                        end
+                        drinkAngles{end} = drink;
                         
                         
                         
@@ -441,9 +447,10 @@ for mi = [1:4,7,9]
                         scPoleUpMat = zeros(length(scPoleup), posShiftSound + 1);
 %                         scPoleDownMat = zeros(length(scPoledown), posShiftSound + 1);
 %                         drinkOnsetMat = zeros(length(drinkOnset), posShiftReward + 1);
-                        drinkLMat = zeros(length(drinkL), posShiftReward + 1);
-                        drinkRMat = zeros(length(drinkR), posShiftReward + 1);
-                        drinkMat = zeros(length(drink), posShiftReward + 1);
+%                         drinkLMat = zeros(length(drinkL), posShiftReward + 1);
+%                         drinkRMat = zeros(length(drinkR), posShiftReward + 1);
+%                         drinkMat = zeros(length(drink), posShiftReward + 1);
+                        drinkAnglesMat = zeros(length(drink), (posShiftReward + 1) * (length(angles)+1));
                         for i = 1 : posShiftTouch + 1
                             for ai = 1 : length(angles) + 1
 %                                 pTouchCountMat(:,(i-1)*(length(angles)+1) + ai) = circshift(pTouchCountAngles{ai}, [0 i-1])';
@@ -458,9 +465,12 @@ for mi = [1:4,7,9]
                         end
                         for i = 1 : posShiftReward + 1
 %                             drinkOnsetMat(:,i) = circshift(drinkOnset, [0 i-1])';
-                            drinkLMat(:,i) = circshift(drinkL, [0 i-1])';
-                            drinkRMat(:,i) = circshift(drinkR, [0 i-1])';
-                            drinkMat(:,i) = circshift(drink, [0 i-1])';
+%                             drinkLMat(:,i) = circshift(drinkL, [0 i-1])';
+%                             drinkRMat(:,i) = circshift(drinkR, [0 i-1])';
+%                             drinkMat(:,i) = circshift(drink, [0 i-1])';
+                            for ai = 1 : length(angles) + 1
+                                drinkAnglesMat(:,(i-1)*(length(angles)+1) + ai) = circshift(drinkAngles{ai}, [0 i-1])';
+                            end                                
                         end
 
                         whiskingOnsetMat = zeros(length(whiskingOnset), negShift + posShiftWhisking + 1);
@@ -508,13 +518,13 @@ for mi = [1:4,7,9]
 %                         soundMat = [scPiezoMat, scPoleUpMat, scPoleDownMat];
                         soundMat = [scPoleUpMat];
 %                         drinkMat = drinkOnsetMat;
-                        drinkMat = [drinkLMat, drinkRMat];
-%                         drinkMat = drinkMat;
+%                         drinkMat = [drinkLMat, drinkRMat];
+                        drinkMat = drinkAnglesMat;
                         whiskingMat = [whiskingOnsetMat, whiskingAmplitudeMat, whiskingMidpointMat];
 %                         lickingMat = [lLickMat, rLickMat, lLickOnsetMat, rLickOnsetMat, lLickOffsetMat, rLickOffsetMat, firstLeftLickMat, firstRightLickMat, lastLeftLickMat, lastRightLickMat];
                         lickingMat = [lLickMat, rLickMat];
 %                         allPredictors{(cgi-1)*4 + plane} = [touchMat, soundMat, drinkMat, whiskingMat, lickingMat];
-                        allPredictors{(cgi-1)*4 + plane} = [touchMat, soundMat, whiskingMat, lickingMat];
+                        allPredictors{(cgi-1)*4 + plane} = [touchMat, soundMat, drinkMat, whiskingMat, lickingMat];
                         nani{(cgi-1)*4 + plane} = find(nanstd(allPredictors{(cgi-1)*4 + plane})==0);
                         allPredictorsMean{(cgi-1)*4 + plane} = nanmean(allPredictors{(cgi-1)*4 + plane});
                         allPredictorsStd{(cgi-1)*4 + plane} = nanstd(allPredictors{(cgi-1)*4 + plane});
@@ -529,16 +539,16 @@ for mi = [1:4,7,9]
                 %%
                 touchInd = 1 : size(touchMat,2);
                 soundInd = max(touchInd) + 1 : max(touchInd) + size(soundMat,2);
-%                 rewardInd = max(soundInd) + 1 : max(soundInd) + size(drinkMat,2);
+                rewardInd = max(soundInd) + 1 : max(soundInd) + size(drinkMat,2);
 %                 rewardInd = max(touchInd) + 1 : max(touchInd) + size(drinkMat,2);
-                whiskingInd = max(soundInd) + 1 : max(soundInd) + size(whiskingMat,2);
+                whiskingInd = max(rewardInd) + 1 : max(rewardInd) + size(whiskingMat,2);
                 lickInd = max(whiskingInd) + 1 : max(whiskingInd) + size(lickingMat,2);
 
                 indPartial{1} = touchInd;
                 indPartial{2} = soundInd;
-%                 indPartial{3} = rewardInd;
-                indPartial{3} = whiskingInd;
-                indPartial{4} = lickInd;
+                indPartial{3} = rewardInd;
+                indPartial{4} = whiskingInd;
+                indPartial{5} = lickInd;
         %%
 %             rtest(ri).fitInd = cell(length(u.cellNums),1); % parameters surviving lasso in training set
 %             rtest(ri).fitCoeffs = cell(length(u.cellNums),1); % intercept + coefficients of the parameters in training set
