@@ -56,7 +56,7 @@
 %     - firstRightLick
 %     - lastRightLick
 
-baseDir = 'C:\JK\';
+baseDir = 'D:\JK\suite2p\';
 
 mice = [25,27,30,36,37,38,39,41,52,53,54,56];
 sessions = {[4,19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]}; 
@@ -115,7 +115,7 @@ for mi = [1:4,7,9]
         end
         frameRate = u.frameRate;
 
-        savefnResult = sprintf('glmResponseType_JK%03dS%02d_glmnet_m37',mouse, session); % m(n) meaining method(n)
+        savefnResult = sprintf('glmResponseType_JK%03dS%02d_glmnet_m38',mouse, session); % m(n) meaining method(n)
 
 %             %% pre-processing for lick onset and offset
 %             % regardless of licking alternating, each l and r has it's own lick onset and offset. both licking, just take the union
@@ -352,6 +352,15 @@ for mi = [1:4,7,9]
                         drink = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.drinkingOnsetTime:0.03:x.drinkingOnsetTime+1, [0, x.tpmTime{plane}]), nan(1,posShift)], u.trials(tind)','uniformoutput',false));
                         drink(drink>0) = 1;
                         
+                        drinkL = cell2mat(cellfun(@(x) [nan(1,posShift), (x.trialType(1) == 'l') * histcounts(x.drinkingOnsetTime:0.03:x.drinkingOnsetTime+1, [0, x.tpmTime{plane}]), nan(1,posShift)], u.trials(tind)','uniformoutput',false));
+                        drinkL(drinkL>0) = 1;
+                        
+                        drinkR = cell2mat(cellfun(@(x) [nan(1,posShift), (x.trialType(1) == 'r') * histcounts(x.drinkingOnsetTime:0.03:x.drinkingOnsetTime+1, [0, x.tpmTime{plane}]), nan(1,posShift)], u.trials(tind)','uniformoutput',false));
+                        drinkR(drinkR>0) = 1;
+                        
+                        
+                        
+                        
                         lLick = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.leftLickTime, [0, x.tpmTime{plane}]), nan(1,posShift)], u.trials(tind)','uniformoutput',false));
                         rLick = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.rightLickTime, [0, x.tpmTime{plane}]), nan(1,posShift)], u.trials(tind)','uniformoutput',false));
                         
@@ -361,13 +370,16 @@ for mi = [1:4,7,9]
                         rLickFrame = rLick;
                         rLickFrame(rLickFrame>0) = 1;
                         
-                        drinkL = drink + lLickFrame;
-                        drinkL(drinkL<2) = 0;
-                        drinkL(drinkL>0) = 1;
                         
-                        drinkR = drink + rLickFrame;
-                        drinkR(drinkR<2) = 0;
-                        drinkR(drinkR>0) = 1;
+                        
+                        
+%                         drinkL = drink + lLickFrame;
+%                         drinkL(drinkL<2) = 0;
+%                         drinkL(drinkL>0) = 1;
+%                         
+%                         drinkR = drink + rLickFrame;
+%                         drinkR(drinkR<2) = 0;
+%                         drinkR(drinkR>0) = 1;
 %                         
 %                         lLick(drink>0) = 0;
 %                         rLick(drink>0) = 0;
@@ -496,8 +508,8 @@ for mi = [1:4,7,9]
 %                         soundMat = [scPiezoMat, scPoleUpMat, scPoleDownMat];
                         soundMat = [scPoleUpMat];
 %                         drinkMat = drinkOnsetMat;
-%                         drinkMat = [drinkLMat, drinkRMat];
-                        drinkMat = drinkMat;
+                        drinkMat = [drinkLMat, drinkRMat];
+%                         drinkMat = drinkMat;
                         whiskingMat = [whiskingOnsetMat, whiskingAmplitudeMat, whiskingMidpointMat];
 %                         lickingMat = [lLickMat, rLickMat, lLickOnsetMat, rLickOnsetMat, lLickOffsetMat, rLickOffsetMat, firstLeftLickMat, firstRightLickMat, lastLeftLickMat, lastRightLickMat];
                         lickingMat = [lLickMat, rLickMat];
