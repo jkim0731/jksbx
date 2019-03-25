@@ -116,12 +116,27 @@ if glmPar
 
                 tempTrainingTn = setdiff(totalTn, tempTestTn);
                 [~,trainingInd] = ismember(tempTrainingTn, totalTn);
-
-                testTn{cellnum} = tempTestTn;
-                trainingTn{cellnum} = tempTrainingTn;
                 
                 iTrain = intersect(tindCell, trainingInd);
                 iTest = intersect(tindCell, testInd);
+                
+                testTind{cellnum} = iTest;
+                trainingTind{cellnum} = iTrain;
+                
+                ratioi(cellnum) = length(iTest)/length(iTrain);
+                
+                planeInd = planeIndAll(cellnum);
+                trainingPredictorInd = cell2mat(cellfun(@(x) (ones(1,length(x.tpmTime{plane})+posShift*2)) * ismember(x.trialNum, tempTrainingTn), u.trials(tindCell)','uniformoutput',false));
+                testPredictorInd = cell2mat(cellfun(@(x) (ones(1,length(x.tpmTime{plane})+posShift*2)) * ismember(x.trialNum, tempTestTn), u.trials(tindCell)','uniformoutput',false));
+                
+                if (trainingPredictorInd .* testPredictorInd)
+                    error('Intersection between trainingPredictorInd and testPredictorInd')
+                elseif sum(trainingPredictorInd + testPredictorInd) ~= size(allPredictors{planeInd},1)
+                    error('Number of total frames mismatch')
+                end
+                
+                ratioInd(cellnum) = length(find(testPredictorInd)) / length(find(trainingPredictorInd));
+                
                 
                 planeInd = planeIndAll(cellnum);
                 trainingPredictorInd = cell2mat(cellfun(@(x) (ones(1,length(x.tpmTime{plane})+posShift*2)) * ismember(x.trialNum, tempTrainingTn), u.trials(tindCell)','uniformoutput',false));
@@ -251,11 +266,24 @@ else
             iTrain = intersect(tindCell, trainingInd);
             iTest = intersect(tindCell, testInd);
 
+            testTind{cellnum} = iTest;
+            trainingTind{cellnum} = iTrain;
+
+            ratioi(cellnum) = length(iTest)/length(iTrain);
+
             planeInd = planeIndAll(cellnum);
             trainingPredictorInd = cell2mat(cellfun(@(x) (ones(1,length(x.tpmTime{plane})+posShift*2)) * ismember(x.trialNum, tempTrainingTn), u.trials(tindCell)','uniformoutput',false));
             testPredictorInd = cell2mat(cellfun(@(x) (ones(1,length(x.tpmTime{plane})+posShift*2)) * ismember(x.trialNum, tempTestTn), u.trials(tindCell)','uniformoutput',false));
 
-            trainingInput = allPredictors{planeInd}(find(trainingPredictorInd),:);
+            if (trainingPredictorInd .* testPredictorInd)
+                error('Intersection between trainingPredictorInd and testPredictorInd')
+            elseif sum(trainingPredictorInd + testPredictorInd) ~= size(allPredictors{planeInd},1)
+                error('Number of total frames mismatch')
+            end
+
+            ratioInd(cellnum) = length(find(testPredictorInd)) / length(find(trainingPredictorInd));
+            
+            trainingInput = allPredictors{planeInd}(find(trainingPredictorInd),:);            
             testInput = allPredictors{planeInd}(find(testPredictorInd),:);
 
             spkTrain = cell2mat(cellfun(@(x) [nan(1,posShift), x(cind,:), nan(1,posShift)], spikeAll(iTrain)','uniformoutput',false));

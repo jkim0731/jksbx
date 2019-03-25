@@ -56,7 +56,7 @@
 %     - firstRightLick
 %     - lastRightLick
 
-baseDir = 'D:\JK\suite2p\';
+baseDir = 'C:\JK\';
 
 mice = [25,27,30,36,37,38,39,41,52,53,54,56];
 sessions = {[4,19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]}; 
@@ -97,7 +97,7 @@ for mi = 1 : length(mice)
 
         glmnetOpt = glmnetSet;
         glmnetOpt.standardize = 0; % do the standardization at the level of predictors, including both training and test
-        glmnetOpt.alpha = 0;
+        glmnetOpt.alpha = 1;
         
         partialGlmOpt = glmnetOpt;
         partialGlmOpt.alpha = 0;
@@ -113,7 +113,7 @@ for mi = 1 : length(mice)
         end
         frameRate = u.frameRate;
 
-        savefnResult = sprintf('glmResponseType_JK%03dS%02d_m45',mouse, session); % m(n) meaining method(n)
+        savefnResult = sprintf('glmResponseType_JK%03dS%02d_m44',mouse, session); % m(n) meaining method(n)
 
 
         for ri = startRepetition : repetition % repetition index
@@ -346,6 +346,8 @@ for mi = 1 : length(mice)
             
             testTn = cell(numCell,1);
             trainingTn = cell(numCell,1);
+            ratioi = zeros(numCell,1);
+            ratioInd = zeros(numCell,1);
             parfor cellnum = 1 : numCell
             if ~ismember(cellnum, errorCellSession)
                 fitCoeffInd = zeros(1,6);
@@ -388,11 +390,14 @@ for mi = 1 : length(mice)
                 tempTrainingTn = setdiff(totalTn, tempTestTn);
                 [~,trainingInd] = ismember(tempTrainingTn, totalTn);
 
-                testTn{cellnum} = tempTestTn;
-                trainingTn{cellnum} = tempTrainingTn;
                 
                 iTrain = intersect(tindCell, trainingInd);
                 iTest = intersect(tindCell, testInd);
+
+                testTind{cellnum} = iTest;
+                trainingTind{cellnum} = iTrain;
+                
+                ratioi(cellnum) = length(iTest)/length(iTrain);
                 
                 planeInd = planeIndAll(cellnum);
                 trainingPredictorInd = cell2mat(cellfun(@(x) (ones(1,length(x.tpmTime{plane})+posShift*2)) * ismember(x.trialNum, tempTrainingTn), u.trials(tindCell)','uniformoutput',false));
@@ -404,6 +409,7 @@ for mi = 1 : length(mice)
                     error('Number of total frames mismatch')
                 end
                 
+                ratioInd(cellnum) = length(find(testPredictorInd)) / length(find(trainingPredictorInd));
 
                 trainingInput = allPredictors{planeInd}(find(trainingPredictorInd),:);
                 testInput = allPredictors{planeInd}(find(testPredictorInd),:);
