@@ -56,7 +56,7 @@
 %     - firstRightLick
 %     - lastRightLick
 
-baseDir = 'C:\JK\';
+baseDir = 'D:\JK\suite2p\';
 
 mice = [25,27,30,36,37,38,39,41,52,53,54,56];
 sessions = {[4,19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]}; 
@@ -97,7 +97,7 @@ for mi = 1 : length(mice)
 
         glmnetOpt = glmnetSet;
         glmnetOpt.standardize = 0; % do the standardization at the level of predictors, including both training and test
-        glmnetOpt.alpha = 1;
+        glmnetOpt.alpha = 0;
         
         partialGlmOpt = glmnetOpt;
         partialGlmOpt.alpha = 0;
@@ -113,7 +113,7 @@ for mi = 1 : length(mice)
         end
         frameRate = u.frameRate;
 
-        savefnResult = sprintf('glmResponseType_JK%03dS%02d_m44',mouse, session); % m(n) meaining method(n)
+        savefnResult = sprintf('glmResponseType_JK%03dS%02d_m45',mouse, session); % m(n) meaining method(n)
 
 
         for ri = startRepetition : repetition % repetition index
