@@ -358,8 +358,8 @@ for mi = 1 : length(mice)
                 
                 spkMedian = median(cellfun(@(x) sum(x(cind,:)), spikeAll(tindCell)'));                
                 spkNumGroup = cell(2,1);
-                spkNumGroup{1} = cellfun(@(x) x.trialNum, u.trials(find(cellfun(@(x) sum(x.spk(cind,:)) <= spkMedian, u.trials(tindCell)) )));
-                spkNumGroup{2} = cellfun(@(x) x.trialNum, u.trials(find(cellfun(@(x) sum(x.spk(cind,:)) >  spkMedian, u.trials(tindCell)) )));
+                spkNumGroup{1} = cellfun(@(x) x.trialNum, u.trials( tindCell(find(cellfun(@(x) sum(x.spk(cind,:)) <= spkMedian, u.trials(tindCell))) )));
+                spkNumGroup{2} = cellfun(@(x) x.trialNum, u.trials( tindCell(find(cellfun(@(x) sum(x.spk(cind,:)) >  spkMedian, u.trials(tindCell))) )));
                 
                 tempTestTn = [];
                 for pti = 1 : length(ptouchGroup)
@@ -397,6 +397,13 @@ for mi = 1 : length(mice)
                 planeInd = planeIndAll(cellnum);
                 trainingPredictorInd = cell2mat(cellfun(@(x) (ones(1,length(x.tpmTime{plane})+posShift*2)) * ismember(x.trialNum, tempTrainingTn), u.trials(tindCell)','uniformoutput',false));
                 testPredictorInd = cell2mat(cellfun(@(x) (ones(1,length(x.tpmTime{plane})+posShift*2)) * ismember(x.trialNum, tempTestTn), u.trials(tindCell)','uniformoutput',false));
+                
+                if (trainingPredictorInd .* testPredictorInd)
+                    error('Intersection between trainingPredictorInd and testPredictorInd')
+                elseif sum(trainingPredictorInd + testPredictorInd) ~= size(allPredictors{planeInd},1)
+                    error('Number of total frames mismatch')
+                end
+                
 
                 trainingInput = allPredictors{planeInd}(find(trainingPredictorInd),:);
                 testInput = allPredictors{planeInd}(find(testPredictorInd),:);
