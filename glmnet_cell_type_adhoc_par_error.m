@@ -20,23 +20,13 @@ end
 if ~exist('negShift', 'var')
     negShift = 2;
 end
-if ~exist('totalTn', 'var')
-    totalTn = union(testTn,trainingTn);
-end
-if ~exist('cIDAll', 'var')
-    cIDAll = u.cellNums;    
-end
-[~,testInd] = ismember(testTn, totalTn);
 
-trainingTn = setdiff(totalTn, testTn);
-[~,trainingInd] = ismember(trainingTn, totalTn);
-
-mouse = 25;
-session = 19;
+mouse = 39;
+session = 1;
 repeat = 1;
 restartingNum = 1;
-glmPar = false;
-savefnResult = sprintf('glmResponseType_JK%03dS%02d_glmnet_m21_R%02d',mouse, session, repeat);
+glmPar = true;
+savefnResult = sprintf('glmResponseType_JK%03dS%02d_glmnet_m44_R%02d',mouse, session, repeat);
 
 savefnResultRe = [savefnResult, '_02'];
 
@@ -62,16 +52,17 @@ cellTimeRe = zeros(length(remainingCell),1);
 tindcellAll = cell(numCell,1);
 cindAll = zeros(numCell,1);
 planeIndAll = zeros(numCell,1);
-iTrainAll = cell(numCell,1);
-iTestAll = cell(numCell,1);
 for i = 1 : numCell
     tindcellAll{i} = find(cellfun(@(x) ismember(cIDAll(i), x.neuindSession), u.trials));
     cindAll(i) = find(u.trials{tindcellAll{i}(1)}.neuindSession == cIDAll(i));
     planeIndAll(i) = floor(cIDAll(i)/1000);
-    iTrainAll{i} = intersect(tindcellAll{i}, trainingInd);
-    iTestAll{i} = intersect(tindcellAll{i}, testInd);
 end
 spikeAll = cellfun(@(x) x.spk, u.trials, 'uniformoutput', false);
+
+poolobj = gcp('nocreate');
+if poolobj.SpmdEnabled == 0
+    error('SpmdEnabled turned to false at #2');
+end
 
 % clear u
 
@@ -86,34 +77,65 @@ if glmPar
     for cellnumInd = restartingNum : length(remainingCell)
         cellnum = remainingCell(cellnumInd);
         
-            celltic = tic;
-        %     poolobj = gcp('nocreate')
+                fitCoeffInd = zeros(1,6);
+                started(cellnum) = cellnum;
+                cellTimeStart = tic;
+                fprintf('Mouse JK%03d session S%02d Loop %d: Running cell %d/%d \n', mouse, session, ri, cellnum, numCell);                
+                
+                cind = cindAll(cellnum);
+                tindCell = tindcellAll{cellnum};
+                
+                spkMedian = median(cellfun(@(x) sum(x(cind,:)), spikeAll(tindCell)'));                
+                spkNumGroup = cell(2,1);
+                spkNumGroup{1} = cellfun(@(x) x.trialNum, u.trials(find(cellfun(@(x) sum(x.spk(cind,:)) <= spkMedian, u.trials(tindCell)) )));
+                spkNumGroup{2} = cellfun(@(x) x.trialNum, u.trials(find(cellfun(@(x) sum(x.spk(cind,:)) >  spkMedian, u.trials(tindCell)) )));
+                
+                tempTestTn = [];
+                for pti = 1 : length(ptouchGroup)
+                    for ci = 1 : length(choiceGroup)
+                        for ai = 1 : length(angleGroup)
+                            for di = 1 : length(distanceGroup)
+                                for spki = 1 : length(spkNumGroup)                                    
+                                    tempTn = intersect(ptouchGroup{pti}, intersect(choiceGroup{ci}, intersect(angleGroup{ai}, intersect(distanceGroup{di}, spkNumGroup{spki}))));
+                                    if ~isempty(tempTn)
+                                        tempTn = tempTn(randperm(length(tempTn)));
+                                        if length(tempTn) > 5
+                                            tempTestTn = [tempTestTn; tempTn(1:round(length(tempTn)*0.3))];
+                                        elseif length(tempTn) > 1
+                                            tempTestTn = [tempTestTn; tempTn(1:round(length(tempTn)*0.5))];                                        
+                                        end
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+                %
+                totalTn = u.trialNums;
+                [~,testInd] = ismember(tempTestTn, totalTn);
 
-        %     fprintf('Is NumWorkers a prop = %d \n', isprop(poolobj,'NumWorkers'))
-        %     if poolobj.NumWorkers < parSetNum
-        %         push_myphone('Lasso GLM error')
-        %         error('Error occurred')
-        %     end    
+                tempTrainingTn = setdiff(totalTn, tempTestTn);
+                [~,trainingInd] = ismember(tempTrainingTn, totalTn);
 
-        %     if ismember(cellnum, doneRe)
-        %         error('Lasso GLM error')
-        %     end
-            fitCoeffInd = nan(1,6);
+                testTn{cellnum} = tempTestTn;
+                trainingTn{cellnum} = tempTrainingTn;
+                
+                iTrain = intersect(tindCell, trainingInd);
+                iTest = intersect(tindCell, testInd);
+                
+                planeInd = planeIndAll(cellnum);
+                trainingPredictorInd = cell2mat(cellfun(@(x) (ones(1,length(x.tpmTime{plane})+posShift*2)) * ismember(x.trialNum, tempTrainingTn), u.trials(tindCell)','uniformoutput',false));
+                testPredictorInd = cell2mat(cellfun(@(x) (ones(1,length(x.tpmTime{plane})+posShift*2)) * ismember(x.trialNum, tempTestTn), u.trials(tindCell)','uniformoutput',false));
 
-        %                 fprintf('Mouse JK%03d session S%02d Loop %d: Running cell %d/%d \n', mouse, session, ri,cellnum, length(u.cellNums));
-            fprintf('Mouse JK%03d session S%02d: Running cell %d/%d \n', mouse, session,cellnum, numCell);
-            startedRe(cellnumInd) = cellnum;
-            iTrain = iTrainAll{cellnum};
-            cind = cindAll(cellnum);
-            planeInd = planeIndAll(cellnum);
-
-            spkTrain = cell2mat(cellfun(@(x) [nan(1,posShift), x(cind,:), nan(1,posShift)], spikeAll(iTrain)','uniformoutput',false));                
-            finiteIndTrain = intersect(find(isfinite(spkTrain)), find(isfinite(sum(trainingInputMat{planeInd},2))));
-            input = trainingInputMat{planeInd}(finiteIndTrain,:);
-            spkTrain = spkTrain(finiteIndTrain)';
-
-            cv = cvglmnet(input, spkTrain, 'poisson', glmnetOpt, [], lambdaCV, [], glmPar);
-
+                trainingInput = allPredictors{planeInd}(find(trainingPredictorInd),:);
+                testInput = allPredictors{planeInd}(find(testPredictorInd),:);
+                
+                spkTrain = cell2mat(cellfun(@(x) [nan(1,posShift), x(cind,:), nan(1,posShift)], spikeAll(iTrain)','uniformoutput',false));
+                finiteIndTrain = intersect(find(isfinite(spkTrain)), find(isfinite(sum(trainingInput,2))));
+                input = trainingInput(finiteIndTrain,:);
+                spkTrain = spkTrain(finiteIndTrain)';
+    
+                cv = cvglmnet(input, spkTrain, 'poisson', glmnetOpt, [], lambdaCV);
             %% survived coefficients
             fitLambdaRe(cellnumInd) = cv.lambda_1se;
             iLambda = find(cv.lambda == cv.lambda_1se);
@@ -129,16 +151,15 @@ if glmPar
                 end
             end
 
-            %% test
-            iTest = iTestAll{cellnum};                
+            %% test            
             spkTest = cell2mat(cellfun(@(x) [nan(1,posShift), x(cind,:), nan(1,posShift)], spikeAll(iTest)','uniformoutput',false));
             spkTest = spkTest';
-            finiteIndTest = intersect(find(isfinite(spkTest)), find(isfinite(sum(testInputMat{planeInd},2))));
+            finiteIndTest = intersect(find(isfinite(spkTest)), find(isfinite(sum(testInput,2))));
             spkTest = spkTest(finiteIndTest)';
             %% (1) if the full model is significant
             fitResult = zeros(1,6);
 
-            model = exp([ones(length(finiteIndTest),1),testInputMat{planeInd}(finiteIndTest,:)]*[cv.glmnet_fit.a0(iLambda); cv.glmnet_fit.beta(:,iLambda)]);
+            model = exp([ones(length(finiteIndTest),1),testInput(finiteIndTest,:)]*[cv.glmnet_fit.a0(iLambda); cv.glmnet_fit.beta(:,iLambda)]);
             mu = mean(spkTest); % null poisson parameter
             nullLogLikelihood = sum(log(poisspdf(spkTest,mu)));
             fullLogLikelihood = sum(log(poisspdf(spkTest',model)));
@@ -153,71 +174,102 @@ if glmPar
                 fitResult(1) = 1;
 
                 %% (2) test without each parameter (as a group)                
-                for pi = 1 : 5
-                    if find(ismember(coeffInds, indPartial{pi}))
-                        if all(ismember(coeffInds, indPartial{pi}))
-                            fitResult(pi+1) = 1;
-                            break
-                        else
-                            tempTrainInput = trainingInputMat{planeInd}(:,setdiff(coeffInds,indPartial{pi}));
-                            tempTestInput = testInputMat{planeInd}(finiteIndTest,setdiff(coeffInds,indPartial{pi}));
-                            cvPartial = cvglmnet(tempTrainInput(finiteIndTrain,:), spkTrain, 'poisson', partialGlmOpt, [], lambdaCV, [], glmPar);
-
-                            iLambda = find(cvPartial.lambda == cvPartial.lambda_1se);
-                            partialLogLikelihood = sum(log(poisspdf(spkTest', exp([ones(length(finiteIndTest),1), tempTestInput] * [cvPartial.glmnet_fit.a0(iLambda); cvPartial.glmnet_fit.beta(:,iLambda)]))));
-                            devianceFullPartial = 2*(fullLogLikelihood - partialLogLikelihood);
-                            dfFullPartial = dfFullNull - cvPartial.glmnet_fit.df(iLambda);
-                            if devianceFullPartial > chi2inv(1-pThresholdPartial, dfFullPartial)
-                                fitResult(pi+1) = 1;
-                            end
-                        end
-                    end
-                end
+%                 for pi = 1 : 5
+%                     if find(ismember(coeffInds, indPartial{pi}))
+%                         if all(ismember(coeffInds, indPartial{pi}))
+%                             fitResult(pi+1) = 1;
+%                             break
+%                         else
+%                             tempTrainInput = trainingInputMat{planeInd}(:,setdiff(coeffInds,indPartial{pi}));
+%                             tempTestInput = testInputMat{planeInd}(finiteIndTest,setdiff(coeffInds,indPartial{pi}));
+%                             cvPartial = cvglmnet(tempTrainInput(finiteIndTrain,:), spkTrain, 'poisson', partialGlmOpt, [], lambdaCV, [], glmPar);
+% 
+%                             iLambda = find(cvPartial.lambda == cvPartial.lambda_1se);
+%                             partialLogLikelihood = sum(log(poisspdf(spkTest', exp([ones(length(finiteIndTest),1), tempTestInput] * [cvPartial.glmnet_fit.a0(iLambda); cvPartial.glmnet_fit.beta(:,iLambda)]))));
+%                             devianceFullPartial = 2*(fullLogLikelihood - partialLogLikelihood);
+%                             dfFullPartial = dfFullNull - cvPartial.glmnet_fit.df(iLambda);
+%                             if devianceFullPartial > chi2inv(1-pThresholdPartial, dfFullPartial)
+%                                 fitResult(pi+1) = 1;
+%                             end
+%                         end
+%                     end
+%                 end
             end
 
             fitResultsRe(cellnumInd,:) = fitResult;
             fitCoeffIndsRe(cellnumInd,:) = fitCoeffInd;
             doneRe(cellnumInd) = cellnum;
-            cellTimeRe(cellnumInd) = toc(celltic);        
+            cellTimeRe(cellnumInd) = toc(cellTimeStart);        
     end % end of for cellnum
 else
     parfor cellnumInd = 1 : length(remainingCell)
         cellnum = remainingCell(cellnumInd);
         
-            celltic = tic;
-        %     poolobj = gcp('nocreate')
+            fitCoeffInd = zeros(1,6);
+            started(cellnum) = cellnum;
+            cellTimeStart = tic;
+            fprintf('Mouse JK%03d session S%02d Loop %d: Running cell %d/%d \n', mouse, session, ri, cellnum, numCell);                
 
-        %     fprintf('Is NumWorkers a prop = %d \n', isprop(poolobj,'NumWorkers'))
-        %     if poolobj.NumWorkers < parSetNum
-        %         push_myphone('Lasso GLM error')
-        %         error('Error occurred')
-        %     end    
-
-        %     if ismember(cellnum, doneRe)
-        %         error('Lasso GLM error')
-        %     end
-            fitCoeffInd = nan(1,6);
-
-        %                 fprintf('Mouse JK%03d session S%02d Loop %d: Running cell %d/%d \n', mouse, session, ri,cellnum, length(u.cellNums));
-            fprintf('Mouse JK%03d session S%02d: Running cell %d/%d \n', mouse, session,cellnum, numCell);
-            startedRe(cellnumInd) = cellnum;
-            iTrain = iTrainAll{cellnum};
             cind = cindAll(cellnum);
-            planeInd = planeIndAll(cellnum);
+            tindCell = tindcellAll{cellnum};
 
-            spkTrain = cell2mat(cellfun(@(x) [nan(1,posShift), x(cind,:), nan(1,posShift)], spikeAll(iTrain)','uniformoutput',false));                
-            finiteIndTrain = intersect(find(isfinite(spkTrain)), find(isfinite(sum(trainingInputMat{planeInd},2))));
-            input = trainingInputMat{planeInd}(finiteIndTrain,:);
+            spkMedian = median(cellfun(@(x) sum(x(cind,:)), spikeAll(tindCell)'));                
+            spkNumGroup = cell(2,1);
+            spkNumGroup{1} = cellfun(@(x) x.trialNum, u.trials(find(cellfun(@(x) sum(x.spk(cind,:)) <= spkMedian, u.trials(tindCell)) )));
+            spkNumGroup{2} = cellfun(@(x) x.trialNum, u.trials(find(cellfun(@(x) sum(x.spk(cind,:)) >  spkMedian, u.trials(tindCell)) )));
+
+            tempTestTn = [];
+            for pti = 1 : length(ptouchGroup)
+                for ci = 1 : length(choiceGroup)
+                    for ai = 1 : length(angleGroup)
+                        for di = 1 : length(distanceGroup)
+                            for spki = 1 : length(spkNumGroup)                                    
+                                tempTn = intersect(ptouchGroup{pti}, intersect(choiceGroup{ci}, intersect(angleGroup{ai}, intersect(distanceGroup{di}, spkNumGroup{spki}))));
+                                if ~isempty(tempTn)
+                                    tempTn = tempTn(randperm(length(tempTn)));
+                                    if length(tempTn) > 5
+                                        tempTestTn = [tempTestTn; tempTn(1:round(length(tempTn)*0.3))];
+                                    elseif length(tempTn) > 1
+                                        tempTestTn = [tempTestTn; tempTn(1:round(length(tempTn)*0.5))];                                        
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+            %
+            totalTn = u.trialNums;
+            [~,testInd] = ismember(tempTestTn, totalTn);
+
+            tempTrainingTn = setdiff(totalTn, tempTestTn);
+            [~,trainingInd] = ismember(tempTrainingTn, totalTn);
+
+            testTn{cellnum} = tempTestTn;
+            trainingTn{cellnum} = tempTrainingTn;
+
+            iTrain = intersect(tindCell, trainingInd);
+            iTest = intersect(tindCell, testInd);
+
+            planeInd = planeIndAll(cellnum);
+            trainingPredictorInd = cell2mat(cellfun(@(x) (ones(1,length(x.tpmTime{plane})+posShift*2)) * ismember(x.trialNum, tempTrainingTn), u.trials(tindCell)','uniformoutput',false));
+            testPredictorInd = cell2mat(cellfun(@(x) (ones(1,length(x.tpmTime{plane})+posShift*2)) * ismember(x.trialNum, tempTestTn), u.trials(tindCell)','uniformoutput',false));
+
+            trainingInput = allPredictors{planeInd}(find(trainingPredictorInd),:);
+            testInput = allPredictors{planeInd}(find(testPredictorInd),:);
+
+            spkTrain = cell2mat(cellfun(@(x) [nan(1,posShift), x(cind,:), nan(1,posShift)], spikeAll(iTrain)','uniformoutput',false));
+            finiteIndTrain = intersect(find(isfinite(spkTrain)), find(isfinite(sum(trainingInput,2))));
+            input = trainingInput(finiteIndTrain,:);
             spkTrain = spkTrain(finiteIndTrain)';
 
-            cv = cvglmnet(input, spkTrain, 'poisson', glmnetOpt, [], lambdaCV, [], glmPar);
+            cv = cvglmnet(input, spkTrain, 'poisson', glmnetOpt, [], lambdaCV);
 
             %% survived coefficients
             fitLambdaRe(cellnumInd) = cv.lambda_1se;
             iLambda = find(cv.lambda == cv.lambda_1se);
             fitCoeffsRe{cellnumInd} = [cv.glmnet_fit.a0(iLambda);cv.glmnet_fit.beta(:,iLambda)];
             coeffInds = find(cv.glmnet_fit.beta(:,iLambda));                
-        %             rtest(ri).fitInd{cellnum} = coeffInds;
             fitIndRe{cellnumInd} = coeffInds;
             for i = 1 : length(indPartial)
                 if sum(ismember(indPartial{i},coeffInds)>0)
@@ -228,15 +280,14 @@ else
             end
 
             %% test
-            iTest = iTestAll{cellnum};                
             spkTest = cell2mat(cellfun(@(x) [nan(1,posShift), x(cind,:), nan(1,posShift)], spikeAll(iTest)','uniformoutput',false));
             spkTest = spkTest';
-            finiteIndTest = intersect(find(isfinite(spkTest)), find(isfinite(sum(testInputMat{planeInd},2))));
+            finiteIndTest = intersect(find(isfinite(spkTest)), find(isfinite(sum(testInput,2))));
             spkTest = spkTest(finiteIndTest)';
             %% (1) if the full model is significant
             fitResult = zeros(1,6);
 
-            model = exp([ones(length(finiteIndTest),1),testInputMat{planeInd}(finiteIndTest,:)]*[cv.glmnet_fit.a0(iLambda); cv.glmnet_fit.beta(:,iLambda)]);
+            model = exp([ones(length(finiteIndTest),1),testInput(finiteIndTest,:)]*[cv.glmnet_fit.a0(iLambda); cv.glmnet_fit.beta(:,iLambda)]);
             mu = mean(spkTest); % null poisson parameter
             nullLogLikelihood = sum(log(poisspdf(spkTest,mu)));
             fullLogLikelihood = sum(log(poisspdf(spkTest',model)));
@@ -251,32 +302,32 @@ else
                 fitResult(1) = 1;
 
                 %% (2) test without each parameter (as a group)                
-                for pi = 1 : 5
-                    if find(ismember(coeffInds, indPartial{pi}))
-                        if all(ismember(coeffInds, indPartial{pi}))
-                            fitResult(pi+1) = 1;
-                            break
-                        else
-                            tempTrainInput = trainingInputMat{planeInd}(:,setdiff(coeffInds,indPartial{pi}));
-                            tempTestInput = testInputMat{planeInd}(finiteIndTest,setdiff(coeffInds,indPartial{pi}));
-                            cvPartial = cvglmnet(tempTrainInput(finiteIndTrain,:), spkTrain, 'poisson', partialGlmOpt, [], lambdaCV, [], glmPar);
-
-                            iLambda = find(cvPartial.lambda == cvPartial.lambda_1se);
-                            partialLogLikelihood = sum(log(poisspdf(spkTest', exp([ones(length(finiteIndTest),1), tempTestInput] * [cvPartial.glmnet_fit.a0(iLambda); cvPartial.glmnet_fit.beta(:,iLambda)]))));
-                            devianceFullPartial = 2*(fullLogLikelihood - partialLogLikelihood);
-                            dfFullPartial = dfFullNull - cvPartial.glmnet_fit.df(iLambda);
-                            if devianceFullPartial > chi2inv(1-pThresholdPartial, dfFullPartial)
-                                fitResult(pi+1) = 1;
-                            end
-                        end
-                    end
-                end
+%                 for pi = 1 : 5
+%                     if find(ismember(coeffInds, indPartial{pi}))
+%                         if all(ismember(coeffInds, indPartial{pi}))
+%                             fitResult(pi+1) = 1;
+%                             break
+%                         else
+%                             tempTrainInput = trainingInputMat{planeInd}(:,setdiff(coeffInds,indPartial{pi}));
+%                             tempTestInput = testInputMat{planeInd}(finiteIndTest,setdiff(coeffInds,indPartial{pi}));
+%                             cvPartial = cvglmnet(tempTrainInput(finiteIndTrain,:), spkTrain, 'poisson', partialGlmOpt, [], lambdaCV, [], glmPar);
+% 
+%                             iLambda = find(cvPartial.lambda == cvPartial.lambda_1se);
+%                             partialLogLikelihood = sum(log(poisspdf(spkTest', exp([ones(length(finiteIndTest),1), tempTestInput] * [cvPartial.glmnet_fit.a0(iLambda); cvPartial.glmnet_fit.beta(:,iLambda)]))));
+%                             devianceFullPartial = 2*(fullLogLikelihood - partialLogLikelihood);
+%                             dfFullPartial = dfFullNull - cvPartial.glmnet_fit.df(iLambda);
+%                             if devianceFullPartial > chi2inv(1-pThresholdPartial, dfFullPartial)
+%                                 fitResult(pi+1) = 1;
+%                             end
+%                         end
+%                     end
+%                 end
             end
 
             fitResultsRe(cellnumInd,:) = fitResult;
             fitCoeffIndsRe(cellnumInd,:) = fitCoeffInd;
             doneRe(cellnumInd) = cellnum;
-            cellTimeRe(cellnumInd) = toc(celltic);
+            cellTimeRe(cellnumInd) = toc(cellTimeStart);
         
     end % end of parfor cellnum
 end
