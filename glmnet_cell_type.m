@@ -98,7 +98,7 @@ for mi = 1 : length(mice)
 
         glmnetOpt = glmnetSet;
         glmnetOpt.standardize = 0; % do the standardization at the level of predictors, including both training and test
-        glmnetOpt.alpha = 0;
+        glmnetOpt.alpha = 0.95;
         
         partialGlmOpt = glmnetOpt;
         partialGlmOpt.alpha = 0;
@@ -114,7 +114,7 @@ for mi = 1 : length(mice)
         end
         frameRate = u.frameRate;
 
-        savefnResult = sprintf('glmResponseType_JK%03dS%02d_m45',mouse, session); % m(n) meaining method(n)
+        savefnResult = sprintf('glmResponseType_JK%03dS%02d_m44',mouse, session); % m(n) meaining method(n)
 
 
         for ri = startRepetition : repetition % repetition index
