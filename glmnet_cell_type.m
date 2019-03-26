@@ -393,8 +393,8 @@ for mi = 1 : length(mice)
                 iTrain = intersect(tindCell, trainingInd);
                 iTest = intersect(tindCell, testInd);
 
-                testTn{cellnum} = tempTestTn;
-                trainingTn{cellnum} = tempTrainingTn;
+                testTn{cellnum} = u.trialNums(testInd);
+                trainingTn{cellnum} = u.trialNums(trainingInd);
                 
                 ratioi(cellnum) = length(iTest)/length(iTrain);
                 
