@@ -56,7 +56,7 @@
 %     - firstRightLick
 %     - lastRightLick
 
-baseDir = 'D:\JK\suite2p\';
+baseDir = 'C:\JK\';
 
 mice = [25,27,30,36,37,38,39,41,52,53,54,56];
 sessions = {[4,19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]}; 
@@ -93,6 +93,7 @@ for mi = 1 : length(mice)
         testPortion = 0.3; % 30 % test set
         pThresholdNull = 0.05;
         pThresholdPartial = 0.05;
+        coeffThreshold = 0.01;
 %         lickBoutInterval = 1; % licks separated by 1 s regarded as different licking bouts
 
         glmnetOpt = glmnetSet;
@@ -384,7 +385,7 @@ for mi = 1 : length(mice)
                     end
                 end
                 %
-                totalTn = u.trialNums;
+                totalTn = cellfun(@(x) x.trialNum, u.trials(tindCell));
                 [~,testInd] = ismember(tempTestTn, totalTn);
 
                 tempTrainingTn = setdiff(totalTn, tempTestTn);
@@ -394,8 +395,8 @@ for mi = 1 : length(mice)
                 iTrain = intersect(tindCell, trainingInd);
                 iTest = intersect(tindCell, testInd);
 
-                testTind{cellnum} = iTest;
-                trainingTind{cellnum} = iTrain;
+                testTn{cellnum} = tempTestTn;
+                trainingTn{cellnum} = tempTrainingTn;
                 
                 ratioi(cellnum) = length(iTest)/length(iTrain);
                 
@@ -427,7 +428,7 @@ for mi = 1 : length(mice)
                 coeffInds = find(cv.glmnet_fit.beta(:,iLambda));                
                 fitInd{cellnum} = coeffInds;
                 for i = 1 : length(indPartial)
-                    if sum(ismember(indPartial{i},coeffInds)>0)
+                    if sum(ismember(indPartial{i},coeffInds)>coeffThreshold)
                         fitCoeffInd(i + 1) = 1;
                     else
                         fitCoeffInd(i + 1) = 0;
