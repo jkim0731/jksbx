@@ -92,8 +92,6 @@ for mi = 1 : length(mice)
         negShift = 2;
         testPortion = 0.3; % 30 % test set
         pThresholdNull = 0.05;
-        pThresholdPartial = 0.05;
-        coeffThreshold = 0.01;
 %         lickBoutInterval = 1; % licks separated by 1 s regarded as different licking bouts
 
         glmnetOpt = glmnetSet;
@@ -428,7 +426,7 @@ for mi = 1 : length(mice)
                 coeffInds = find(cv.glmnet_fit.beta(:,iLambda));                
                 fitInd{cellnum} = coeffInds;
                 for i = 1 : length(indPartial)
-                    if sum(ismember(indPartial{i},coeffInds)>coeffThreshold)
+                    if sum(ismember(indPartial{i},coeffInds))>0
                         fitCoeffInd(i + 1) = 1;
                     else
                         fitCoeffInd(i + 1) = 0;
