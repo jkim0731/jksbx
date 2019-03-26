@@ -383,7 +383,7 @@ for mi = 1 : length(mice)
                     end
                 end
                 %
-                totalTn = cellfun(@(x) x.trialNum, u.trials(tindCell));
+                totalTn = u.trialNums;
                 [~,testInd] = ismember(tempTestTn, totalTn);
 
                 tempTrainingTn = setdiff(totalTn, tempTestTn);
