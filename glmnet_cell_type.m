@@ -56,7 +56,7 @@
 %     - firstRightLick
 %     - lastRightLick
 
-baseDir = 'C:\JK\';
+baseDir = 'D:\JK\suite2p\';
 
 mice = [25,27,30,36,37,38,39,41,52,53,54,56];
 sessions = {[4,19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]}; 
@@ -69,10 +69,10 @@ sessions = {[4,19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]};
 errorCell = {{[],[]},{[],[]},{[],[]},{[],[]},{[]},{[]},{[],[]},{[]},{[],[]},{[]},{[]},{[]}};
 %%
 
-for mi = 1 : length(mice)
-% for mi = 1
-    for si = 1:length(sessions{mi})
-%     for si = 2
+% for mi = 5 : length(mice)
+for mi = 6
+%     for si = 1:length(sessions{mi})
+    for si = 1
         errorCellSession = errorCell{mi}{si};
     
         poolobj = gcp('nocreate');
@@ -96,7 +96,7 @@ for mi = 1 : length(mice)
 
         glmnetOpt = glmnetSet;
         glmnetOpt.standardize = 0; % do the standardization at the level of predictors, including both training and test
-        glmnetOpt.alpha = 0.95;
+        glmnetOpt.alpha = 0;
         
         partialGlmOpt = glmnetOpt;
         partialGlmOpt.alpha = 0;
@@ -112,7 +112,7 @@ for mi = 1 : length(mice)
         end
         frameRate = u.frameRate;
 
-        savefnResult = sprintf('glmResponseType_JK%03dS%02d_m44',mouse, session); % m(n) meaining method(n)
+        savefnResult = sprintf('glmResponseType_JK%03dS%02d_m45',mouse, session); % m(n) meaining method(n)
 
 
         for ri = startRepetition : repetition % repetition index
@@ -399,6 +399,10 @@ for mi = 1 : length(mice)
                 ratioi(cellnum) = length(iTest)/length(iTrain);
                 
                 planeInd = planeIndAll(cellnum);
+                plane = mod(planeInd,4);
+                if plane==0
+                    plane = 4;
+                end
                 trainingPredictorInd = cell2mat(cellfun(@(x) (ones(1,length(x.tpmTime{plane})+posShift*2)) * ismember(x.trialNum, tempTrainingTn), u.trials(tindCell)','uniformoutput',false));
                 testPredictorInd = cell2mat(cellfun(@(x) (ones(1,length(x.tpmTime{plane})+posShift*2)) * ismember(x.trialNum, tempTestTn), u.trials(tindCell)','uniformoutput',false));
                 
