@@ -21,12 +21,12 @@ if ~exist('negShift', 'var')
     negShift = 2;
 end
 
-mouse = 39;
-session = 1;
-repeat = 1;
+mouse = 38;
+session = 2;
+repeat = 10;
 restartingNum = 1;
-glmPar = true;
-savefnResult = sprintf('glmResponseType_JK%03dS%02d_glmnet_m44_R%02d',mouse, session, repeat);
+glmPar = false;
+savefnResult = sprintf('glmResponseType_JK%03dS%02d_m45_R%02d',mouse, session, repeat);
 
 savefnResultRe = [savefnResult, '_02'];
 
@@ -42,6 +42,10 @@ fitCoeffsRe = cell(length(remainingCell),1);
 fitIndRe = cell(length(remainingCell),1);
 fitDFRe = zeros(length(remainingCell),1);
 fitDevExplainedRe = zeros(length(remainingCell),1);
+ratioIndRe = zeros(length(remainingCell),1);
+ratioiRe = zeros(length(remainingCell),1);
+testTnRe = cell(length(remainingCell),1);
+trainingTnRe = cell(length(remainingCell),1);
 
 fitCvDevRe = zeros(length(remainingCell),1);
 fitResultsRe = zeros(length(remainingCell),6);
@@ -73,12 +77,13 @@ if poolobj.SpmdEnabled == 0
 end
 
 
+
 if glmPar
     for cellnumInd = restartingNum : length(remainingCell)
         cellnum = remainingCell(cellnumInd);
         
                 fitCoeffInd = zeros(1,6);
-                started(cellnum) = cellnum;
+                startedRe(cellnum) = cellnum;
                 cellTimeStart = tic;
                 fprintf('Mouse JK%03d session S%02d Loop %d: Running cell %d/%d \n', mouse, session, ri, cellnum, numCell);                
                 
@@ -120,12 +125,16 @@ if glmPar
                 iTrain = intersect(tindCell, trainingInd);
                 iTest = intersect(tindCell, testInd);
                 
-                testTind{cellnum} = iTest;
-                trainingTind{cellnum} = iTrain;
+                testTnRe{cellnumInd} = u.trialNums(testInd);
+                trainingTnRe{cellnumInd} = u.trialNums(trainingInd);
                 
-                ratioi(cellnum) = length(iTest)/length(iTrain);
+                ratioiRe(cellnumInd) = length(iTest)/length(iTrain);
                 
                 planeInd = planeIndAll(cellnum);
+                plane = mod(planeInd,4);
+                if plane==0
+                    plane = 4;
+                end
                 trainingPredictorInd = cell2mat(cellfun(@(x) (ones(1,length(x.tpmTime{plane})+posShift*2)) * ismember(x.trialNum, tempTrainingTn), u.trials(tindCell)','uniformoutput',false));
                 testPredictorInd = cell2mat(cellfun(@(x) (ones(1,length(x.tpmTime{plane})+posShift*2)) * ismember(x.trialNum, tempTestTn), u.trials(tindCell)','uniformoutput',false));
                 
@@ -135,7 +144,7 @@ if glmPar
                     error('Number of total frames mismatch')
                 end
                 
-                ratioInd(cellnum) = length(find(testPredictorInd)) / length(find(trainingPredictorInd));
+                ratioIndRe(cellnumInd) = length(find(testPredictorInd)) / length(find(trainingPredictorInd));
                 
                 
                 planeInd = planeIndAll(cellnum);
@@ -221,7 +230,7 @@ else
         cellnum = remainingCell(cellnumInd);
         
             fitCoeffInd = zeros(1,6);
-            started(cellnum) = cellnum;
+            startedRe(cellnumInd) = cellnum;
             cellTimeStart = tic;
             fprintf('Mouse JK%03d session S%02d Loop %d: Running cell %d/%d \n', mouse, session, ri, cellnum, numCell);                
 
@@ -260,18 +269,19 @@ else
             tempTrainingTn = setdiff(totalTn, tempTestTn);
             [~,trainingInd] = ismember(tempTrainingTn, totalTn);
 
-            testTn{cellnum} = tempTestTn;
-            trainingTn{cellnum} = tempTrainingTn;
-
+            testTnRe{cellnumInd} = u.trialNums(testInd);
+            trainingTnRe{cellnumInd} = u.trialNums(trainingInd);
+                
             iTrain = intersect(tindCell, trainingInd);
             iTest = intersect(tindCell, testInd);
 
-            testTind{cellnum} = iTest;
-            trainingTind{cellnum} = iTrain;
-
-            ratioi(cellnum) = length(iTest)/length(iTrain);
+            ratioiRe(cellnumInd) = length(iTest)/length(iTrain);
 
             planeInd = planeIndAll(cellnum);
+            plane = mod(planeInd,4);
+            if plane==0
+                plane = 4;
+            end
             trainingPredictorInd = cell2mat(cellfun(@(x) (ones(1,length(x.tpmTime{plane})+posShift*2)) * ismember(x.trialNum, tempTrainingTn), u.trials(tindCell)','uniformoutput',false));
             testPredictorInd = cell2mat(cellfun(@(x) (ones(1,length(x.tpmTime{plane})+posShift*2)) * ismember(x.trialNum, tempTestTn), u.trials(tindCell)','uniformoutput',false));
 
@@ -281,7 +291,7 @@ else
                 error('Number of total frames mismatch')
             end
 
-            ratioInd(cellnum) = length(find(testPredictorInd)) / length(find(trainingPredictorInd));
+            ratioIndRe(cellnumInd) = length(find(testPredictorInd)) / length(find(trainingPredictorInd));
             
             trainingInput = allPredictors{planeInd}(find(trainingPredictorInd),:);            
             testInput = allPredictors{planeInd}(find(testPredictorInd),:);
@@ -371,6 +381,10 @@ fitResults(remainingCell,:) = fitResultsRe;
 fitCoeffInds(remainingCell,:) = fitCoeffIndsRe;
 done(remainingCell) = doneRe;
 cellTime(remainingCell) = cellTimeRe;
+ratioInd(remainingCell) = ratioIndRe;
+ratioi(remainingCell) = ratioiRe;
+testTn(remainingCell) = testTnRe;
+trainingTn(remainingCell) = trainingTnRe;
 %             rtest(ri).fitInd = fitInd; % parameters surviving lasso in training set
 %             rtest(ri).fitCoeffs = fitCoeffs;
 %             rtest(ri).fitCoeffInds = fitCoeffInds; % first column is dummy
@@ -384,8 +398,9 @@ cellTime(remainingCell) = cellTimeRe;
 %             rtest(ri).devExplained = devExplained;
 %             rtest(ri).cvDev = cvDev;
 
-save(savefnResultRe, 'fit*', 'allPredictors', '*InputMat', 'indPartial', '*Group', '*Tn', 'lambdaCV', '*Opt', 'done', '*Re', 'remainingCell', 'pThreshold*', '*Shift', 'testInd', 'trainingInd', 'cIDAll', ...
-    'cellTime', 'ratio*');
+% save(savefnResultRe, 'fit*', 'allPredictors', '*InputMat', 'indPartial', '*Group', '*Tn', 'lambdaCV', '*Opt', 'done', '*Re', 'remainingCell', 'pThreshold*', '*Shift', 'testInd', 'trainingInd', 'cIDAll', ...
+%     'cellTime', 'ratio*');
+save(savefnResultRe, 'fit*', 'allPredictors', 'indPartial', '*Group', '*Tn', 'lambdaCV', '*Opt', 'done', 'pThreshold*', '*Shift', 'cellTime', 'cIDAll', 'ratio*');
 %%
 %         end % of ri. random group selection index
 % push_myphone(sprintf('GLM done for JK%03d S%02d', mouse, session))
