@@ -56,23 +56,23 @@
 %     - firstRightLick
 %     - lastRightLick
 
-baseDir = 'D:\TPM\JK\suite2p\';
+baseDir = 'C:\JK\';
 
 mice = [25,27,30,36,37,38,39,41,52,53,54,56];
 sessions = {[4,19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]}; 
 
             repetition = 10;
-            startRepetition = 1;
+            startRepetition = 3;
 % sessions = {[4,19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]};
 % errorCell = {{[],[224]},{[],[]},{[],[]},{[],[]},{[]},{[]},{[1211,1972],[1286]},{[]},{[],[605, 676, 740, 755, 811]},{[]},{[]},{[]}};
 % errorCell = {{[],[]},{[],[]},{[],[]},{[],[]},{[]},{[]},{[2042,2059],[]},{[]},{[],[]},{[]},{[]},{[]}};
 errorCell = {{[],[]},{[],[]},{[],[]},{[],[]},{[]},{[]},{[],[]},{[]},{[],[]},{[]},{[]},{[]}};
 %%
 
-for mi = 7 : length(mice)
-% for mi = 6
-    for si = 1:length(sessions{mi})
-%     for si = 1
+% for mi = 7 : length(mice)
+for mi = 4
+%     for si = 1:length(sessions{mi})
+    for si = 1
         errorCellSession = errorCell{mi}{si};
     
         poolobj = gcp('nocreate');
@@ -96,7 +96,7 @@ for mi = 7 : length(mice)
 
         glmnetOpt = glmnetSet;
         glmnetOpt.standardize = 0; % do the standardization at the level of predictors, including both training and test
-        glmnetOpt.alpha = 0;
+        glmnetOpt.alpha = 0.95;
         
         partialGlmOpt = glmnetOpt;
         partialGlmOpt.alpha = 0;
@@ -112,7 +112,7 @@ for mi = 7 : length(mice)
         end
         frameRate = u.frameRate;
 
-        savefnResult = sprintf('glmResponseType_JK%03dS%02d_m45',mouse, session); % m(n) meaining method(n)
+        savefnResult = sprintf('glmResponseType_JK%03dS%02d_m44',mouse, session); % m(n) meaining method(n)
 
 
         for ri = startRepetition : repetition % repetition index
@@ -347,7 +347,7 @@ for mi = 7 : length(mice)
             trainingTn = cell(numCell,1);
             ratioi = zeros(numCell,1);
             ratioInd = zeros(numCell,1);
-            parfor cellnum = 1 : numCell
+            parfor cellnum = 1 : numCell                
             if ~ismember(cellnum, errorCellSession)
                 fitCoeffInd = zeros(1,6);
                 started(cellnum) = cellnum;
@@ -488,7 +488,9 @@ for mi = 7 : length(mice)
                 fitCoeffInds(cellnum,:) = fitCoeffInd;
                 done(cellnum) = cellnum;
                 cellTime(cellnum) = toc(cellTimeStart);
+                
             end
+            
             end % end of parfor cellnum
 %%
 %             save(sprintf('%s_R%02d',savefnResult, ri), 'fit*', 'allPredictors', '*inputMat', 'indPartial', '*Group', '*Tn', 'lambdaCV', '*Opt', 'done', 'pThreshold*', '*Shift', 'cellTime', 'testInd', 'trainingInd', 'cIDAll');

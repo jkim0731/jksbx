@@ -21,14 +21,14 @@ if ~exist('negShift', 'var')
     negShift = 2;
 end
 
-mouse = 38;
-session = 2;
-repeat = 10;
+mouse = 36;
+session = 1;
+repeat = 3;
 restartingNum = 1;
-glmPar = false;
-savefnResult = sprintf('glmResponseType_JK%03dS%02d_m45_R%02d',mouse, session, repeat);
+glmPar = true;
+savefnResult = sprintf('glmResponseType_JK%03dS%02d_m44_R%02d',mouse, session, repeat);
 
-savefnResultRe = [savefnResult, '_02'];
+savefnResultRe = [savefnResult, '_01'];
 
 previousDone = done(find(done));
 
@@ -83,9 +83,9 @@ if glmPar
         cellnum = remainingCell(cellnumInd);
         
                 fitCoeffInd = zeros(1,6);
-                startedRe(cellnum) = cellnum;
+                startedRe(cellnumInd) = cellnum;
                 cellTimeStart = tic;
-                fprintf('Mouse JK%03d session S%02d Loop %d: Running cell %d/%d \n', mouse, session, ri, cellnum, numCell);                
+                fprintf('Mouse JK%03d session S%02d Loop %d: Running cell %d/%d \n', mouse, session, repeat, cellnum, numCell);                
                 
                 cind = cindAll(cellnum);
                 tindCell = tindcellAll{cellnum};
