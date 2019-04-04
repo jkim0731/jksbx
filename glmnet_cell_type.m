@@ -56,23 +56,24 @@
 %     - firstRightLick
 %     - lastRightLick
 
-baseDir = 'C:\JK\';
+baseDir = 'D:\JK\suite2p\';
 
-mice = [25,27,30,36,37,38,39,41,52,53,54,56];
-sessions = {[4,19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]}; 
-
+% mice = [25,27,30,36,37,38,39,41,52,53,54,56];
+% sessions = {[4,19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]}; 
+mice = [70,74,75,76];
+sessions = {[6],[4],[4],[4]};
             repetition = 10;
-            startRepetition = 3;
+            startRepetition = 1;
 % sessions = {[4,19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]};
 % errorCell = {{[],[224]},{[],[]},{[],[]},{[],[]},{[]},{[]},{[1211,1972],[1286]},{[]},{[],[605, 676, 740, 755, 811]},{[]},{[]},{[]}};
 % errorCell = {{[],[]},{[],[]},{[],[]},{[],[]},{[]},{[]},{[2042,2059],[]},{[]},{[],[]},{[]},{[]},{[]}};
 errorCell = {{[],[]},{[],[]},{[],[]},{[],[]},{[]},{[]},{[],[]},{[]},{[],[]},{[]},{[]},{[]}};
 %%
 
-% for mi = 7 : length(mice)
-for mi = 4
-%     for si = 1:length(sessions{mi})
-    for si = 1
+for mi = 1 : length(mice)
+% for mi = 9
+    for si = 1:length(sessions{mi})
+%     for si = 1
         errorCellSession = errorCell{mi}{si};
     
         poolobj = gcp('nocreate');
@@ -218,6 +219,9 @@ for mi = 4
                             currTrial = u.trials{tind(ti)};
                             time = [0, currTrial.tpmTime{plane}];
                             wtimes = currTrial.whiskerTime;
+                            if iscell(wtimes)
+                                wtimes = wtimes{1};
+                            end
                             [onsetFrame, amplitude, midpoint] = jkWhiskerOnsetNAmplitude(currTrial.theta);
                             whiskerVideoFrameDuration = u.trials{tind(1)}.frameDuration; % in s
                             onsetTimes = onsetFrame*whiskerVideoFrameDuration; % back to s
@@ -494,7 +498,7 @@ for mi = 4
             end % end of parfor cellnum
 %%
 %             save(sprintf('%s_R%02d',savefnResult, ri), 'fit*', 'allPredictors', '*inputMat', 'indPartial', '*Group', '*Tn', 'lambdaCV', '*Opt', 'done', 'pThreshold*', '*Shift', 'cellTime', 'testInd', 'trainingInd', 'cIDAll');
-            save(sprintf('%s_R%02d',savefnResult, ri), 'fit*', 'allPredictors', 'indPartial', '*Group', '*Tn', 'lambdaCV', '*Opt', 'done', 'pThreshold*', '*Shift', 'cellTime', 'cIDAll', 'ratio*');
+            save(sprintf('%s_R%02d',savefnResult, ri), 'fit*', 'allPredictors', 'indPartial', '*Group', 'testTn', 'trainingTn', 'lambdaCV', '*Opt', 'done', 'pThreshold*', '*Shift', 'cellTime', 'cIDAll', 'ratio*');
 %             push_myphone(sprintf('Lasso GLM done for JK%03d S%02d Loop #%03d', mouse, session, ri))
         end % of ri. random group selection index
 %         push_myphone(sprintf('Lasso GLM done for JK%03d S%02d', mouse, session))

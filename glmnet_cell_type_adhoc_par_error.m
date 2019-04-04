@@ -21,14 +21,14 @@ if ~exist('negShift', 'var')
     negShift = 2;
 end
 
-mouse = 36;
-session = 1;
-repeat = 3;
-restartingNum = 1;
+mouse = 52;
+session = 21;
+repeat = 9;
+restartingNum = 5;
 glmPar = true;
 savefnResult = sprintf('glmResponseType_JK%03dS%02d_m44_R%02d',mouse, session, repeat);
 
-savefnResultRe = [savefnResult, '_01'];
+savefnResultRe = [savefnResult, '_07'];
 
 previousDone = done(find(done));
 
@@ -232,7 +232,7 @@ else
             fitCoeffInd = zeros(1,6);
             startedRe(cellnumInd) = cellnum;
             cellTimeStart = tic;
-            fprintf('Mouse JK%03d session S%02d Loop %d: Running cell %d/%d \n', mouse, session, ri, cellnum, numCell);                
+            fprintf('Mouse JK%03d session S%02d Loop %d: Running cell %d/%d \n', mouse, session, repeat, cellnum, numCell);                
 
             cind = cindAll(cellnum);
             tindCell = tindcellAll{cellnum};
@@ -400,7 +400,7 @@ trainingTn(remainingCell) = trainingTnRe;
 
 % save(savefnResultRe, 'fit*', 'allPredictors', '*InputMat', 'indPartial', '*Group', '*Tn', 'lambdaCV', '*Opt', 'done', '*Re', 'remainingCell', 'pThreshold*', '*Shift', 'testInd', 'trainingInd', 'cIDAll', ...
 %     'cellTime', 'ratio*');
-save(savefnResultRe, 'fit*', 'allPredictors', 'indPartial', '*Group', '*Tn', 'lambdaCV', '*Opt', 'done', 'pThreshold*', '*Shift', 'cellTime', 'cIDAll', 'ratio*');
+save(savefnResultRe, 'fit*', 'allPredictors', 'indPartial', '*Group', 'testTn', 'trainingTn', 'lambdaCV', '*Opt', 'done', 'pThreshold*', '*Shift', 'cellTime', 'cIDAll', 'ratio*', 'restartingNum');
 %%
 %         end % of ri. random group selection index
 % push_myphone(sprintf('GLM done for JK%03d S%02d', mouse, session))
