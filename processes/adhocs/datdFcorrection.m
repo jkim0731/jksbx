@@ -1,38 +1,40 @@
-% clear
-% mice = [25,27,30,36,37,39,52,53,54,56];
-% sessions = {[4,19],[3,16],[3,21],[1,17],[7],[1,22],[3,21],[3],[3],[3]};  
-% rollingWindowForBaseF = 100; % in s
-% baseFprctile = 5;
-% baseDir = 'D:\TPM\JK\suite2p\';
-% for mi = 1 : length(mice)
-% % for mi = 1
-%     cd([baseDir, sprintf('%03d',mice(mi))])
-%     fList = dir('F_*_proc_final.mat');
-%     for i = 1 : length(fList)
-% %     for i = 1
-%         fprintf('mouse %03d session %d\n', mice(mi), i)
-%         load(fList(i).name)
-%         dat.rollingWindowForBaseF = rollingWindowForBaseF;
-%         dat.baseFprctile = baseFprctile;
-%         
-%         dF = zeros(size(dat.Fcell{1}), 'like', dat.Fcell{1});
-%         inds = find([dat.stat.iscell]);
-%         npcoeffs = min(min(dat.Fcell{1}(inds,:) ./ dat.FcellNeu{1}(inds,:), [], 2), ones(length(inds),1)*0.7);
-%                             
-%         len = size(dat.Fcell{1},2);
-%         window = round(rollingWindowForBaseF*(dat.ops.imageRate/dat.ops.num_plane));
-% 
-%         tempF = dat.Fcell{1}(inds,:) - dat.FcellNeu{1}(inds,:) .* npcoeffs;
-%         tempFF = [tempF, tempF(:,end-window+1:end)];
-%         ttbase = zeros(length(inds),size(tempF,2));
-%         parfor k = 1 : len
-%             ttbase(:,k) = prctile(tempFF(:,k:k+window),baseFprctile,2);
-%         end        
-%         dat.dF = (tempF - ttbase)./ttbase;
-%         dat.npcoeffs = npcoeffs;
-%         save(fList(i).name, 'dat')
-%     end
-% end
+clear
+% mice = [25,27,30,36,37,38,39,41,52,53,54,56, 70,74,75,76];
+% sessions = {[4,19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3], [6],[4],[4],[4]};  
+mice = [38,41];
+sessions = {[2],[3]};
+rollingWindowForBaseF = 100; % in s
+baseFprctile = 5;
+baseDir = 'Y:\Whiskernas\JK\suite2p\';
+for mi = 1 : length(mice)
+% for mi = 1
+    cd([baseDir, sprintf('%03d',mice(mi))])
+    fList = dir('F_*_proc_final.mat');
+    for i = 1 : length(fList)
+%     for i = 1
+        fprintf('mouse %03d session %d\n', mice(mi), i)
+        load(fList(i).name)
+        dat.rollingWindowForBaseF = rollingWindowForBaseF;
+        dat.baseFprctile = baseFprctile;
+        
+        dF = zeros(size(dat.Fcell{1}), 'like', dat.Fcell{1});
+        inds = find([dat.stat.iscell]);
+        npcoeffs = min(min(dat.Fcell{1}(inds,:) ./ dat.FcellNeu{1}(inds,:), [], 2), ones(length(inds),1)*0.7);
+                            
+        len = size(dat.Fcell{1},2);
+        window = round(rollingWindowForBaseF*(dat.ops.imageRate/dat.ops.num_plane));
+
+        tempF = dat.Fcell{1}(inds,:) - dat.FcellNeu{1}(inds,:) .* npcoeffs;
+        tempFF = [tempF, tempF(:,end-window+1:end)];
+        ttbase = zeros(length(inds),size(tempF,2));
+        parfor k = 1 : len
+            ttbase(:,k) = prctile(tempFF(:,k:k+window),baseFprctile,2);
+        end        
+        dat.dF = (tempF - ttbase)./ttbase;
+        dat.npcoeffs = npcoeffs;
+        save(fList(i).name, 'dat')
+    end
+end
 
 %% Split just for now. Integrate into the upper for loops later (2018/10/15)
 %% Error estimation. Using 5th percentile of std of smoothed n (5?) frames window.
@@ -41,12 +43,15 @@
 % -> No. This cannot average out slow drift. When decided to subtract the mean
 % rather than using it's values. Do not care redundancy. 
 clear
-mice = [25,27,30,36,37,39,52,53,54,56];
-sessions = {[4,19],[3,16],[3,21],[1,17],[7],[1,22],[3,21],[3],[3],[3]};  
+% mice = [25,27,30,36,37,38,39,41,52,53,54,56, 70,74,75,76];
+% sessions = {[4,19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3], [6],[4],[4],[4]};  
+mice = [38,41];
+sessions = {[2],[3]};
+
 stdwindow = 5;
 lowerprct = 5; % 5th percentile
 iteration = 10000;
-baseDir = 'D:\TPM\JK\suite2p\';
+baseDir = 'Y:\Whiskernas\JK\suite2p\';
 for mi = 1 : length(mice)
     cd([baseDir, sprintf('%03d',mice(mi))])
     fList = dir('F_*_proc_final.mat');

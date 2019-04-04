@@ -15,8 +15,8 @@
 stdwindow = 5;
 lowerprct = 5; % 5th percentile
 
-mice = [74:76];
-baseDir = 'D:\2p\JK\';
+mice = [38,41];
+baseDir = 'Y:\Whiskernas\JK\suite2p\';
 for mi = 1 : length(mice)
     cd(sprintf('%s%03d',baseDir, mice(mi)))
     flist = dir('F_*_proc_final.mat');
