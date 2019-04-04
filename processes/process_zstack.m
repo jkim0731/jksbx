@@ -100,3 +100,45 @@ for i = 1 : length(mice)
 end
 
 %%
+dBase = 'Y:\Whiskernas\JK\suite2p\';
+% mice = [25,27,30,36,37,38,39,41,52,53,54,56];
+% depths = {[110 : 165/3 : 110+165,  244 : 165/3 : 244+165], ... % 025
+%     [110 : 165/3 : 110+165,  269 : 165/3 : 269+165], ... % 027
+%     [98  : 165/3 : 98+165,   244 : 165/3 : 244+165], ... % 030
+%     [98  : 165/3 : 98+165,   280 : 165/3 : 280+165], ... % 036    
+%     [98  : 165/3 : 98+165,   299 : 165/3 : 299+165], ... % 037
+%     [98  : 165/3 : 98+165,   269 : 165/3 : 269+165], ... % 038
+%     [98  : 165/3 : 98+165,   299 : 165/3 : 299+165], ... % 039
+%     [98  : 165/3 : 98+165,   299 : 165/3 : 299+165], ... % 041
+%     [110 : 131/3 : 110+131,  269 : 131/3 : 269+131], ... % 052
+%     [110 : 131/3 : 110+131,  269 : 131/3 : 269+131], ... % 053
+%     [110 : 131/3 : 110+131,  269 : 131/3 : 269+131], ... % 054
+%     [110 : 131/3 : 110+131,  269 : 131/3 : 269+131]};    % 056
+
+mice = [70,74,75,76];
+depths = {[400  : 120/3 : 520], ... % 070   
+    [366 : 120/3 : 486], ... % 074
+    [300 : 120/3 : 420], ... % 075
+    [300 : 120/3 : 420] ... % 076
+    };    
+ 
+for i = 1 : length(mice)
+    cd(sprintf('%s%03d',dBase,mice(i)))
+    for j = 1 : 4
+        flist = dir(sprintf('%s%03d_*_plane%d_proc_final.mat','F_',mice(i),j));
+        for k = 1 : length(flist)
+            load(flist(k).name) % loading dat
+                       
+            dat.depth.imagingDepth = depths{i}(j);
+            dat.depth.FOV = dat.depth.imagingDepth;
+            for kk = 1 : length(dat.stat)
+                % for readability, extend out actual x, y position of the
+                % cell, from the whole FOV of tpm image
+%                 yind = dat.ops.useY(dat.ops.yrange(round(dat.stat(kk).med(1))));
+%                 xind = dat.ops.useX(dat.ops.xrange(round(dat.stat(kk).med(2))));
+                dat.stat(kk).depth = dat.depth.FOV;
+            end
+            save(flist(k).name, 'dat')
+        end
+    end
+end
