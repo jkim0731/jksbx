@@ -22,51 +22,51 @@ cd(caDir)
 % if exist(savefn, 'file')
 %     load(savefn)
 % else
-    if exist('b','var') && iscell(b)
-        if isprop(b{1}, 'mouseName') && strcmp(b{1}.mouseName, mouseName)
-            if exist('bSession','var')
-                if isprop(bSession, 'sessionName')
-                    if strcmp(bSession.sessionName, sessionName)
-                        disp('running with existing bSession')
-                    else
-                        disp('finding right bSession')
-                        bSession = b{cellfun(@(x) strcmp(x.sessionName,sessionName), b)};
-                    end
-                end
-            else
-                disp('assigning bSession')
-                bSession = b{cellfun(@(x) strcmp(x.sessionName,sessionName), b)};
-            end
-        else
-            disp('building new behavior array')
-            cd(bDir)
-            load(['behavior_',mouseName]) % loading b{}
-            bSession = b{cellfun(@(x) strcmp(x.sessionName,sessionName), b)};
-        end
-    else
-        disp('building new behavior array')
+%     if exist('b','var') && iscell(b)
+%         if isprop(b{1}, 'mouseName') && strcmp(b{1}.mouseName, mouseName)
+%             if exist('bSession','var')
+%                 if isprop(bSession, 'sessionName')
+%                     if strcmp(bSession.sessionName, sessionName)
+%                         disp('running with existing bSession')
+%                     else
+%                         disp('finding right bSession')
+%                         bSession = b{cellfun(@(x) strcmp(x.sessionName,sessionName), b)};
+%                     end
+%                 end
+%             else
+%                 disp('assigning bSession')
+%                 bSession = b{cellfun(@(x) strcmp(x.sessionName,sessionName), b)};
+%             end
+%         else
+%             disp('building new behavior array')
+%             cd(bDir)
+%             load(['behavior_',mouseName]) % loading b{}
+%             bSession = b{cellfun(@(x) strcmp(x.sessionName,sessionName), b)};
+%         end
+%     else
+%         disp('building new behavior array')
         cd(bDir)
         load(['behavior_',mouseName]) % loading b{}
         bSession = b{cellfun(@(x) strcmp(x.sessionName,sessionName), b)};
-    end
+%     end
 
 
-    if exist('wfArray', 'var') && strcmp(wfArray.mouseName, mouseName) && strcmp(wfArray.sessionName, sessionName)
-        disp('using existing w3Array')
-    else
-        disp('building new whisker trial lite array')
+%     if exist('wfArray', 'var') && strcmp(wfArray.mouseName, mouseName) && strcmp(wfArray.sessionName, sessionName)
+%         disp('using existing w3Array')
+%     else
+%         disp('building new whisker trial lite array')
         cd(wDir)
         wfArray = Whisker.WhiskerFinal_2padArray(wDir);
-    end
+%     end
     
     
-    if exist('caArray', 'var') && strcmp(caArray.mouseName, mouseName(3:end)) && strcmp(caArray.sessionName, caSessionName)
-        disp('using existing caArray')
-    else
-        disp('building new calcium array')
+%     if exist('caArray', 'var') && strcmp(caArray.mouseName, mouseName(3:end)) && strcmp(caArray.sessionName, caSessionName)
+%         disp('using existing caArray')
+%     else
+%         disp('building new calcium array')
         cd(caDir)
         caArray = Calcium.CalciumDataArray(mouse,session);
-    end
+%     end
     
     
     if strcmp(bSession.mouseName, wfArray.mouseName) && strcmp(bSession.sessionName, wfArray.sessionName) && strcmp(bSession.sessionName, ['S', caArray.sessionName(2:3)])

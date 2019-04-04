@@ -17,7 +17,7 @@ classdef Uber_2pad < handle
         distractor = ''; % 'On' or 'Off'
         trialType = ''; % rn, ln, rc, rf, lc, lf, ra, la, oo
         
-        % from the Whisker Behavior
+        % from WF
         poleMovingTime = []; % in sec
         poleUpTime = []; % in sec
         whiskerTime = []; % in sec, all frames
@@ -25,15 +25,14 @@ classdef Uber_2pad < handle
         nof = 0;
         frameDuration = 1/311;
         
-        % from W3_2pad
         phi = [];
         kappaH = [];
         kappaV = [];
         
-        % from WL_2pad
-%         touchChunks = {}; % touch chunks, each converted into time (in sec)
         protractionTouchChunks = {};
         retractionTouchChunks = {};
+        protractionTouchChunksByWhisking = {};
+        retractionTouchChunksByWhisking = {};        
         
         % from two-photon data
         planes = []; % 1:4 or 5:8 (for now, 2018/04/01)
@@ -85,12 +84,10 @@ classdef Uber_2pad < handle
             obj.distractor = b.distractor;
             obj.trialType = b.trialType;
             
-            if ~isempty(wf.protractionTFchunks)
-                obj.protractionTouchChunks = cellfun(@(x) (x-1) * wf.framePeriodInSec, wf.protractionTFchunks, 'uniformoutput', false);
-            end
-            if ~isempty(wf.retractionTFchunks)
-                obj.retractionTouchChunks = cellfun(@(x) (x-1) * wf.framePeriodInSec, wf.retractionTFchunks, 'uniformoutput', false);
-            end
+            obj.protractionTouchChunks = wf.protractionTFchunks;
+            obj.retractionTouchChunks = wf.retractionTFchunks;
+            obj.protractionTouchChunksByWhisking = wf.protractionTFchunksByWhisking;
+            obj.retractionTouchChunksByWhisking = wf.retractionTFchunksByWhisking;
             
             obj.poleMovingTime = (wf.poleMovingFrames-1)*wf.framePeriodInSec;
             obj.poleUpTime = (wf.poleUpFrames-1)*wf.framePeriodInSec;
