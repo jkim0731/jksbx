@@ -98,8 +98,9 @@ dat.depth.windowAngle = atand(tiltGradUmperpix/xyUmperpix);
 % load(C2Fn)
 % 
 % save
-if contains(suite2pFn,'.mat')
-    suite2pFn = suite2pFn(1:end-4);
-end
-saveFn = [suite2pFn, '_final.mat'];
-save(saveFn, 'dat')
+% if contains(suite2pFn,'.mat')
+%     suite2pFn = suite2pFn(1:end-4);
+% end
+% saveFn = [suite2pFn, '_final.mat'];
+saveFn = suite2pFn;
+save(saveFn, 'dat', 'spk')

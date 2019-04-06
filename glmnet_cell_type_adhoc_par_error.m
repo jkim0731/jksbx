@@ -21,14 +21,14 @@ if ~exist('negShift', 'var')
     negShift = 2;
 end
 
-mouse = 52;
-session = 21;
-repeat = 9;
-restartingNum = 5;
+mouse = 38;
+session = 2;
+repeat = 1;
+restartingNum = 1;
 glmPar = true;
 savefnResult = sprintf('glmResponseType_JK%03dS%02d_m44_R%02d',mouse, session, repeat);
 
-savefnResultRe = [savefnResult, '_07'];
+savefnResultRe = [savefnResult, '_05'];
 
 previousDone = done(find(done));
 
