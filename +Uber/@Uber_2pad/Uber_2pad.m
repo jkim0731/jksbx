@@ -31,8 +31,11 @@ classdef Uber_2pad < handle
         
         protractionTouchChunks = {};
         retractionTouchChunks = {};
-        protractionTouchChunksByWhisking = {};
-        retractionTouchChunksByWhisking = {};        
+        protractionTouchDuration = [];
+        protractionTouchSlideDistance = [];
+        
+%         protractionTouchChunksByWhisking = {};
+%         retractionTouchChunksByWhisking = {};
         
         % from two-photon data
         planes = []; % 1:4 or 5:8 (for now, 2018/04/01)
@@ -53,6 +56,10 @@ classdef Uber_2pad < handle
     end
     
     properties (Dependent = true)
+        protractionTouchDTheta
+        protractionTouchDPhi
+        protractionTouchDKappaV
+        protractionTouchDKappaH
     end
     
     methods (Access = public)
@@ -86,8 +93,11 @@ classdef Uber_2pad < handle
             
             obj.protractionTouchChunks = wf.protractionTFchunks;
             obj.retractionTouchChunks = wf.retractionTFchunks;
-            obj.protractionTouchChunksByWhisking = wf.protractionTFchunksByWhisking;
-            obj.retractionTouchChunksByWhisking = wf.retractionTFchunksByWhisking;
+            obj.protractionTouchDuration = wf.protractionTouchDuration;
+            obj.protractionTouchSlideDistance = cellfun(@(x) max(x) - x(1), wf.protractionSlide);
+%             obj.protractionTouchChunksByWhisking = wf.protractionTFchunksByWhisking;
+%             obj.retractionTouchChunksByWhisking = wf.retractionTFchunksByWhisking;
+
             
             obj.poleMovingTime = (wf.poleMovingFrames-1)*wf.framePeriodInSec;
             obj.poleUpTime = (wf.poleUpFrames-1)*wf.framePeriodInSec;
@@ -115,7 +125,44 @@ classdef Uber_2pad < handle
     end
     
     methods % Dependent property methods; cannot have attributes.
-        
+        function value = get.protractionTouchDTheta(obj)
+            value = cellfun(@(x) max(obj.theta(x)) - obj.theta(x(1)), obj.protractionTouchChunks);
+        end
+        function value = get.protractionTouchDPhi(obj)
+            if ~isempty(obj.protractionTouchChunks)
+                value = zeros(1, length(obj.protractionTouchChunks));                
+                for i = 1 : length(value)
+                    [~, maxInd] = max(abs(obj.phi(obj.protractionTouchChunks{i}) - obj.phi(obj.protractionTouchChunks{i}(1))));
+                    value(i) = obj.phi(obj.protractionTouchChunks{i}(maxInd)) - obj.phi(obj.protractionTouchChunks{i}(1));
+                end
+            else
+                value = [];
+            end
+        end
+        function value = get.protractionTouchDKappaV(obj)
+            if ~isempty(obj.protractionTouchChunks)
+                value = zeros(1, length(obj.protractionTouchChunks));                
+                for i = 1 : length(value)
+                    [~, maxInd] = max(abs(obj.kappaV(obj.protractionTouchChunks{i}) - obj.kappaV(obj.protractionTouchChunks{i}(1))));
+                    value(i) = obj.kappaV(obj.protractionTouchChunks{i}(maxInd)) - obj.kappaV(obj.protractionTouchChunks{i}(1));
+                end
+            else
+                value = [];
+            end
+
+        end
+        function value = get.protractionTouchDKappaH(obj)
+            if ~isempty(obj.protractionTouchChunks)
+                value = zeros(1, length(obj.protractionTouchChunks));                
+                for i = 1 : length(value)
+                    [~, maxInd] = max(abs(obj.kappaH(obj.protractionTouchChunks{i}) - obj.kappaH(obj.protractionTouchChunks{i}(1))));
+                    value(i) = obj.kappaH(obj.protractionTouchChunks{i}(maxInd)) - obj.kappaH(obj.protractionTouchChunks{i}(1));
+                end
+            else
+                value = [];
+            end
+
+        end
     end
     
 end
