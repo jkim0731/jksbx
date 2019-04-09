@@ -56,13 +56,13 @@
 %     - firstRightLick
 %     - lastRightLick
 
-baseDir = 'C:\JK\';
+baseDir = 'D:\JK\suite2p\';
 
 % mice = [25,27,30,36,37,38,39,41,52,53,54,56,70,74,75,76];
 % sessions = {[4,19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3],[6],[4],[4],[4]}; 
-mice = 74;
-sessions = {[4]};
-            repetition = 5;
+mice = [70,74,75,76];
+sessions = {[6],[4],[4],[4]};
+            repetition = 10;
             startRepetition = 1;
 % sessions = {[4,19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]};
 % errorCell = {{[],[224]},{[],[]},{[],[]},{[],[]},{[]},{[]},{[1211,1972],[1286]},{[]},{[],[605, 676, 740, 755, 811]},{[]},{[]},{[]}};
@@ -70,10 +70,10 @@ sessions = {[4]};
 errorCell = {{[],[]},{[],[]},{[],[]},{[],[]},{[]},{[]},{[],[]},{[]},{[],[]},{[]},{[]},{[]}};
 %%
 
-% for mi = 1 : length(mice)
-for mi = 1
-%     for si = 1:length(sessions{mi})
-    for si = 1
+for mi = 1 : length(mice)
+% for mi = 1
+    for si = 1:length(sessions{mi})
+%     for si = 1
         errorCellSession = errorCell{mi}{si};
     
         poolobj = gcp('nocreate');
@@ -97,7 +97,7 @@ for mi = 1
 
         glmnetOpt = glmnetSet;
         glmnetOpt.standardize = 0; % do the standardization at the level of predictors, including both training and test
-        glmnetOpt.alpha = 0.95;
+        glmnetOpt.alpha = 0;
         
         partialGlmOpt = glmnetOpt;
         partialGlmOpt.alpha = 0;
@@ -106,14 +106,14 @@ for mi = 1
         dn = sprintf('%s%03d',baseDir,mouse);
         ufn = sprintf('UberJK%03dS%02d.mat', mouse, session);
         cd(dn)
-        if exist(ufn,'file')
+%         if exist(ufn,'file')
             load(ufn)
-        else
-            u = Uber.buildUberArray(mouse, session);
-        end
+%         else
+%             u = Uber.buildUberArray(mouse, session);
+%         end
         frameRate = u.frameRate;
 
-        savefnResult = sprintf('glmResponseType_JK%03dS%02d_m44',mouse, session); % m(n) meaining method(n)
+        savefnResult = sprintf('glmResponseType_JK%03dS%02d_m45',mouse, session); % m(n) meaining method(n)
 
 
         for ri = startRepetition : repetition % repetition index
@@ -433,13 +433,13 @@ for mi = 1
                 fitCoeffs{cellnum} = [cv.glmnet_fit.a0(iLambda);cv.glmnet_fit.beta(:,iLambda)];
                 coeffInds = find(cv.glmnet_fit.beta(:,iLambda));                
                 fitInd{cellnum} = coeffInds;
-                for i = 1 : length(indPartial)
-                    if sum(ismember(indPartial{i},coeffInds))>0
-                        fitCoeffInd(i + 1) = 1;
-                    else
-                        fitCoeffInd(i + 1) = 0;
-                    end
-                end
+%                 for i = 1 : length(indPartial)
+%                     if sum(ismember(indPartial{i},coeffInds))>0
+%                         fitCoeffInd(i + 1) = 1;
+%                     else
+%                         fitCoeffInd(i + 1) = 0;
+%                     end
+%                 end
 
                 %% test
                               
@@ -463,8 +463,8 @@ for mi = 1
                 fitDevExplained(cellnum) = 1 - (saturatedLogLikelihood - fullLogLikelihood)/(saturatedLogLikelihood - nullLogLikelihood);
                 fitCvDev(cellnum) = cv.glmnet_fit.dev(iLambda);
 
-                if devianceFullNull > chi2inv(1-pThresholdNull, dfFullNull)
-                    fitResult(1) = 1;
+%                 if devianceFullNull > chi2inv(1-pThresholdNull, dfFullNull)
+%                     fitResult(1) = 1;
                     
                     %% (2) test without each parameter (as a group)                
 %                     for pi = 1 : 5
@@ -486,7 +486,7 @@ for mi = 1
 %                             end
 %                         end
 %                     end
-                end
+%                 end
                 
                 fitResults(cellnum,:) = fitResult;
                 fitCoeffInds(cellnum,:) = fitCoeffInd;
