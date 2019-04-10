@@ -70,8 +70,8 @@ sessions = {[6],[4],[4],[4]};
 errorCell = {{[],[]},{[],[]},{[],[]},{[],[]},{[]},{[]},{[],[]},{[]},{[],[]},{[]},{[]},{[]}};
 %%
 
-for mi = 1 : length(mice)
-% for mi = 1
+for mi = 3 : length(mice)
+% for mi = 4
     for si = 1:length(sessions{mi})
 %     for si = 1
         errorCellSession = errorCell{mi}{si};
@@ -189,7 +189,7 @@ for mi = 1 : length(mice)
 %                         trainingPredictorInd{(cgi-1)*4 + plane} = cell2mat(cellfun(@(x) (ones(1,length(x.tpmTime{plane})+posShift*2)) * ismember(x.trialNum, trainingTn), u.trials(tind)','uniformoutput',false));
 %                         testPredictorInd{(cgi-1)*4 + plane} = cell2mat(cellfun(@(x) (ones(1,length(x.tpmTime{plane})+posShift*2)) * ismember(x.trialNum, testTn), u.trials(tind)','uniformoutput',false));
                         
-                        pTouchCount = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(cellfun(@(y) y(1), x.protractionTouchChunks), [0, x.tpmTime{plane}]), nan(1,posShift)], u.trials(tind)','uniformoutput',false));
+                        pTouchCount = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(cellfun(@(y) x.whiskerTime(y(1)), x.protractionTouchChunks), [0, x.tpmTime{plane}]), nan(1,posShift)], u.trials(tind)','uniformoutput',false));
                         pTouchFrame = pTouchCount;
                         pTouchFrame(pTouchFrame > 0) = 1;
                         pTouchFrameAngles = cell(length(angles)+1,1);
