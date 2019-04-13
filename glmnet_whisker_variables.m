@@ -67,6 +67,16 @@
 % Touch cells only (both tuned and not-tuned)
 % load 'spk' from "JKoooSooangle_tuning.mat"
 
+% Adding more touch variables (instantaneous featuers) + absolute vertical
+% forces 2019/04/12 JK
+% maxAbsDkappaV
+% maxAbsDphi
+% kappaHAtTouch
+% kappaVAtTouch
+% thetaAtTouch
+% phiAtTouch
+% touchCounts
+
 baseDir = 'C:\JK\';
 
 mice = [25,27,30,36,37,38,39,41,52,53,54,56,70,74,75,76];
@@ -78,7 +88,7 @@ sessions = {[4,19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3],[6
 % sessions = {[4,19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]};
 % errorCell = {{[],[224]},{[],[]},{[],[]},{[],[]},{[]},{[]},{[1211,1972],[1286]},{[]},{[],[605, 676, 740, 755, 811]},{[]},{[]},{[]}};
 % errorCell = {{[],[]},{[],[]},{[],[]},{[],[]},{[]},{[]},{[2042,2059],[]},{[]},{[],[]},{[]},{[]},{[]}};
-errorCell = {{[],[]},{[],[]},{[],[]},{[],[]},{[]},{[]},{[],[]},{[]},{[],[]},{[]},{[]},{[]}};
+errorCell = {{[],[]},{[],[]},{[],[]},{[],[]},{[]},{[]},{[],[]},{[]},{[],[]},{[]},{[]},{[]},{[]},{[]},{[]},{[]}};
 %%
 
 for mi = 1 : length(mice)
@@ -202,6 +212,14 @@ for mi = 1 : length(mice)
                         maxDphiCell = cell(1,length(tind));
                         maxSlideDistanceCell = cell(1,length(tind));
                         maxDurationCell = cell(1,length(tind));
+                        maxAbsDkappaVCell = cell(1,length(tind));
+                        maxAbsDphiCell = cell(1,length(tind));
+                        % whisker touch onset variables
+                        thetaAtTouchCell = cell(1,length(tind));
+                        phiAtTouchCell = cell(1,length(tind));
+                        kappaHAtTouchCell = cell(1,length(tind));
+                        kappaVAtTouchCell = cell(1,length(tind));
+                        % + touchCount later
                         
                         % use this to confirm it matches with previous protractionTouchFrames calculation
                         touchFrameConfirmCell = cell(1,length(tind));
@@ -240,6 +258,13 @@ for mi = 1 : length(mice)
                             tempDphi = zeros(1,length(time)-1);
                             tempDuration = zeros(1,length(time)-1);
                             tempSlideDistance = zeros(1,length(time)-1);
+%                             tempAbsDKappaV = zeros(1,length(time)-1);
+%                             tempAbsDPhi = zeros(1,length(time)-1);
+                            tempThetaAtTouch = zeros(1,length(time)-1);
+                            tempPhiAtTouch = zeros(1,length(time)-1);
+                            tempKappaHAtTouch = zeros(1,length(time)-1);
+                            tempKappaVAtTouch = zeros(1,length(time)-1);
+                            
                             tempTouchFramesForConfirm = zeros(1,length(time)-1);
                             if ~isempty(currTrial.protractionTouchChunks)
                                 % assign all whisker touch variables to the
@@ -261,6 +286,10 @@ for mi = 1 : length(mice)
                                     tempDphi(touchFrames(tfi)) = currTrial.protractionTouchDPhi(tempInds(maxInd));
                                     tempSlideDistance(touchFrames(tfi)) = max(currTrial.protractionTouchSlideDistance(tempInds));
                                     tempDuration(touchFrames(tfi)) = max(currTrial.protractionTouchDuration(tempInds));
+                                    tempThetaAtTouch(touchFrames(tfi)) = nanmean(cellfun(@(x) currTrial.theta(x(1)-1), currTrial.protractionTouchChunks(tempInds)));
+                                    tempPhiAtTouch(touchFrames(tfi)) = nanmean(cellfun(@(x) currTrial.phi(x(1)-1), currTrial.protractionTouchChunks(tempInds)));
+                                    tempKappaHAtTouch(touchFrames(tfi)) = nanmean(cellfun(@(x) currTrial.kappaH(x(1)-1), currTrial.protractionTouchChunks(tempInds)));
+                                    tempKappaVAtTouch(touchFrames(tfi)) = nanmean(cellfun(@(x) currTrial.kappaV(x(1)-1), currTrial.protractionTouchChunks(tempInds)));                                    
                                 end
                             end
                             maxDkappaHCell{ti} = [nan(1,posShift), tempDkappaH, nan(1,posShift)];
@@ -269,6 +298,11 @@ for mi = 1 : length(mice)
                             maxDphiCell{ti} = [nan(1,posShift), tempDphi, nan(1,posShift)];
                             maxSlideDistanceCell{ti} = [nan(1,posShift), tempSlideDistance, nan(1,posShift)];
                             maxDurationCell{ti} = [nan(1,posShift), tempDuration, nan(1,posShift)];
+                            thetaAtTouchCell{ti} = [nan(1,posShift), tempThetaAtTouch, nan(1,posShift)];
+                            phiAtTouchCell{ti} = [nan(1,posShift), tempPhiAtTouch, nan(1,posShift)];
+                            kappaHAtTouchCell{ti} = [nan(1,posShift), tempKappaHAtTouch, nan(1,posShift)];
+                            kappaVAtTouchCell{ti} = [nan(1,posShift), tempKappaVAtTouch, nan(1,posShift)];
+                            
                             touchFrameConfirmCell{ti} = [nan(1,posShift), tempTouchFramesForConfirm, nan(1,posShift)];
                         end
                         whiskingOnset = cell2mat(whiskingOnsetCell);
@@ -281,6 +315,11 @@ for mi = 1 : length(mice)
                         maxDphi = cell2mat(maxDphiCell);
                         maxSlideDistance = cell2mat(maxSlideDistanceCell);
                         maxDuration = cell2mat(maxDurationCell);
+                        thetaAtTouch = cell2mat(thetaAtTouchCell);
+                        phiAtTouch = cell2mat(phiAtTouchCell);
+                        kappaHAtTouch = cell2mat(kappaHAtTouchCell);
+                        kappaVAtTouch = cell2mat(kappaVAtTouchCell);
+                        
                         touchFrameConfirm = cell2mat(touchFrameConfirmCell);
                         
                         %% check validity of whisker touch variable allocation
@@ -330,6 +369,11 @@ for mi = 1 : length(mice)
                         maxDphiMat = zeros(length(pTouchFrame), (posShiftTouch + 1));
                         maxSlideDistanceMat = zeros(length(pTouchFrame), (posShiftTouch + 1));
                         maxDurationMat = zeros(length(pTouchFrame), (posShiftTouch + 1));
+                        thetaAtTouchMat = zeros(length(pTouchFrame), (posShiftTouch + 1));
+                        phiAtTouchMat = zeros(length(pTouchFrame), (posShiftTouch + 1));
+                        kappaHAtTouchMat = zeros(length(pTouchFrame), (posShiftTouch + 1));
+                        kappaVAtTouchMat = zeros(length(pTouchFrame), (posShiftTouch + 1));
+                        touchCountMat = zeros(length(pTouchFrame), (posShiftTouch + 1));
                         for i = 1 : posShiftTouch + 1
                             maxDkappaHMat(:,i) = circshift(maxDkappaH, [0 i-1]);
                             maxDkappaVMat(:,i) = circshift(maxDkappaV, [0 i-1]);
@@ -337,14 +381,23 @@ for mi = 1 : length(mice)
                             maxDphiMat(:,i) = circshift(maxDphi, [0 i-1]);
                             maxSlideDistanceMat(:,i) = circshift(maxSlideDistance, [0 i-1]);
                             maxDurationMat(:,i) = circshift(maxDuration, [0 i-1]);
+                            thetaAtTouchMat(:,i) = circshift(thetaAtTouch, [0 i-1]);
+                            phiAtTouchMat(:,i) = circshift(phiAtTouch, [0 i-1]);
+                            kappaHAtTouchMat(:,i) = circshift(kappaHAtTouch, [0 i-1]);
+                            kappaVAtTouchMat(:,i) = circshift(kappaVAtTouch, [0 i-1]);
+                            touchCountMat(:,i) = circshift(pTouchCount, [0 i-1]);
                         end
+                        maxAbsDkappaVMat = abs(maxDkappaVMat);
+                        maxAbsDphiMat = abs(maxDphiMat);
+                        
                         
                         touchMat = [pTouchFrameMat];
                         soundMat = [scPoleUpMat];
                         drinkMat = drinkAnglesMat;
                         whiskingMat = [whiskingOnsetMat, whiskingAmplitudeMat, whiskingMidpointMat];
                         lickingMat = [lLickMat, rLickMat];
-                        whiskerTouchMat = [maxDkappaHMat, maxDkappaVMat, maxDthetaMat, maxDphiMat, maxSlideDistanceMat, maxDurationMat];
+                        whiskerTouchMat = [maxDkappaHMat, maxDkappaVMat, maxDthetaMat, maxDphiMat, maxSlideDistanceMat, maxDurationMat, ...
+                            thetaAtTouchMat, phiAtTouchMat, kappaHAtTouchMat, kappaVAtTouchMat, touchCountMat];
                         allPredictors{(cgi-1)*4 + plane} = [touchMat, soundMat, drinkMat, whiskingMat, lickingMat, whiskerTouchMat];
                         nani{(cgi-1)*4 + plane} = find(nanstd(allPredictors{(cgi-1)*4 + plane})==0);
                         allPredictorsMean{(cgi-1)*4 + plane} = nanmean(allPredictors{(cgi-1)*4 + plane});
