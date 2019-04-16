@@ -103,4 +103,4 @@ dat.depth.windowAngle = atand(tiltGradUmperpix/xyUmperpix);
 % end
 % saveFn = [suite2pFn, '_final.mat'];
 saveFn = suite2pFn;
-save(saveFn, 'dat', 'spk')
+save(saveFn, 'dat')
