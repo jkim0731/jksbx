@@ -12,10 +12,9 @@
 % roiMatch.gain{i}
 close all
 baseDir = 'D:\TPM\JK\suite2p\';
-% mice = [25,27,30,36,52];
-% sessions = {[4,19],[3,16],[3,21],[1,17],[3,21]}; 
 mice = [25,27,30,36,39,52];
-sessions = {[19,22],[16,17],[21,22],[17,18],[23,24,25], [21,26]};% each first one is the reference session
+sessions = {[4,19,22],[3,16,17],[3,21,22],[1,17,18],[1,23,24],[3,21,26]}; % each second one is the reference session (expert session)
+refSessionInd = 2;
 [optimizer, metric] = imregconfig('monomodal');
 overlapThreshold = 0.1;
 for mi = 1 : length(mice)
@@ -42,36 +41,41 @@ for mi = 1 : length(mice)
         us.mouseName = u.mouseName;
         
 
-        for si = 2 : numSessions
+        for si = 1 : 2 : numSessions
             % assume all # of planes are the same
-            numPlanes = length(us.sessions(1).mimg);
+            numPlanes = length(us.sessions(refSessionInd).mimg);
             
             tform = cell(numPlanes,1);
-            for pi = 1 : numPlanes
-                ref = mat2gray(us.sessions(1).mimg{pi});
-                ref2 = adapthisteq(ref);
+            for pi = 1 : numPlanes                                
+                ref = mat2gray(us.sessions(refSessionInd).mimg{pi});
                 moving = mat2gray(us.sessions(si).mimg{pi});
-                moving2 = adapthisteq(moving);
+                if mouse == 36 && si == 3 && pi <= 2 % special treatment for JK036 S21 VS S22
+                    ref2 = ref;
+                    moving2 = moving;
+                else
+                    ref2 = adapthisteq(ref);
+                    moving2 = adapthisteq(moving);
+                end
                 tform{pi} = imregtform(moving2, ref2, 'rigid', optimizer, metric);
             end
             us.sessions(si).tform = tform;
-            figure
+%             figure
             us.sessions(si).matchedRefCellID = zeros(length(us.sessions(si).cellID),1);
             refCellmap = cell(numPlanes,1);
             movedCellmap = cell(numPlanes,1);
             for pi = 1 : numPlanes
-                refCellmap{pi} = us.sessions(1).cellmap{pi};
+                refCellmap{pi} = us.sessions(refSessionInd).cellmap{pi};
                 movingCellmap = us.sessions(si).cellmap{pi};
                 movedCellmap{pi} = imwarp(movingCellmap, tform{pi}, 'OutputView', imref2d(size(ref)));
-                subplot(3,3,pi)
-                imshowpair(refCellmap{pi}, movedCellmap{pi})
+%                 subplot(3,3,pi)
+%                 imshowpair(refCellmap{pi}, movedCellmap{pi})
                 
                 movCurrInd = find(floor(us.sessions(si).cellID/1000) == pi);
                 movCellID = us.sessions(si).cellID(movCurrInd);
                 matchingID = zeros(length(movCellID),1);
                 
-                refCurrInd = find(floor(us.sessions(1).cellID/1000) == pi);
-                refCellID = us.sessions(1).cellID(refCurrInd);
+                refCurrInd = find(floor(us.sessions(refSessionInd).cellID/1000) == pi);
+                refCellID = us.sessions(refSessionInd).cellID(refCurrInd);
                 
                 overlapMat = zeros(length(movCurrInd), length(refCurrInd));
                 for movi = 1 : length(movCurrInd)
@@ -110,7 +114,7 @@ for mi = 1 : length(mice)
                 us.sessions(si).matchedRefCellID(movCurrInd) = matchingID;
             end
             
-            figure
+%             figure
             for pi = 1 : numPlanes
                 currMovInd = find(floor(us.sessions(si).cellID/1000) == pi);
                 tempRefCellID = us.sessions(si).matchedRefCellID(currMovInd);
@@ -125,11 +129,11 @@ for mi = 1 : length(mice)
                     selectedRef(refCellmap{pi}==tempRefCellID(matchedInd(i))) = 1;
                 end
                 
-                subplot(3,3,pi)
-                imshowpair(selectedRef, selectedMoved)
+%                 subplot(3,3,pi)
+%                 imshowpair(selectedRef, selectedMoved)
             end
         end
-%         save(savefn, 'us')
+        save(savefn, 'us')
     end
     
 end
