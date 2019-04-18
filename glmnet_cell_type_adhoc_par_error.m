@@ -21,16 +21,17 @@ if ~exist('negShift', 'var')
     negShift = 2;
 end
 
-mouse = 39;
-session = 23;
-repeat = 10;
+mouse = 52;
+session = 26;
+repeat = 5;
 restartingNum = 1;
 glmPar = true;
 savefnResult = sprintf('glmResponseType_JK%03dS%02d_m45_R%02d',mouse, session, repeat);
 
-savefnResultRe = [savefnResult, '_03'];
-errorCellSession = [26, 82, 83, 87, 89, 104, 119, 120, 130, 246, 298, 319, 366, 391, 409, 411, 593, 615, 834, 1822]; % JK038 S23
-
+savefnResultRe = [savefnResult, '_02'];
+% errorCellSession = [26, 82, 83, 87, 89, 104, 119, 120, 130, 246, 298, 319, 366, 391, 409, 411, 593, 615, 834, 1822]; % JK039 S23
+% errorCellSession = [139,152, 163,259,453,1726]; % JK039 S24
+errorCellSession = [160]; % JK052 S26
 previousDone = done(find(done));
 
 numCell = length(cIDAll);

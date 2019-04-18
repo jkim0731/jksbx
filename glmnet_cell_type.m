@@ -25,7 +25,7 @@
 %     - pTouchFrames: protraction touch frames (binary)
 %
 %     - pTouchDuration: protraction touch duration within each tpm frame (parameter, in ms)
-
+%
 %       Up to here, have one as all angles and add each angles (total number of predictors: 1 + length(angles)
 %
 %     - scPoleup: pole up sound cue onset (binary)
@@ -56,25 +56,25 @@
 %     - firstRightLick
 %     - lastRightLick
 
-baseDir = 'C:\JK\';
+baseDir = 'D:\JK\suite2p\';
 
 % mice = [25,27,30,36,37,38,39,41,52,53,54,56,70,74,75,76];
 % sessions = {[4,19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3],[6],[4],[4],[4]}; 
-mice = [25,27,30,36,39,52];
-sessions = {[22],[17],[22],[18],[23,24,25],[4,26]};
+mice = [70,74];
+sessions = {[6],[4]};
             repetition = 10;
-            startRepetition = 10;
+            startRepetition = 1;
 % sessions = {[4,19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]};
 % errorCell = {{[],[224]},{[],[]},{[],[]},{[],[]},{[]},{[]},{[1211,1972],[1286]},{[]},{[],[605, 676, 740, 755, 811]},{[]},{[]},{[]}};
 % errorCell = {{[],[]},{[],[]},{[],[]},{[],[]},{[]},{[]},{[2042,2059],[]},{[]},{[],[]},{[]},{[]},{[]}};
 %%
-errorCell = {{[],[]},{[],[]},{[],[]},{[],[]},{[26, 82, 83, 87, 89, 104, 119, 120, 130, 246, 298, 319, 366, 391, 409, 411, 593, 615, 834, 1822], [], []},{[], []},{[],[]},{[]},{[],[]},{[]},{[]},{[]}};
+% errorCell = {{[[139,152,163,259,453,1726]],[]},{[160],[]},{[],[]},{[],[]},{[26, 82, 83, 87, 89, 104, 119, 120, 130, 246, 298, 319, 366, 391, 409, 411, 593, 615, 834, 1822], [], []},{[], []},{[],[]},{[]},{[],[]},{[]},{[]},{[]}};
 %%
 
-% for mi = 5 : length(mice)
-for mi = 5
-%     for si = 1:length(sessions{mi})
-    for si = 1
+for mi = 1 : length(mice)
+% for mi = 2
+    for si = 1:length(sessions{mi})
+%     for si = 1
         errorCellSession = errorCell{mi}{si};
     
         poolobj = gcp('nocreate');
@@ -451,8 +451,6 @@ for mi = 5
                     devianceFullNull = 2*(fullLogLikelihood - nullLogLikelihood);
                     fitDeviance(cellnum) = devianceFullNull;
                     [fitCorrelation(cellnum), fitCorrPval(cellnum)] = corr(spkTest', model);            
-                    dfFullNull = length(coeffInds);                
-                    fitDF(cellnum) = dfFullNull;
                     fitDevExplained(cellnum) = 1 - (saturatedLogLikelihood - fullLogLikelihood)/(saturatedLogLikelihood - nullLogLikelihood);
                     fitCvDev(cellnum) = cv.glmnet_fit.dev(iLambda);
 
