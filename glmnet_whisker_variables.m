@@ -79,10 +79,10 @@
 
 baseDir = 'C:\JK\';
 % 
-% mice = [25,27,30,36,37,38,39,41,52,53,54,56,70,74,75,76];
-% sessions = {[4,19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3],[6],[4],[4],[4]}; 
-mice = [39];
-sessions = {[23]};
+mice = [25,27,30,36,37,38,39,41,52,53,54,56,70,74,75,76];
+sessions = {[4,19],[3,16],[3,21],[1,17],[7],[2],[1,23],[3],[3,21],[3],[3],[3],[6],[4],[4],[4]}; 
+% mice = [39];
+% sessions = {[23]};
             repetition = 10;
             startRepetition = 1;
 % sessions = {[4,19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]};
@@ -396,7 +396,7 @@ for mi = 1 : length(mice)
                         drinkMat = drinkAnglesMat;
                         whiskingMat = [whiskingOnsetMat, whiskingAmplitudeMat, whiskingMidpointMat];
                         lickingMat = [lLickMat, rLickMat];
-                        whiskerTouchMat = [maxDkappaHMat, maxDkappaVMat, maxDthetaMat, maxDphiMat, maxSlideDistanceMat, maxDurationMat, ...
+                        whiskerTouchMat = [maxDkappaHMat, maxDkappaVMat, maxDthetaMat, maxDphiMat, maxSlideDistanceMat, maxDurationMat, maxAbsDkappaVMat, maxAbsDphiMat, ...
                             thetaAtTouchMat, phiAtTouchMat, kappaHAtTouchMat, kappaVAtTouchMat, touchCountMat];
                         allPredictors{(cgi-1)*4 + plane} = [touchMat, soundMat, drinkMat, whiskingMat, lickingMat, whiskerTouchMat];
                         nani{(cgi-1)*4 + plane} = find(nanstd(allPredictors{(cgi-1)*4 + plane})==0);
