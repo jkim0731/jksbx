@@ -50,7 +50,7 @@ classdef Uber_2pad < handle
 %         neuindAnimal = []; % index (number) of neurons observed across sessions 
 % This should be in another array (Uber_2pad_animal array)
 
-        cellDepth = [];
+        cellDepths = [];
         dF = []; % F should be (length(neuind),timepoints), calculated by Fneu - neuropilCoefficient * Fneuropil. dF/F_0.
         tpmTime = []; % each frame has it's own time. plane from top to bottom
         spk = [];
@@ -117,7 +117,7 @@ classdef Uber_2pad < handle
             
             obj.planes = ca.planes;
             obj.neuindSession = ca.cellNums;
-            obj.cellDepth = ca.cellDepth;
+            obj.cellDepths = ca.cellDepths;
             obj.dF = ca.dF;
             obj.spk = ca.spk;
             obj.tpmTime = cell(length(ca.time),1);

@@ -33,8 +33,8 @@ classdef Uber_2padArray < handle
         function obj = Uber_2padArray(bArray,wfArray,caArray)
             obj.mouseName = bArray.mouseName;
             obj.sessionName = bArray.sessionName;
-            obj.cellNums = caArray.cellInd;
-            obj.cellDepths = caArray.cellDepth;
+            obj.cellNums = caArray.cellNums;
+            obj.cellDepths = caArray.cellDepths;
             
             btrialNums = cellfun(@(x) x.trialNum, bArray.trials);            
             wftrialNums = cellfun(@(x) x.trialNum, wfArray.trials);
