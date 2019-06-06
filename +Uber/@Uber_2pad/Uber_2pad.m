@@ -16,6 +16,7 @@ classdef Uber_2pad < handle
         taskTarget = ''; % 'Angle' or 'Distance'
         distractor = ''; % 'On' or 'Off'
         trialType = ''; % rn, ln, rc, rf, lc, lf, ra, la, oo
+        choice = ''; % 'l' for left, 'r' for right, 'm' for miss ('e' for error)
         
         % from WF
         poleMovingTime = []; % in sec
@@ -28,6 +29,7 @@ classdef Uber_2pad < handle
         phi = [];
         kappaH = [];
         kappaV = [];
+        arcLength = [];
         
         protractionTouchChunks = {};
         retractionTouchChunks = {};
@@ -60,6 +62,8 @@ classdef Uber_2pad < handle
         protractionTouchDPhi
         protractionTouchDKappaV
         protractionTouchDKappaH
+        protractionAbsTouchDPhi
+        protractionAbsTouchDKappaV
     end
     
     methods (Access = public)
@@ -90,11 +94,12 @@ classdef Uber_2pad < handle
             obj.taskTarget = b.taskTarget;
             obj.distractor = b.distractor;
             obj.trialType = b.trialType;
+            obj.choice = b.choice;
             
             obj.protractionTouchChunks = wf.protractionTFchunks;
             obj.retractionTouchChunks = wf.retractionTFchunks;
             obj.protractionTouchDuration = wf.protractionTouchDuration;
-            obj.protractionTouchSlideDistance = cellfun(@(x) max(x) - x(1), wf.protractionSlide);
+            obj.protractionTouchSlideDistance = cellfun(@(x) max(x) - x(1), wf.protractionSlide);            
 %             obj.protractionTouchChunksByWhisking = wf.protractionTFchunksByWhisking;
 %             obj.retractionTouchChunksByWhisking = wf.retractionTFchunksByWhisking;
 
@@ -106,6 +111,7 @@ classdef Uber_2pad < handle
             obj.phi = wf.phi;
             obj.kappaH = wf.kappaH;
             obj.kappaV = wf.kappaV;
+            obj.arcLength = wf.arcLength;
             obj.nof = wf.nof;
             obj.frameDuration = wf.framePeriodInSec;
             
@@ -161,8 +167,16 @@ classdef Uber_2pad < handle
             else
                 value = [];
             end
-
         end
+        
+        function value = get.protractionAbsTouchDPhi(obj)
+            value = abs(obj.protractionTouchDPhi);
+        end
+        
+        function value = get.protractionAbsTouchDKappaV(obj)
+            value = abs(obj.protractionTouchDKappaV);
+        end
+        
     end
     
 end

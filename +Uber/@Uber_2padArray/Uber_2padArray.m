@@ -21,6 +21,8 @@ classdef Uber_2padArray < handle
         fovxrange = {};
         fovdepth = {}; 
         pixResolution = [];
+        planeTrialInds = {}; % 1: indices of trials (of u.trials) for plane #1 (1-4)
+                             % 2: indices of trials (of u.trials) for plane #2 (5-8)
     end
     
     properties (Dependent = true)

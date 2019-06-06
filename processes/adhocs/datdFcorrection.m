@@ -1,8 +1,8 @@
 clear
 % mice = [25,27,30,36,37,38,39,41,52,53,54,56, 70,74,75,76];
 % sessions = {[4,19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3], [6],[4],[4],[4]};  
-mice = [52];
-sessions = {[26]};  
+mice = [25,27,30,36,37,38,39,41,52,53,54,56];
+sessions = {[4,19,22],[3,16,17],[3,21,22],[1,17,18],[7],[2],[1,23,24],[3],[3,21,26],[3],[3],[3]};  
 rollingWindowForBaseF = 100; % in s
 baseFprctile = 5;
 baseDir = 'Y:\Whiskernas\JK\suite2p\';
@@ -14,8 +14,8 @@ for mi = 1 : length(mice)
         session = sessions{mi}(si);
     
         fList = dir(sprintf('F_%03d_%03d_plane*_proc_final.mat', mouse, session));
-%         for i = 1 : length(fList)
-        for i = 1
+        for i = 1 : length(fList)
+%         for i = 1
             fprintf('mouse %03d session %d plane %d\n', mouse, session, i)
             load(fList(i).name)
             dat.rollingWindowForBaseF = rollingWindowForBaseF;
@@ -50,8 +50,8 @@ end
 clear
 % mice = [25,27,30,36,37,38,39,41,52,53,54,56, 70,74,75,76];
 % sessions = {[4,19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3], [6],[4],[4],[4]};  
-mice = [52];
-sessions = {[26]};  
+mice = [25,27,30,36,37,38,39,41,52,53,54,56];
+sessions = {[4,19,22],[3,16,17],[3,21,22],[1,17,18],[7],[2],[1,23,24],[3],[3,21,26],[3],[3],[3]};
 
 stdwindow = 5;
 lowerprct = 5; % 5th percentile
@@ -65,8 +65,8 @@ for mi = 1 : length(mice)
         session = sessions{mi}(si);
 
         fList = dir(sprintf('F_%03d_%03d_plane*_proc_final.mat', mouse, session));
-%         for i = 1 : length(fList)
-        for i = 1
+        for i = 1 : length(fList)
+%         for i = 1
             fprintf('mouse %03d session %d plane %d\n', mouse, session, i)
             load(fList(i).name) % loading dat
             frameNum = round(dat.ops.imageRate/dat.ops.num_plane);
