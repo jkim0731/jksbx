@@ -81,24 +81,24 @@
 % phiAtTouch
 % touchCounts
 
-baseDir = 'C:\JK\';
+baseDir = 'D:\JK\suite2p\';
 
 mice = [25,27,30,36,37,38,39,41,52,53,54,56];
 sessions = {[4,19],[3,10],[3,21],[1,17],[7],[2],[1,23],[3],[3,21],[3],[3],[3]}; 
 % mice = [37,41,75,76];
 % sessions = {[7],[3],[4],[4]}; 
             repetition = 10;
-            startRepetition = 1;
+            startRepetition = 2;
 % sessions = {[4,19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]};
 % errorCell = {{[],[224]},{[],[]},{[],[]},{[],[]},{[]},{[]},{[1211,1972],[1286]},{[]},{[],[605, 676, 740, 755, 811]},{[]},{[]},{[]}};
 % errorCell = {{[],[]},{[],[]},{[],[]},{[],[]},{[]},{[]},{[2042,2059],[]},{[]},{[],[]},{[]},{[]},{[]}};
 errorCell = {{[],[]},{[],[]},{[],[]},{[],[]},{[]},{[]},{[],[]},{[]},{[],[]},{[]},{[]},{[]},{[]},{[]},{[]},{[]}};
 %%
 
-for mi = 1 : length(mice)
-% for mi = 1
-    for si = 1:length(sessions{mi})
-%     for si = 1
+% for mi = 1 : length(mice)
+for mi = 10
+%     for si = 1:length(sessions{mi})
+    for si = 1
         errorCellSession = errorCell{mi}{si};
     
         poolobj = gcp('nocreate');
