@@ -1,10 +1,11 @@
-% save(savefnResultRe, 'fit*', 'allPredictors', '*InputMat', 'indPartial', '*Group', '*Tn', 'lambdaCV', '*Opt', 'done', '*Re', 'remainingCell', 'pThreshold*', '*Shift');
-
-%%
+% % save(savefnResultRe, 'fit*', 'allPredictors', '*InputMat', 'indPartial', '*Group', '*Tn', 'lambdaCV', '*Opt', 'done', '*Re', 'remainingCell', 'pThreshold*', '*Shift');
+% 
+% %%
 % myCluster = parcluster('local');
 % delete(myCluster.Jobs)
 % clear myCluster
-% parpool(20, 'SpmdEnabled', true);
+% %%
+% parpool(36, 'SpmdEnabled', true);
 %%
 
 poolobj = gcp('nocreate');
@@ -26,15 +27,15 @@ if ~exist('negShift', 'var')
     negShift = 2;
 end
 
-mouse = 53;
-session = 3;
+mouse = 39;
+session = 1;
 repeat = 1;
 restartingNum = 1;
-glmPar = false;
+glmPar = true;
 % savefnResult = sprintf('glmResponseType_JK%03dS%02d_m45_R%02d',mouse, session, repeat);
 savefnResult = sprintf('glmWhiskerTouchVariablesONLYlasso_JK%03dS%02d_R%02d',mouse, session,ri); % m(n) meaining method(n)
 
-savefnResultRe = [savefnResult, '_02'];
+savefnResultRe = [savefnResult, '_01'];
 % errorCellSession = [26, 82, 83, 87, 89, 104, 119, 120, 130, 246, 298, 319, 366, 391, 409, 411, 593, 615, 834, 1822]; % JK039 S23
 % errorCellSession = [139,152, 163,259,453,1726]; % JK039 S24
 % errorCellSession = [160]; % JK052 S26
@@ -193,10 +194,10 @@ if glmPar
                 devianceFullNull = 2*(fullLogLikelihood - nullLogLikelihood);
                 fitDevExplainedRe(cellnumInd) = 1 - (saturatedLogLikelihood - fullLogLikelihood)/(saturatedLogLikelihood - nullLogLikelihood);
                 fitCvDevRe(cellnumInd) = cv.glmnet_fit.dev(iLambda);
-                cellTimeRe(cellnumInd) = toc(cellTimeStart);
                 
-                doneRe(cellnumInd) = cellnum;
             end
+            cellTimeRe(cellnumInd) = toc(cellTimeStart);                
+            doneRe(cellnumInd) = cellnum;
         end
     end % end of for cellnum
 else
