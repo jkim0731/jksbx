@@ -21,17 +21,20 @@ if ~exist('negShift', 'var')
     negShift = 2;
 end
 
-mouse = 52;
-session = 26;
-repeat = 5;
+mouse = 39;
+session = 23;
+repeat = 1;
 restartingNum = 1;
 glmPar = true;
-savefnResult = sprintf('glmResponseType_JK%03dS%02d_m45_R%02d',mouse, session, repeat);
+savefnResult = sprintf('glmResponseType_JK%03dS%02d_m44_R%02d',mouse, session, repeat);
 
 savefnResultRe = [savefnResult, '_02'];
-% errorCellSession = [26, 82, 83, 87, 89, 104, 119, 120, 130, 246, 298, 319, 366, 391, 409, 411, 593, 615, 834, 1822]; % JK039 S23
+errorCellSession = [12,26,35,73,78,79,83,87,89,93,98,108:110,112:117,119,123,130,132,133,139,141:143,145,148,150:153,164,170:172,176,177,179,181,185,190,201,205,206,211,212,219,231,233,...
+    246, 264, 298, 319, 366, 391, 409, 411, 593, 615, 834, 1822]; % JK039 S23.including low firing cell
 % errorCellSession = [139,152, 163,259,453,1726]; % JK039 S24
-errorCellSession = [160]; % JK052 S26
+% errorCellSession = [160]; % JK052 S26
+
+
 previousDone = done(find(done));
 
 numCell = length(cIDAll);
@@ -339,7 +342,7 @@ save(savefnResultRe, 'fit*', 'allPredictors', 'indPartial', '*Group', 'testTn', 
 
 
 %%
-% myCluster = parcluster('local');
-% delete(myCluster.Jobs)
-% clear myCluster
-% parpool(34, 'SpmdEnabled', true);
+myCluster = parcluster('local');
+delete(myCluster.Jobs)
+clear myCluster
+parpool(5, 'SpmdEnabled', true);

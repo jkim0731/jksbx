@@ -56,17 +56,17 @@
 %     - firstRightLick
 %     - lastRightLick
 
-baseDir = 'D:\JK\suite2p\';
+baseDir = 'C:\JK\';
 
 % mice = [25,27,30,36,37,38,39,41,52,53,54,56,70,74,75,76];
 % sessions = {[4,19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3],[6],[4],[4],[4]}; 
-mice = [70,74];
-sessions = {[6],[4]};
+mice = [39];
+sessions = {[23]};
             repetition = 10;
-            startRepetition = 1;
+            startRepetition = 7;
 % sessions = {[4,19],[3,16],[3,21],[1,17],[7],[2],[1,22],[3],[3,21],[3],[3],[3]};
 % errorCell = {{[],[224]},{[],[]},{[],[]},{[],[]},{[]},{[]},{[1211,1972],[1286]},{[]},{[],[605, 676, 740, 755, 811]},{[]},{[]},{[]}};
-% errorCell = {{[],[]},{[],[]},{[],[]},{[],[]},{[]},{[]},{[2042,2059],[]},{[]},{[],[]},{[]},{[]},{[]}};
+errorCell = {{[],[]},{[],[]},{[],[]},{[],[]},{[]},{[]},{[2042,2059],[]},{[]},{[],[]},{[]},{[]},{[]}};
 %%
 % errorCell = {{[[139,152,163,259,453,1726]],[]},{[160],[]},{[],[]},{[],[]},{[26, 82, 83, 87, 89, 104, 119, 120, 130, 246, 298, 319, 366, 391, 409, 411, 593, 615, 834, 1822], [], []},{[], []},{[],[]},{[]},{[],[]},{[]},{[]},{[]}};
 %%
@@ -98,7 +98,7 @@ for mi = 1 : length(mice)
 
         glmnetOpt = glmnetSet;
         glmnetOpt.standardize = 0; % do the standardization at the level of predictors, including both training and test
-        glmnetOpt.alpha = 0;
+        glmnetOpt.alpha = 0.95;
         
         partialGlmOpt = glmnetOpt;
         partialGlmOpt.alpha = 0;
@@ -114,7 +114,7 @@ for mi = 1 : length(mice)
 %         end
         frameRate = u.frameRate;
 
-        savefnResult = sprintf('glmResponseType_JK%03dS%02d_m45',mouse, session); % m(n) meaining method(n)
+        savefnResult = sprintf('glmResponseType_JK%03dS%02d_m44',mouse, session); % m(n) meaining method(n)
 
 
         for ri = startRepetition : repetition % repetition index

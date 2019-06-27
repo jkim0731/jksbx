@@ -1,5 +1,5 @@
-% % save(savefnResultRe, 'fit*', 'allPredictors', '*InputMat', 'indPartial', '*Group', '*Tn', 'lambdaCV', '*Opt', 'done', '*Re', 'remainingCell', 'pThreshold*', '*Shift');
-% 
+% % % save(savefnResultRe, 'fit*', 'allPredictors', '*InputMat', 'indPartial', '*Group', '*Tn', 'lambdaCV', '*Opt', 'done', '*Re', 'remainingCell', 'pThreshold*', '*Shift');
+% % 
 % %%
 % myCluster = parcluster('local');
 % delete(myCluster.Jobs)
@@ -27,19 +27,19 @@ if ~exist('negShift', 'var')
     negShift = 2;
 end
 
-mouse = 39;
-session = 1;
-repeat = 1;
+mouse = 41;
+session = 3;
+repeat = 8;
 restartingNum = 1;
-glmPar = true;
+glmPar = false;
 % savefnResult = sprintf('glmResponseType_JK%03dS%02d_m45_R%02d',mouse, session, repeat);
-savefnResult = sprintf('glmWhiskerTouchVariablesONLYlasso_JK%03dS%02d_R%02d',mouse, session,ri); % m(n) meaining method(n)
+savefnResult = sprintf('glmWhiskerTouchVariablesONLYlasso_JK%03dS%02d_R%02d',mouse, session,repeat); % m(n) meaining method(n)
 
-savefnResultRe = [savefnResult, '_01'];
+savefnResultRe = [savefnResult, '_02'];
 % errorCellSession = [26, 82, 83, 87, 89, 104, 119, 120, 130, 246, 298, 319, 366, 391, 409, 411, 593, 615, 834, 1822]; % JK039 S23
 % errorCellSession = [139,152, 163,259,453,1726]; % JK039 S24
 % errorCellSession = [160]; % JK052 S26
-
+errorCellSession = []; % JK052 S03
 previousDone = done(find(done));
 
 numCell = length(cIDAll);
