@@ -4,6 +4,8 @@ mouseName = sprintf('JK%03d', mouse);
 sessionName = sprintf('S%02d',session);
 caSessionName = sprintf('%03d',session);
 
+fprintf('Processing %s %s\n', mouseName, sessionName)
+
 savefn = sprintf('Uber%s%s.mat',mouseName, sessionName); 
 
 bDirBase = 'Y:\Whiskernas\JK\SoloData\';
@@ -15,10 +17,10 @@ wDirBase = 'Y:\Whiskernas\JK\whisker\tracked\';
 wDir = [wDirBase, mouseName, sessionName];
 
 caDirBase = 'Y:\Whiskernas\JK\suite2p\';
-% caDirBase = 'C:\Data\suite2p\';
+% caDirBase = 'D:\TPM\JK\suite2p\';
 caDir = sprintf('%s%03d\\',caDirBase, mouse);
 
-cd(caDir)
+% cd(caDir)
 % if exist(savefn, 'file')
 %     load(savefn)
 % else

@@ -34,10 +34,12 @@ classdef Uber_2pad < handle
         protractionTouchChunks = {};
         retractionTouchChunks = {};
         protractionTouchDuration = [];
-        protractionTouchSlideDistance = [];
+        protractionTouchSlideDistance = []; % in mm, inherited from wf, in turn from wl
         
-%         protractionTouchChunksByWhisking = {};
-%         retractionTouchChunksByWhisking = {};
+        protractionTouchChunksByWhisking = {};
+        retractionTouchChunksByWhisking = {};
+        protractionTouchDurationByWhisking = [];
+        protractionTouchSlideDistanceByWhisking = [];
         
         % from two-photon data
         planes = []; % 1:4 or 5:8 (for now, 2018/04/01)
@@ -50,7 +52,6 @@ classdef Uber_2pad < handle
 %         neuindAnimal = []; % index (number) of neurons observed across sessions 
 % This should be in another array (Uber_2pad_animal array)
 
-        cellDepths = [];
         dF = []; % F should be (length(neuind),timepoints), calculated by Fneu - neuropilCoefficient * Fneuropil. dF/F_0.
         tpmTime = []; % each frame has it's own time. plane from top to bottom
         spk = [];
@@ -64,6 +65,15 @@ classdef Uber_2pad < handle
         protractionTouchDKappaH
         protractionAbsTouchDPhi
         protractionAbsTouchDKappaV
+        protractionTouchOnsetFrames
+        
+        protractionTouchDThetaByWhisking
+        protractionTouchDPhiByWhisking
+        protractionTouchDKappaVByWhisking
+        protractionTouchDKappaHByWhisking
+        protractionAbsTouchDPhiByWhisking
+        protractionAbsTouchDKappaVByWhisking
+        protractionTouchOnsetFramesByWhisking
     end
     
     methods (Access = public)
@@ -100,9 +110,11 @@ classdef Uber_2pad < handle
             obj.retractionTouchChunks = wf.retractionTFchunks;
             obj.protractionTouchDuration = wf.protractionTouchDuration;
             obj.protractionTouchSlideDistance = cellfun(@(x) max(x) - x(1), wf.protractionSlide);            
-%             obj.protractionTouchChunksByWhisking = wf.protractionTFchunksByWhisking;
-%             obj.retractionTouchChunksByWhisking = wf.retractionTFchunksByWhisking;
-
+            
+            obj.protractionTouchChunksByWhisking = wf.protractionTFchunksByWhisking;
+            obj.retractionTouchChunksByWhisking = wf.retractionTFchunksByWhisking;
+            obj.protractionTouchDurationByWhisking = wf.protractionTouchDurationByWhisking;
+            obj.protractionTouchSlideDistanceByWhisking = cellfun(@(x) max(x) - x(1), wf.protractionSlideByWhisking);
             
             obj.poleMovingTime = (wf.poleMovingFrames-1)*wf.framePeriodInSec;
             obj.poleUpTime = (wf.poleUpFrames-1)*wf.framePeriodInSec;
@@ -117,7 +129,6 @@ classdef Uber_2pad < handle
             
             obj.planes = ca.planes;
             obj.neuindSession = ca.cellNums;
-            obj.cellDepths = ca.cellDepths;
             obj.dF = ca.dF;
             obj.spk = ca.spk;
             obj.tpmTime = cell(length(ca.time),1);
@@ -175,6 +186,67 @@ classdef Uber_2pad < handle
         
         function value = get.protractionAbsTouchDKappaV(obj)
             value = abs(obj.protractionTouchDKappaV);
+        end
+        
+        function value = get.protractionTouchOnsetFrames(obj)
+            value = cell(length(obj.tpmTime),1);
+            for i = 1 : length(obj.tpmTime)
+                value{i} = cellfun(@(x) find(obj.tpmTime{i} > obj.whiskerTime(x(1)), 1), obj.protractionTouchChunks);
+            end
+        end
+        
+        
+        function value = get.protractionTouchDThetaByWhisking(obj)
+            value = cellfun(@(x) max(obj.theta(x)) - obj.theta(x(1)), obj.protractionTouchChunksByWhisking);
+        end
+        function value = get.protractionTouchDPhiByWhisking(obj)
+            if ~isempty(obj.protractionTouchChunksByWhisking)
+                value = zeros(1, length(obj.protractionTouchChunksByWhisking));                
+                for i = 1 : length(value)
+                    [~, maxInd] = max(abs(obj.phi(obj.protractionTouchChunksByWhisking{i}) - obj.phi(obj.protractionTouchChunksByWhisking{i}(1))));
+                    value(i) = obj.phi(obj.protractionTouchChunksByWhisking{i}(maxInd)) - obj.phi(obj.protractionTouchChunksByWhisking{i}(1));
+                end
+            else
+                value = [];
+            end
+        end
+        function value = get.protractionTouchDKappaVByWhisking(obj)
+            if ~isempty(obj.protractionTouchChunksByWhisking)
+                value = zeros(1, length(obj.protractionTouchChunksByWhisking));                
+                for i = 1 : length(value)
+                    [~, maxInd] = max(abs(obj.kappaV(obj.protractionTouchChunksByWhisking{i}) - obj.kappaV(obj.protractionTouchChunksByWhisking{i}(1))));
+                    value(i) = obj.kappaV(obj.protractionTouchChunksByWhisking{i}(maxInd)) - obj.kappaV(obj.protractionTouchChunksByWhisking{i}(1));
+                end
+            else
+                value = [];
+            end
+
+        end
+        function value = get.protractionTouchDKappaHByWhisking(obj)
+            if ~isempty(obj.protractionTouchChunksByWhisking)
+                value = zeros(1, length(obj.protractionTouchChunksByWhisking));                
+                for i = 1 : length(value)
+                    [~, maxInd] = max(abs(obj.kappaH(obj.protractionTouchChunksByWhisking{i}) - obj.kappaH(obj.protractionTouchChunksByWhisking{i}(1))));
+                    value(i) = obj.kappaH(obj.protractionTouchChunksByWhisking{i}(maxInd)) - obj.kappaH(obj.protractionTouchChunksByWhisking{i}(1));
+                end
+            else
+                value = [];
+            end
+        end
+        
+        function value = get.protractionAbsTouchDPhiByWhisking(obj)
+            value = abs(obj.protractionTouchDPhiByWhisking);
+        end
+        
+        function value = get.protractionAbsTouchDKappaVByWhisking(obj)
+            value = abs(obj.protractionTouchDKappaVByWhisking);
+        end
+        
+        function value = get.protractionTouchOnsetFramesByWhisking(obj)
+            value = cell(length(obj.tpmTime),1);
+            for i = 1 : length(obj.tpmTime)
+                value{i} = cellfun(@(x) find(obj.tpmTime{i} > obj.whiskerTime(x(1)), 1), obj.protractionTouchChunksByWhisking);
+            end
         end
         
     end

@@ -63,16 +63,32 @@ classdef CalciumDataArray < handle
             fnlist = dir(['F_', mouseName, '_', sessionName, '_plane*_proc_final_spikes.mat']);
             for i = 1 : length(fnlist)
                 load(fnlist(i).name);
-               
-                obj.mimg{i} = dat.ops.mimg1;
-                obj.cellmap{i} = zeros(size(dat.ops.mimg1),'single');
+                %
+                %
+                %
+                %
+
+                if strcmp(mouseName, '027') && (strcmp(sessionName, '009') || strcmp(sessionName, '010'))
+                    pi = i + 4; % only for JK027 S09 and S10
+                else
+                    pi = i; % all otherwise (the ones with both layers imaged)
+                end
+                %
+                %
+                %
+                %
+                %
+                %
+                
+                obj.mimg{pi} = dat.ops.mimg1;
+                obj.cellmap{pi} = zeros(size(dat.ops.mimg1),'single');
                 tempCellmap = zeros([length(dat.ops.yrange), length(dat.ops.xrange)],'single');
                 
                 inds = find([dat.stat.iscell]);
                 for j = 1 : length(inds)
-                    fprintf('processing cells %d/%d of plane #%d\n', j, length(inds),i)
-                    tempCellmap(dat.stat(inds(j)).ipix) = j + i*1000;
-                    obj.cellNums(end+1) = j + i*1000;
+                    fprintf('processing cells %d/%d of plane #%d\n', j, length(inds),pi)
+                    tempCellmap(dat.stat(inds(j)).ipix) = j + pi*1000;
+                    obj.cellNums(end+1) = j + pi*1000;
                     if isfield(dat.stat,'depth')
                         obj.cellDepths(end+1) = round(dat.stat(inds(j)).depth);
                     end
@@ -83,23 +99,23 @@ classdef CalciumDataArray < handle
                     obj.spk{end+1} = spk.n(j,:);
                     obj.noise(end+1) = dat.noise(j);
                     obj.npcoeff(end+1) = dat.npcoeffs(j);
-                    if i <= dat.ops.num_plane
-                        cellNums{1} = [cellNums{1}, j + i*1000];
+                    if pi <= dat.ops.num_plane
+                        cellNums{1} = [cellNums{1}, j + pi*1000];
                         if isfield(dat.stat,'depth')
                             cellDepths{1} = [cellDepths{1}, dat.stat(inds(j)).depth];
                         end
                     else
-                        cellNums{2} = [cellNums{2}, j + i*1000];
+                        cellNums{2} = [cellNums{2}, j + pi*1000];
                         if isfield(dat.stat,'depth')
                             cellDepths{2} = [cellDepths{2}, dat.stat(inds(j)).depth];
                         end
                     end
                 end
-                obj.cellmap{i}(dat.ops.yrange,dat.ops.xrange) = tempCellmap;
-                obj.fovyrange{i} = dat.ops.useY(dat.ops.yrange);
-                obj.fovxrange{i} = dat.ops.useX(dat.ops.xrange);
+                obj.cellmap{pi}(dat.ops.yrange,dat.ops.xrange) = tempCellmap;
+                obj.fovyrange{pi} = dat.ops.useY(dat.ops.yrange);
+                obj.fovxrange{pi} = dat.ops.useX(dat.ops.xrange);
                 if isfield(dat.stat,'depth')
-                    obj.fovdepth{i} = dat.depth.FOV;
+                    obj.fovdepth{pi} = dat.depth.FOV;
                 end
             end
             

@@ -21,7 +21,10 @@ draw_C2('076_999_001')
 
 % sorting, it's included in datadFcorrection
 
-% datdFcorrection
+datdFcorrection
 
-%% then, spike deconvolution
-% mlspike_on_suite2p
+% then, spike deconvolution
+mlspike_on_suite2p
+
+%% aligning FOVs
+

@@ -12,8 +12,10 @@
 % roiMatch.gain{i}
 close all
 baseDir = 'D:\TPM\JK\suite2p\';
-mice = [25,27,30,36,39,52];
-sessions = {[4,19,22],[3,16,17],[3,21,22],[1,17,18],[1,23,24],[3,21,26]}; % each second one is the reference session (expert session)
+% mice = [25,27,30,36,39,52];
+% sessions = {[4,19,22],[3,16,17],[3,21,22],[1,17,18],[1,23,24],[3,21,26]}; % each second one is the reference session (expert session)
+mice = 27;
+sessions = {[3,8,14]}; % each second one is the reference session (expert session)
 refSessionInd = 2;
 [optimizer, metric] = imregconfig('monomodal');
 overlapThreshold = 0.1;
@@ -24,7 +26,7 @@ for mi = 1 : length(mice)
     
     numSessions = length(sessions{mi}); % including ref session
     if numSessions > 1
-        savefn = sprintf('cellIDmatch_JK%03d',mouse);
+        savefn = sprintf('cellIDmatchTest_JK%03d',mouse);
         us = struct;    
         for si = 1 : numSessions
             session = sessions{mi}(si);
@@ -67,8 +69,8 @@ for mi = 1 : length(mice)
                 refCellmap{pi} = us.sessions(refSessionInd).cellmap{pi};
                 movingCellmap = us.sessions(si).cellmap{pi};
                 movedCellmap{pi} = imwarp(movingCellmap, tform{pi}, 'OutputView', imref2d(size(ref)));
-%                 subplot(3,3,pi)
-%                 imshowpair(refCellmap{pi}, movedCellmap{pi})
+                subplot(3,3,pi)
+                imshowpair(refCellmap{pi}, movedCellmap{pi})
                 
                 movCurrInd = find(floor(us.sessions(si).cellID/1000) == pi);
                 movCellID = us.sessions(si).cellID(movCurrInd);
@@ -114,7 +116,7 @@ for mi = 1 : length(mice)
                 us.sessions(si).matchedRefCellID(movCurrInd) = matchingID;
             end
             
-%             figure
+            figure
             for pi = 1 : numPlanes
                 currMovInd = find(floor(us.sessions(si).cellID/1000) == pi);
                 tempRefCellID = us.sessions(si).matchedRefCellID(currMovInd);
@@ -129,8 +131,8 @@ for mi = 1 : length(mice)
                     selectedRef(refCellmap{pi}==tempRefCellID(matchedInd(i))) = 1;
                 end
                 
-%                 subplot(3,3,pi)
-%                 imshowpair(selectedRef, selectedMoved)
+                subplot(3,3,pi)
+                imshowpair(selectedRef, selectedMoved)
             end
         end
         save(savefn, 'us')

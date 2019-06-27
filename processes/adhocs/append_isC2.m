@@ -5,10 +5,11 @@ clear
 
 % mice = [70, 74,75,76];
 % sessions = {[4], [4],[4],[4]};  
-mice = [52];
-sessions = {[26]};  
+mice = [27];
+sessions = {[9,10]};  
 
-baseD = 'Y:\Whiskernas\JK\suite2p\';
+% baseD = 'Y:\Whiskernas\JK\suite2p\';
+baseD = 'D:\TPM\JK\suite2p\';
 for mi = 1 : length(mice)
     mouse = mice(mi);
     cd(sprintf('%s%03d',baseD,mouse));

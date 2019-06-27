@@ -5,7 +5,7 @@
 i = 0;
 
 i = i+1;
-db(i).fn            = '025_005_000'; % JK sbx 
+db(i).fn            = '027_005_000'; % JK sbx 
 db(i).mouse_name    = '025';
 db(i).RootDir       = ['D:\TPM\JK\', db(i).mouse_name]; 
 db(i).optotune      = [1:8];
