@@ -59,7 +59,7 @@
 baseDir = 'D:\JK\suite2p\';
 
 mice = [25,27,30,36,37,38,39,41,52,53,54,56,70,74,75,76];
-sessions = {[4,19],[3],[3,21],[1,17],[7],[2],[1],[3],[3,21],[3],[3],[3],[6],[4],[4],[4]}; 
+sessions = {[4,19,22],[3,10,17],[3,21,22],[1,17,18],[7],[2],[1,23,24],[3],[3,21,26],[3],[3],[3],[6],[4],[4],[4]}; 
 % mice = [39];
 % sessions = {[23]};
             repetition = 10;
@@ -85,21 +85,17 @@ for mi = 1 : length(mice)
         
         posShiftTouch = 2;
         posShiftSound = 3;
-        posShiftReward = 3;
+        posShiftReward = 4;
         posShiftWhisking = 4;
         posShiftLicking = 1;
         posShift = 4; % maximum posShift
         negShift = 2;
         testPortion = 0.3; % 30 % test set
         pThresholdNull = 0.05;
-%         lickBoutInterval = 1; % licks separated by 1 s regarded as different licking bouts
 
         glmnetOpt = glmnetSet;
         glmnetOpt.standardize = 0; % do the standardization at the level of predictors, including both training and test
         glmnetOpt.alpha = 0.95;
-        
-        partialGlmOpt = glmnetOpt;
-        partialGlmOpt.alpha = 0;
         lambdaCV = 5; % cross-validation fold number
 
         dn = sprintf('%s%03d',baseDir,mouse);
@@ -108,7 +104,7 @@ for mi = 1 : length(mice)
             load(ufn)
         frameRate = u.frameRate;
 
-        savefnResult = sprintf('glmResponseType_JK%03dS%02d_m44',mouse, session); % m(n) meaining method(n)
+        savefnResult = sprintf('glmResponseType_JK%03dS%02d_lasso',mouse, session); % m(n) meaining method(n)
 
         for ri = startRepetition : repetition % repetition index
             %% divide into training set and test set (70%, 30%)
@@ -165,14 +161,8 @@ for mi = 1 : length(mice)
                     end
                     pTouchFrameAngles{end} = pTouchFrame;
                     scPoleup = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.poleUpOnsetTime, [0, x.tpmTime{plane}]), nan(1,posShift)], u.trials(tind)','uniformoutput',false));
-                    drink = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.drinkingOnsetTime:0.03:x.drinkingOnsetTime+1, [0, x.tpmTime{plane}]), nan(1,posShift)], u.trials(tind)','uniformoutput',false));
-                    drink(drink>0) = 1;
-                    drinkAngles = cell(length(angles)+1,1);
-                    for ai = 1 : length(angles)
-                        tempAngleBinary = cell2mat(cellfun(@(x) ones(length(x.tpmTime{plane}) + 2 * posShift, 1) * (x.angle == angles(ai)), u.trials(tind), 'uniformoutput', false));
-                        drinkAngles{ai} = drink .* tempAngleBinary';
-                    end
-                    drinkAngles{end} = drink;
+                    drinkL = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.drinkingOnsetTime, [0, x.tpmTime{plane}]) * strcmp(x.choice, 'l'), nan(1,posShift)], u.trials(tind)','uniformoutput',false));
+                    drinkR = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.drinkingOnsetTime, [0, x.tpmTime{plane}]) * strcmp(x.choice, 'r'), nan(1,posShift)], u.trials(tind)','uniformoutput',false));
                     lLick = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.leftLickTime, [0, x.tpmTime{plane}]), nan(1,posShift)], u.trials(tind)','uniformoutput',false));
                     rLick = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(x.rightLickTime, [0, x.tpmTime{plane}]), nan(1,posShift)], u.trials(tind)','uniformoutput',false));
 
@@ -215,7 +205,8 @@ for mi = 1 : length(mice)
                     pTouchFrameMat = zeros(length(pTouchFrame), (posShiftTouch + 1) * (length(angles)+1));
 
                     scPoleUpMat = zeros(length(scPoleup), posShiftSound + 1);
-                    drinkAnglesMat = zeros(length(drink), (posShiftReward + 1) * (length(angles)+1));
+                    drinkLMat = zeros(length(drinkL), posShiftReward + 1);
+                    drinkRMat = zeros(length(drinkR), posShiftReward + 1);
                     for i = 1 : posShiftTouch + 1
                         for ai = 1 : length(angles) + 1
                             pTouchFrameMat(:,(i-1)*(length(angles)+1) + ai) = circshift(pTouchFrameAngles{ai}, [0 i-1])';
@@ -225,9 +216,8 @@ for mi = 1 : length(mice)
                         scPoleUpMat(:,i) = circshift(scPoleup, [0 i-1])';
                     end
                     for i = 1 : posShiftReward + 1
-                        for ai = 1 : length(angles) + 1
-                            drinkAnglesMat(:,(i-1)*(length(angles)+1) + ai) = circshift(drinkAngles{ai}, [0 i-1])';
-                        end                                
+                        drinkLMat(:,i) = circshift(drinkL, [0 i-1])';
+                        drinkRMat(:,i) = circshift(drinkR, [0 i-1])';
                     end
 
                     whiskingOnsetMat = zeros(length(whiskingOnset), negShift + posShiftWhisking + 1);
@@ -250,7 +240,7 @@ for mi = 1 : length(mice)
 
                     touchMat = [pTouchFrameMat];
                     soundMat = [scPoleUpMat];
-                    drinkMat = drinkAnglesMat;
+                    drinkMat = [drinkLMat, drinkRMat];
                     whiskingMat = [whiskingOnsetMat, whiskingAmplitudeMat, whiskingMidpointMat];
                     lickingMat = [lLickMat, rLickMat];
                     allPredictors{(cgi-1)*4 + plane} = [touchMat, soundMat, drinkMat, whiskingMat, lickingMat];
@@ -376,7 +366,7 @@ for mi = 1 : length(mice)
                         trainingPredictorInd = cell2mat(cellfun(@(x) (ones(1,length(x.tpmTime{plane})+posShift*2)) * ismember(x.trialNum, tempTrainingTn), u.trials(tindCell)','uniformoutput',false));
                         testPredictorInd = cell2mat(cellfun(@(x) (ones(1,length(x.tpmTime{plane})+posShift*2)) * ismember(x.trialNum, tempTestTn), u.trials(tindCell)','uniformoutput',false));
 
-                        if (trainingPredictorInd .* testPredictorInd)
+                        if sum(trainingPredictorInd .* testPredictorInd)
                             error('Intersection between trainingPredictorInd and testPredictorInd')
                         elseif sum(trainingPredictorInd + testPredictorInd) ~= size(allPredictors{planeInd},1)
                             error('Number of total frames mismatch')

@@ -23,7 +23,7 @@ end
 
 mouse = 39;
 session = 23;
-repeat = 1;
+repeat = 10;
 restartingNum = 1;
 glmPar = true;
 savefnResult = sprintf('glmResponseType_JK%03dS%02d_m44_R%02d',mouse, session, repeat);
@@ -345,4 +345,4 @@ save(savefnResultRe, 'fit*', 'allPredictors', 'indPartial', '*Group', 'testTn', 
 myCluster = parcluster('local');
 delete(myCluster.Jobs)
 clear myCluster
-parpool(5, 'SpmdEnabled', true);
+parpool(24, 'SpmdEnabled', true);
