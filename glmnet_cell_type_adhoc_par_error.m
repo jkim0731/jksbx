@@ -21,19 +21,15 @@ if ~exist('negShift', 'var')
     negShift = 2;
 end
 
-mouse = 39;
-session = 23;
-repeat = 10;
+mouse = 25;
+session = 4;
+repeat = 1;
 restartingNum = 1;
-glmPar = true;
-savefnResult = sprintf('glmResponseType_JK%03dS%02d_m44_R%02d',mouse, session, repeat);
+glmPar = false;
+savefnResult = sprintf('glmResponseType_JK%03dS%02d_lasso_R%02d',mouse, session, repeat);
 
 savefnResultRe = [savefnResult, '_02'];
-errorCellSession = [12,26,35,73,78,79,83,87,89,93,98,108:110,112:117,119,123,130,132,133,139,141:143,145,148,150:153,164,170:172,176,177,179,181,185,190,201,205,206,211,212,219,231,233,...
-    246, 264, 298, 319, 366, 391, 409, 411, 593, 615, 834, 1822]; % JK039 S23.including low firing cell
-% errorCellSession = [139,152, 163,259,453,1726]; % JK039 S24
-% errorCellSession = [160]; % JK052 S26
-
+% errorCellSession = [92]; % JK025 S04
 
 previousDone = done(find(done));
 
@@ -44,7 +40,8 @@ remainingCell = setdiff(1 : numCell, previousDone);
 startedRe = zeros(length(remainingCell),1);
 fitLambdaRe = zeros(length(remainingCell),1);
 fitCoeffsRe = cell(length(remainingCell),1);
-fitDevExplainedRe = zeros(length(remainingCell),1);
+fitDevianceRe = nan(length(remainingCell),1);
+fitDevExplainedRe = nan(length(remainingCell),1);
 ratioIndRe = zeros(length(remainingCell),1);
 ratioiRe = zeros(length(remainingCell),1);
 testTnRe = cell(length(remainingCell),1);
@@ -187,6 +184,7 @@ if glmPar
                 fullLogLikelihood = sum(log(poisspdf(spkTest',model)));
                 saturatedLogLikelihood = sum(log(poisspdf(spkTest,spkTest)));
                 devianceFullNull = 2*(fullLogLikelihood - nullLogLikelihood);
+                fitDevianceRe(cellnumInd) = devianceFullNull;
                 fitDevExplainedRe(cellnumInd) = 1 - (saturatedLogLikelihood - fullLogLikelihood)/(saturatedLogLikelihood - nullLogLikelihood);
                 fitCvDevRe(cellnumInd) = cv.glmnet_fit.dev(iLambda);
                 cellTimeRe(cellnumInd) = toc(cellTimeStart);
@@ -297,6 +295,7 @@ else
                 fullLogLikelihood = sum(log(poisspdf(spkTest',model)));
                 saturatedLogLikelihood = sum(log(poisspdf(spkTest,spkTest)));
                 devianceFullNull = 2*(fullLogLikelihood - nullLogLikelihood);
+                fitDevianceRe(cellnumInd) = devianceFullNull;
                 fitDevExplainedRe(cellnumInd) = 1 - (saturatedLogLikelihood - fullLogLikelihood)/(saturatedLogLikelihood - nullLogLikelihood);
                 fitCvDevRe(cellnumInd) = cv.glmnet_fit.dev(iLambda);
             end
@@ -312,6 +311,7 @@ started(remainingCell) = startedRe;
 fitLambda(remainingCell) = fitLambdaRe;
 fitCoeffs(remainingCell) = fitCoeffsRe;
 fitDevExplained(remainingCell) = fitDevExplainedRe;
+fitDeviance(remainingCell) = fitDevianceRe;
 fitCvDev(remainingCell) = fitCvDevRe;
 fitResults(remainingCell,:) = fitResultsRe;
 done(remainingCell) = doneRe;

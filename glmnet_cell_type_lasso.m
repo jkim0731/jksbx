@@ -63,16 +63,16 @@ sessions = {[4,19,22],[3,10,17],[3,21,22],[1,17,18],[7],[2],[1,23,24],[3],[3,21,
 % mice = [39];
 % sessions = {[23]};
             repetition = 10;
-            startRepetition = 1;
+            startRepetition = 3;
 %%
 % errorCell = {{[[139,152,163,259,453,1726]],[]},{[160],[]},{[],[]},{[],[]},{[26, 82, 83, 87, 89, 104, 119, 120, 130, 246, 298, 319, 366, 391, 409, 411, 593, 615, 834, 1822], [], []},{[], []},{[],[]},{[]},{[],[]},{[]},{[]},{[]}};
-errorCell = {{[],[]},{[],[]},{[],[]},{[],[]},{[]},{[]},{[],[]},{[]},{[],[]},{[]},{[]},{[]}};
+errorCell = {{[92],[],[]},{[],[],[]},{[],[],[]},{[],[],[]},{[]},{[]},{[],[],[]},{[]},{[],[],[]},{[]},{[]},{[]}};
 %%
 
-for mi = 1 : length(mice)
-% for mi = 2
-    for si = 1:length(sessions{mi})
-%     for si = 1
+for mi = 3 : length(mice)
+% for mi = 3
+%     for si = 1:length(sessions{mi})
+    for si = 3
         errorCellSession = errorCell{mi}{si};
     
         poolobj = gcp('nocreate');
@@ -271,11 +271,11 @@ for mi = 1 : length(mice)
             numCell = length(cIDAll); 
             fitCoeffs = cell(numCell,1); % intercept + coefficients of the parameters in training set
 
-            fitDeviance = zeros(numCell,1);
+            fitDeviance = nan(numCell,1);
             fitCorrelation = zeros(numCell,1);
             fitCorrPval = zeros(numCell,1);
                 
-            fitDevExplained = zeros(numCell,1); % deviance explained from test set
+            fitDevExplained = nan(numCell,1); % deviance explained from test set
             fitCvDev = zeros(numCell,1); % deviance explained from training set
             fitLambda = zeros(numCell,1);
             fitDF = zeros(numCell,1);
