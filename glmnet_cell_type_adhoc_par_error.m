@@ -21,15 +21,16 @@ if ~exist('negShift', 'var')
     negShift = 2;
 end
 
-mouse = 25;
-session = 4;
-repeat = 1;
+mouse = 39;
+session = 23;
+repeat = 10;
 restartingNum = 1;
 glmPar = false;
 savefnResult = sprintf('glmResponseType_JK%03dS%02d_lasso_R%02d',mouse, session, repeat);
 
-savefnResultRe = [savefnResult, '_02'];
+savefnResultRe = [savefnResult, '_03'];
 % errorCellSession = [92]; % JK025 S04
+errorCellSession = [12;26;35;73;78;79;83;87;89;93;98;108;109;110;112;113;114;115;116;117;119;123;130;132;133;139;141;142;143;145;148;150;151;152;153;164;170;171;172;176;177;179;181;182;185;190;201;205;206;211;212;219;223;231;233;246;249;264;292;293;298;299;300;305;310;313;316;319;322;339;346;350;360;361;364;366;368;376;377;381;385;391;393;394;398;399;405;408;409;411;413;417;420;422;430;434;435;436;438;441;442;446;542;593;596;608;609;615;616;619;620;623;627;827;834;845;894;905;957;981;1097;1102;1122;1131;1140;1155;1166;1209;1238;1372;1822;1846;1912]; % JK039 S23
 
 previousDone = done(find(done));
 
@@ -342,7 +343,7 @@ save(savefnResultRe, 'fit*', 'allPredictors', 'indPartial', '*Group', 'testTn', 
 
 
 %%
-myCluster = parcluster('local');
-delete(myCluster.Jobs)
-clear myCluster
-parpool(24, 'SpmdEnabled', true);
+% myCluster = parcluster('local');
+% delete(myCluster.Jobs)
+% clear myCluster
+% parpool(20, 'SpmdEnabled', true);
