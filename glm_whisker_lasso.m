@@ -81,7 +81,7 @@
 % phiAtTouch
 % touchCounts
 
-baseDir = 'C:\JK\';
+baseDir = 'D:\JK\suite2p\';
 
 mice = [25,27,30,36,37,38,39,41,52,53,54,56,70,74,75,76];
 sessions = {[4,19,22],[3,10,17],[3,21,22],[1,17,18],[7],[2],[1,23,24],[3],[3,21,26],[3],[3],[3],[6],[4],[4],[4]}; 
@@ -124,11 +124,8 @@ for mi = 1 : length(mice)
 
         dn = sprintf('%s%03d',baseDir,mouse);
         ufn = sprintf('UberJK%03dS%02d.mat', mouse, session);
-        angleTuningFn = sprintf('JK%03dS%02dangle_tuning.mat', mouse, session);
         cd(dn)
         load(ufn, 'u')
-        load(angleTuningFn, 'spk')
-        
         frameRate = u.frameRate;
 
         savefnResult = sprintf('glmWhisker_JK%03dS%02d',mouse, session); % m(n) meaining method(n)
@@ -416,7 +413,7 @@ for mi = 1 : length(mice)
                 indPartial{5} = lickInd;
         %%
 
-            cIDAll = spk.touchID;
+            cIDAll = u.cellNums;
             numCell = length(cIDAll); 
             fitCoeffs = cell(numCell,1); % intercept + coefficients of the parameters in training set
             
