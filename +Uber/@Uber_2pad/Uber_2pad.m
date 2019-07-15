@@ -62,7 +62,7 @@ classdef Uber_2pad < handle
         protractionTouchDTheta
         protractionTouchDPhi
         protractionTouchDKappaV
-        protractionTouchDKappaH
+        protractionTouchDKappaH % consider kappaH change only in negative direction (push curvature)
         protractionAbsTouchDPhi
         protractionAbsTouchDKappaV
         protractionTouchOnsetFrames
@@ -70,7 +70,7 @@ classdef Uber_2pad < handle
         protractionTouchDThetaByWhisking
         protractionTouchDPhiByWhisking
         protractionTouchDKappaVByWhisking
-        protractionTouchDKappaHByWhisking
+        protractionTouchDKappaHByWhisking % consider kappaH change only in negative direction (push curvature)
         protractionAbsTouchDPhiByWhisking
         protractionAbsTouchDKappaVByWhisking
         protractionTouchOnsetFramesByWhisking
@@ -145,6 +145,22 @@ classdef Uber_2pad < handle
         function value = get.protractionTouchDTheta(obj)
             value = cellfun(@(x) max(obj.theta(x)) - obj.theta(x(1)), obj.protractionTouchChunks);
         end
+        function value = get.protractionTouchDKappaH(obj)
+            % consider kappaH change only in negative direction (push curvature)
+            value = cellfun(@(x) min(obj.kappaH(x)) - obj.kappaH(x(1)), obj.protractionTouchChunks);            
+        end
+%         function value = get.protractionTouchDKappaH(obj)
+%             if ~isempty(obj.protractionTouchChunks)
+%                 value = zeros(1, length(obj.protractionTouchChunks));                
+%                 for i = 1 : length(value)
+%                     [~, maxInd] = 
+%                     value(i) = obj.kappaH(obj.protractionTouchChunks{i}(maxInd)) - obj.kappaH(obj.protractionTouchChunks{i}(1));
+%                 end
+%             else
+%                 value = [];
+%             end
+%         end
+        
         function value = get.protractionTouchDPhi(obj)
             if ~isempty(obj.protractionTouchChunks)
                 value = zeros(1, length(obj.protractionTouchChunks));                
@@ -168,17 +184,7 @@ classdef Uber_2pad < handle
             end
 
         end
-        function value = get.protractionTouchDKappaH(obj)
-            if ~isempty(obj.protractionTouchChunks)
-                value = zeros(1, length(obj.protractionTouchChunks));                
-                for i = 1 : length(value)
-                    [~, maxInd] = max(abs(obj.kappaH(obj.protractionTouchChunks{i}) - obj.kappaH(obj.protractionTouchChunks{i}(1))));
-                    value(i) = obj.kappaH(obj.protractionTouchChunks{i}(maxInd)) - obj.kappaH(obj.protractionTouchChunks{i}(1));
-                end
-            else
-                value = [];
-            end
-        end
+        
         
         function value = get.protractionAbsTouchDPhi(obj)
             value = abs(obj.protractionTouchDPhi);
@@ -199,6 +205,24 @@ classdef Uber_2pad < handle
         function value = get.protractionTouchDThetaByWhisking(obj)
             value = cellfun(@(x) max(obj.theta(x)) - obj.theta(x(1)), obj.protractionTouchChunksByWhisking);
         end
+        
+        function value = get.protractionTouchDKappaHByWhisking(obj)
+            % consider kappaH change only in negative direction (push curvature)
+            value = cellfun(@(x) min(obj.kappaH(x)) - obj.kappaH(x(1)), obj.protractionTouchChunksByWhisking);
+        end
+        
+%         function value = get.protractionTouchDKappaHByWhisking(obj)
+%             if ~isempty(obj.protractionTouchChunksByWhisking)
+%                 value = zeros(1, length(obj.protractionTouchChunksByWhisking));                
+%                 for i = 1 : length(value)
+%                     [~, maxInd] = max(abs(obj.kappaH(obj.protractionTouchChunksByWhisking{i}) - obj.kappaH(obj.protractionTouchChunksByWhisking{i}(1))));
+%                     value(i) = obj.kappaH(obj.protractionTouchChunksByWhisking{i}(maxInd)) - obj.kappaH(obj.protractionTouchChunksByWhisking{i}(1));
+%                 end
+%             else
+%                 value = [];
+%             end
+%         end
+%         
         function value = get.protractionTouchDPhiByWhisking(obj)
             if ~isempty(obj.protractionTouchChunksByWhisking)
                 value = zeros(1, length(obj.protractionTouchChunksByWhisking));                
@@ -222,17 +246,7 @@ classdef Uber_2pad < handle
             end
 
         end
-        function value = get.protractionTouchDKappaHByWhisking(obj)
-            if ~isempty(obj.protractionTouchChunksByWhisking)
-                value = zeros(1, length(obj.protractionTouchChunksByWhisking));                
-                for i = 1 : length(value)
-                    [~, maxInd] = max(abs(obj.kappaH(obj.protractionTouchChunksByWhisking{i}) - obj.kappaH(obj.protractionTouchChunksByWhisking{i}(1))));
-                    value(i) = obj.kappaH(obj.protractionTouchChunksByWhisking{i}(maxInd)) - obj.kappaH(obj.protractionTouchChunksByWhisking{i}(1));
-                end
-            else
-                value = [];
-            end
-        end
+        
         
         function value = get.protractionAbsTouchDPhiByWhisking(obj)
             value = abs(obj.protractionTouchDPhiByWhisking);
