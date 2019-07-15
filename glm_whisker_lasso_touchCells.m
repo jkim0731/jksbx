@@ -89,15 +89,15 @@ sessions = {[4,19,22],[3,10,17],[3,21,22],[1,17,18],[7],[2],[1,23,24],[3],[3,21,
 % sessions = {[7],[3],[4],[4]}; 
             repetition = 10;
             startRepetition = 1;
-errorCell = {{[92],[],[]},{[],[],[]},{[],[],[]},{[],[],[]},{[]},{[631]},{[],[12;26;35;73;78;79;83;87;89;93;98;108;109;110;112;113;114;115;116;117;119;123;130;132;133;139;141;142;143;145;148;150;151;152;153;164;170;171;172;176;177;179;181;185;190;201;205;206;211;212;219;223;231;233;246;249;264;292;293;298;299;300;305;310;313;316;319;322;339;346;350;360;361;364;366;368;376;377;381;385;391;393;394;398;399;405;408;409;411;413;417;420;422;430;434;435;436;438;441;442;446;542;593;596;608;609;615;616;619;620;623;627;827;834;845;894;905;957;981;1097;1102;1122;1131;1140;1155;1166;1209;1238;1372;1822;1846;1912],...
-    []},{[2017,2103,2121]},{[],[176],[160,966]},{[]},{[]},{[]}};
+errorCell = {{[92,103,219],[],[]},{[],[],[]},{[],[391],[]},{[],[],[]},{[]},{[631]},{[],[12;26;35;73;78;79;83;87;89;93;98;108;109;110;112;113;114;115;116;117;119;123;130;132;133;139;141;142;143;145;148;150;151;152;153;164;170;171;172;176;177;179;181;185;190;201;205;206;211;212;219;223;231;233;246;249;264;292;293;298;299;300;305;310;313;316;319;322;339;346;350;360;361;364;366;368;376;377;381;385;391;393;394;398;399;405;408;409;411;413;417;420;422;430;434;435;436;438;441;442;446;542;593;596;608;609;615;616;619;620;623;627;827;834;845;894;905;957;981;1097;1102;1122;1131;1140;1155;1166;1209;1238;1372;1822;1846;1912],...
+    [117,139,163,437]},{[2017,2103,2121]},{[],[176],[160,966]},{[]},{[]},{[]}};
 %%
 
 for mi = 1 : length(mice)
 % for mi = 9
     for si = 1:length(sessions{mi})
 %     for si = 1
-        errorCellSession = errorCell{mi}{si};
+        
     
         poolobj = gcp('nocreate');
         if poolobj.SpmdEnabled == 0
@@ -129,6 +129,8 @@ for mi = 1 : length(mice)
         load(ufn, 'u')
         load(spkfn, 'spk')
         frameRate = u.frameRate;
+        errorCellSessionInd = errorCell{mi}{si};
+        errorCellSession = u.cellNums(errorCellSessionInd);
 
         savefnResult = sprintf('glmWhisker_lasso_touchCell_JK%03dS%02d',mouse, session); % m(n) meaining method(n)
         
@@ -450,14 +452,15 @@ for mi = 1 : length(mice)
             trainingTn = cell(numCell,1);
             ratioi = zeros(numCell,1);
             ratioInd = zeros(numCell,1);
-            parfor cellnum = 1 : numCell                
-            if ~ismember(cellnum, errorCellSession)
+            parfor cellnum = 1 : numCell    
+                cind = cindAll(cellnum);
+            if ~ismember(cind, errorCellSession)
                 fitCoeffInd = zeros(1,6);
                 started(cellnum) = cellnum;
                 cellTimeStart = tic;
                 fprintf('Mouse JK%03d session S%02d Loop %d: Running cell %d/%d \n', mouse, session, ri, cellnum, numCell);                
                 
-                cind = cindAll(cellnum);
+                
                 tindCell = tindcellAll{cellnum};
             
                 totalNumSpikeFrames = sum(cellfun(@(x) length(find(x(cind,:))), spikeAll(tindCell)'));
@@ -554,11 +557,9 @@ for mi = 1 : length(mice)
                     dfFullNull = length(coeffInds);
                     fitDevExplained(cellnum) = 1 - (saturatedLogLikelihood - fullLogLikelihood)/(saturatedLogLikelihood - nullLogLikelihood);
                     fitCvDev(cellnum) = cv.glmnet_fit.dev(iLambda);
+                    done(cellnum) = cellnum;
                 end
-
-                done(cellnum) = cellnum;
                 cellTime(cellnum) = toc(cellTimeStart);
-                
             end
             
             end % end of parfor cellnum
