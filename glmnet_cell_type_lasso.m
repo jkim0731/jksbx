@@ -121,10 +121,10 @@ for mi = 7
             distanceGroup = cell(length(distances),1);
             timeGroup = cell(3,1); % dividing whole session into 5 different time points
 
-            ptouchGroup{1} = cellfun(@(x) x.trialNum, u.trials(find(cellfun(@(x) length(x.protractionTouchChunks), u.trials))));
+            ptouchGroup{1} = cellfun(@(x) x.trialNum, u.trials(find(cellfun(@(x) length(x.protractionTouchChunksByWhisking), u.trials))));
             ptouchGroup{2} = setdiff(u.trialNums, ptouchGroup{1});
 
-            rtouchGroup{1} = cellfun(@(x) x.trialNum, u.trials(find(cellfun(@(x) length(x.retractionTouchChunks), u.trials))));
+            rtouchGroup{1} = cellfun(@(x) x.trialNum, u.trials(find(cellfun(@(x) length(x.retractionTouchChunksByWhisking), u.trials))));
             rtouchGroup{2} = setdiff(u.trialNums, rtouchGroup{1});
 
             choiceGroup{1} = cellfun(@(x) x.trialNum, u.trials(find(cellfun(@(x) x.response == 1, u.trials))));
@@ -150,9 +150,8 @@ for mi = 7
                 tindcell = find(cellfun(@(x) ismember(1001+(cgi-1)*4000, x.neuindSession), u.trials));
 
                 tind = tindcell;
-                for plane = 1 : 4    
-
-                    pTouchCount = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(cellfun(@(y) x.whiskerTime(y(1)), x.protractionTouchChunks), [0, x.tpmTime{plane}]), nan(1,posShift)], u.trials(tind)','uniformoutput',false));
+                for plane = 1 : 4
+                    pTouchCount = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(cellfun(@(y) x.whiskerTime(y(1)), x.protractionTouchChunksByWhisking), [0, x.tpmTime{plane}]), nan(1,posShift)], u.trials(tind)','uniformoutput',false));
                     pTouchFrame = pTouchCount;
                     pTouchFrame(pTouchFrame > 0) = 1;
                     pTouchFrameAngles = cell(length(angles)+1,1);
