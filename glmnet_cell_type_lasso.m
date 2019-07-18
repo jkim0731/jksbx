@@ -56,10 +56,11 @@
 %     - firstRightLick
 %     - lastRightLick
 
-baseDir = 'D:\JK\suite2p\';
+baseDir = 'D:\TPM\JK\suite2p\';
 
 mice = [25,27,30,36,37,38,39,41,52,53,54,56,70,74,75,76];
-sessions = {[4,19,22],[3,10,17],[3,21,22],[1,17,18],[7],[2],[1,23,24],[3],[3,21,26],[3],[3],[3],[6],[4],[4],[4]}; 
+% sessions = {[4,19,22],[3,10,17],[3,21,22],[1,17,18],[7],[2],[1,23,24],[3],[3,21,26],[3],[3],[3],[6],[4],[4],[4]}; 
+sessions = {[4,19],[3,10],[3,21],[1,17],[7],[2],[1,23],[3],[3,21],[3],[3],[3],[],[],[],[]}; 
 % mice = [39];
 % sessions = {[23]};
             repetition = 10;
@@ -70,10 +71,10 @@ errorCell = {{[92,103,219,220],[],[]},{[],[],[]},{[],[391],[]},{[],[],[]},{[]},{
     [117,139,163,437]},{[2017,2103,2121]},{[],[176],[160,966]},{[]},{[]},{[]}};
 %%
 
-% for mi = 3 : length(mice)
-for mi = 7
-%     for si = 1:length(sessions{mi})
-    for si = 3
+for mi = 1 : length(mice)
+% for mi = 7
+    for si = 1:length(sessions{mi})
+%     for si = 1
         errorCellSession = errorCell{mi}{si};
     
         poolobj = gcp('nocreate');
@@ -100,12 +101,12 @@ for mi = 7
         lambdaCV = 5; % cross-validation fold number
 
         dn = sprintf('%s%03d',baseDir,mouse);
-        ufn = sprintf('UberJK%03dS%02d.mat', mouse, session);
+        ufn = sprintf('UberJK%03dS%02d_NC.mat', mouse, session);
         cd(dn)
             load(ufn)
         frameRate = u.frameRate;
 
-        savefnResult = sprintf('glmResponseType_JK%03dS%02d_lasso',mouse, session); % m(n) meaining method(n)
+        savefnResult = sprintf('glmResponseType_JK%03dS%02d_lasso_NC',mouse, session); % m(n) meaining method(n)
 
         for ri = startRepetition : repetition % repetition index
             %% divide into training set and test set (70%, 30%)

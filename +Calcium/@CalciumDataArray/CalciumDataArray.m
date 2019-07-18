@@ -60,7 +60,7 @@ classdef CalciumDataArray < handle
             cellNums{1} = []; cellDepths{1} = [];
             cellNums{2} = []; cellDepths{2} = [];
 
-            fnlist = dir(['F_', mouseName, '_', sessionName, '_plane*_proc_final_spikes.mat']);
+            fnlist = dir(['F_', mouseName, '_', sessionName, '_plane*_proc_final_spikes_noiseCorrected.mat']);
             for i = 1 : length(fnlist)
                 load(fnlist(i).name);
                 %

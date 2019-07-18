@@ -111,17 +111,7 @@ for mi = 12
         
         posShiftTouch = 2;
         posShiftSound = 3;
-        
-        
-        
-        
-                                                            posShiftReward = 3; % this should be 4
-        
-        
-        
-        
-        
-        
+        posShiftReward = 4;
         posShiftWhisking = 4;
         posShiftLicking = 1;
         posShift = 4; % maximum posShift

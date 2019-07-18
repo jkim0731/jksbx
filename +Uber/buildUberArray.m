@@ -6,7 +6,7 @@ caSessionName = sprintf('%03d',session);
 
 fprintf('Processing %s %s\n', mouseName, sessionName)
 
-savefn = sprintf('Uber%s%s.mat',mouseName, sessionName); 
+savefn = sprintf('Uber%s%s_NC.mat',mouseName, sessionName); 
 
 bDirBase = 'Y:\Whiskernas\JK\SoloData\';
 % bDirBase = 'C:\Data\SoloData\';
