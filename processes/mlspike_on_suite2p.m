@@ -15,12 +15,13 @@
 stdwindow = 5;
 lowerprct = 5; % 5th percentile
 
-% mice = [25,27,30,36,37,38,39,41,52,53,54,56];
-% sessions = {[4,19,22],[3,16,17],[3,21,22],[1,17,18],[7],[2],[1,23,24],[3],[3,21,26],[3],[3],[3]};
+mice = [25,27,30,36,37,38,39,41,52,53,54,56];
+% sessions = {[4,19,22],[3,10,17],[3,21,22],[1,17,18],[7],[2],[1,23,24],[3],[3,21,26],[3],[3],[3]};
+sessions = {[4,19],[3,10],[3,21],[1,17],[7],[2],[1,23],[3],[3,21],[3],[3],[3]};
 % baseDir = 'Y:\Whiskernas\JK\suite2p\';
 
-mice = 27;
-sessions = {[9,10]};
+% mice = 27;
+% sessions = {[9,10]};
 baseDir = 'D:\TPM\JK\suite2p\';
 
 for mi = 1 : length(mice)
@@ -34,7 +35,7 @@ for mi = 1 : length(mice)
             fprintf('mouse %03d session %d plane %d\n', mouse, session, fi)
             load(flist(fi).name)
             dt = 1/dat.ops.imageRate*dat.ops.num_plane;
-            savefn = [strtok(flist(fi).name,'.'), '_spikes.mat'];
+            savefn = [strtok(flist(fi).name,'.'), '_spikes_noiseCorrected.mat'];
             %%
             n = zeros(size(dat.dF), 'single');
             fit = zeros(size(dat.dF), 'single');

@@ -1,8 +1,8 @@
 clear
-% mice = [25,27,30,36,37,39,52,53,54,56];
-% sessions = {[4,19],[3,16],[3,21],[1,17],[7],[1,22],[3,21],[3],[3],[3]};
-mice = [74,75,76];
-% sessions = {[6]};
+% mice = [25,27,30,36,37,39,41,52,53,54,56];
+% sessions = {[4,19],[3,10],[3,21],[1,17],[7],[1,23],[3],[3,21],[3],[3],[3]};
+mice = [25,27,30,36,39,52];
+sessions = {[22],[17],[22],[18],[24],[26]};
 rollingWindowForBaseF = 100; % in s
 baseFprctile = 5;
 
@@ -13,70 +13,75 @@ stdwindow = 5;
 lowerprct = 5; % 5th percentile
 iteration = 10000;
 
-baseDir = 'D:\2p\JK\';
+baseDir = 'D:\TPM\JK\suite2p\';
 for mi = 1 : length(mice)
-% for mi = 1
+% for mi = 2
+    mouse = mice(mi);
     cd([baseDir, sprintf('%03d',mice(mi))])
-    fList = dir('F_*_proc_final.mat');
-    for i = 1 : length(fList)
-%     for i = 1
-        fprintf('mouse %03d session %d\n', mice(mi), i)
-        load(fList(i).name)
-        dat.rollingWindowForBaseF = rollingWindowForBaseF;
-        dat.baseFprctile = baseFprctile;
-        dat.responseThreshold = responseThreshold;
-        dat.responsePercentile = responsePercentile;
-        
-        inds = find([dat.stat.iscell]);
-        npcoeffs = min(min(dat.Fcell{1}(inds,:) ./ dat.FcellNeu{1}(inds,:), [], 2), ones(length(inds),1)*0.7);
-        npcoeffs = repmat(npcoeffs, 1, size(dat.Fcell{1},2));
-                            
-        len = size(dat.Fcell{1},2);
-        window = round(rollingWindowForBaseF*(dat.ops.imageRate/dat.ops.num_plane));
+    for si = 1 : length(sessions{mi})
+        session = sessions{mi}(si);
+        fnbase = sprintf('F_%03d_%03d_plane',mouse, session);
+        fList = dir([fnbase,'*_proc_final.mat']);
+        for i = 1 : length(fList)
+%         for i = 1
+            fprintf('mouse %03d session %d\n', mice(mi), i)
+            load(fList(i).name)
+            dat.rollingWindowForBaseF = rollingWindowForBaseF;
+            dat.baseFprctile = baseFprctile;
+            dat.responseThreshold = responseThreshold;
+            dat.responsePercentile = responsePercentile;
 
-        tempF = dat.Fcell{1}(inds,:) - dat.FcellNeu{1}(inds,:) .* npcoeffs;
-        tempFF = [tempF, tempF(:,end-window+1:end)];
-        ttbase = zeros(length(inds),size(tempF,2));
-        parfor k = 1 : len
-            ttbase(:,k) = prctile(tempFF(:,k:k+window),baseFprctile,2);
-        end        
-        dF = (tempF - ttbase)./ttbase;
-        
-        % final sorting cell based on dF/F0
-        response = prctile(dF, responsePercentile, 2);
-        isNotCell = find(response < responseThreshold);        
-        [dat.stat(inds(isNotCell)).iscell] = deal(0);
-        dF(isNotCell,:) = [];
-        dat.dF = dF;
-        npcoeffs(isNotCell) = [];
-        dat.npcoeffs = npcoeffs;
-        
-        % noise calculation
-        errorDiffs = cell(size(dat.dF,1),1);
-        errorResponse = zeros(size(dat.dF,1),2);
-        for j = 1 : size(dat.dF,1)
-            tempstd = zeros(size(dat.dF,2) - (stdwindow-1), 1);
-            temp = dat.dF(j,:);
-            tempsmooth = smooth(temp,5);
-            parfor k = 1 : length(tempstd)
-                tempstd(k) = std(tempsmooth(k+2:k+(stdwindow-1)/2+2)); % chopping off flanking half-windows
+            inds = find([dat.stat.iscell]);
+            npcoeffs = min(min(dat.Fcell{1}(inds,:) ./ dat.FcellNeu{1}(inds,:), [], 2), ones(length(inds),1)*0.7);
+            npcoeffs = repmat(npcoeffs, 1, size(dat.Fcell{1},2));
+
+            len = size(dat.Fcell{1},2);
+            window = round(rollingWindowForBaseF*(dat.ops.imageRate/dat.ops.num_plane));
+
+            tempF = dat.Fcell{1}(inds,:) - dat.FcellNeu{1}(inds,:) .* npcoeffs;
+            tempFF = [tempF, tempF(:,end-window+1:end)];
+            ttbase = zeros(length(inds),size(tempF,2));
+            parfor k = 1 : len
+                ttbase(:,k) = prctile(tempFF(:,k:k+window),baseFprctile,2);
+            end        
+            dF = (tempF - ttbase)./ttbase;
+
+            % final sorting cell based on dF/F0
+            response = prctile(dF, responsePercentile, 2);
+            isNotCell = find(response < responseThreshold);        
+            [dat.stat(inds(isNotCell)).iscell] = deal(0);
+            dF(isNotCell,:) = [];
+            dat.dF = dF;
+            npcoeffs(isNotCell) = [];
+            dat.npcoeffs = npcoeffs;
+
+            % noise calculation
+            errorDiffs = cell(size(dat.dF,1),1);
+            errorResponse = zeros(size(dat.dF,1),2);
+            for j = 1 : size(dat.dF,1)
+                tempstd = zeros(size(dat.dF,2) - (stdwindow-1), 1);
+                temp = dat.dF(j,:);
+                tempsmooth = smooth(temp,5);
+                parfor k = 1 : length(tempstd)
+                    tempstd(k) = std(tempsmooth(k+2:k+(stdwindow-1)/2+2)); % chopping off flanking half-windows
+                end
+                tempstdInds = find(tempstd<=prctile(tempstd,lowerprct));
+                baseInds = zeros(length(tempstdInds),stdwindow);
+                diffs = zeros(length(tempstdInds),stdwindow);
+                parfor k = 1 : length(tempstdInds)
+                    baseInds(k,:) = tempstdInds(k) : tempstdInds(k)+(stdwindow-1);
+                    diffs(k,:) = temp(baseInds(k,:)) - mean(temp(baseInds(k,:)));
+                end
+                diffs = diffs(:);
+                errorDiffs{j} = diffs;
             end
-            tempstdInds = find(tempstd<=prctile(tempstd,lowerprct));
-            baseInds = zeros(length(tempstdInds),stdwindow);
-            diffs = zeros(length(tempstdInds),stdwindow);
-            parfor k = 1 : length(tempstdInds)
-                baseInds(k,:) = tempstdInds(k) : tempstdInds(k)+(stdwindow-1);
-                diffs(k,:) = temp(baseInds(k,:)) - mean(temp(baseInds(k,:)));
-            end
-            diffs = diffs(:);
-            errorDiffs{j} = diffs;
+            dat.noise = cellfun(@(x) sqrt(sum(x.^2)/length(x)), errorDiffs);
+            dat.errorDiffs = errorDiffs;
+            dat.stdwindow = stdwindow;
+            dat.lowerprct = lowerprct;
+
+            save(fList(i).name, 'dat')
         end
-        dat.noise = cellfun(@(x) sqrt(sum(x.^2)/length(x)), errorDiffs);
-        dat.errorDiffs = errorDiffs;
-        dat.stdwindow = stdwindow;
-        dat.lowerprct = lowerprct;
-        
-        save(fList(i).name, 'dat')
     end
 end
 
