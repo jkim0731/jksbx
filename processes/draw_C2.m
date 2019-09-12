@@ -38,9 +38,12 @@ while true
     ypoints = [ypoints, y];
     plot(xpoints, ypoints, 'r-', 'linewidth', 5)
 end
-plot([xpoints, xpoints(1)], [ypoints, ypoints(1)], 'r-', 'linewidth', 5)
+if isempty(xpoints)
+    return
+else
+    plot([xpoints, xpoints(1)], [ypoints, ypoints(1)], 'r-', 'linewidth', 5)
 
-% cd([suite2pdir,mouse])
-savefn = sprintf('JK%sC2.mat',mouse);
-save(savefn, 'xpoints', 'ypoints')
-
+    % cd([suite2pdir,mouse])
+    savefn = sprintf('JK%sC2.mat',mouse);
+    save(savefn, 'xpoints', 'ypoints')
+end

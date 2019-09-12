@@ -52,7 +52,7 @@ else
     subplotnum2 = ceil(length(plane)/3);
 end
 
-max_idx = jkget_maxidx(fn);
+max_idx = info.max_idx;
 
 freq = info.resfreq/info.sz(1)*(2-info.scanmode);
 

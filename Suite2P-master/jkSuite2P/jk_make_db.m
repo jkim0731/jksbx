@@ -15,8 +15,8 @@
 
 
 i = 0;
-mice = {'070'};
-sessions = {[6]};
+mice = {'054'};
+sessions = {[21:26]};
 for mi = 1 : length(mice)
     for si = 1 : length(sessions{mi})
         i = i + 1;

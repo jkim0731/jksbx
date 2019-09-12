@@ -5,12 +5,17 @@ clear
 
 % mice = [70, 74,75,76];
 % sessions = {[4], [4],[4],[4]};  
-mice = [27];
-sessions = {[9,10]};  
+% mice = [27,36,41,52];
+% sessions = {[3,9,10],[],[],[]};  
+
+mice = [25,27,30,36,37,38,39,41,52,53,54,56];
+sessions = {[2:3,5:18], [1:2,4:7], [1:2,4:7,9:20], [2:16], [1:6,8:10,12:24], [1,3:22,24:31], [2:21], [1,2,4:19,21:30], [1,2,5:20], [1,2,5:21], [1,2,5:24], [1,2,6:13]};
+
 
 % baseD = 'Y:\Whiskernas\JK\suite2p\';
 baseD = 'D:\TPM\JK\suite2p\';
-for mi = 1 : length(mice)
+% for mi = 1 : length(mice)
+for mi = 1 : 4
     mouse = mice(mi);
     cd(sprintf('%s%03d',baseD,mouse));
     load(sprintf('JK%03dC2.mat',mouse))

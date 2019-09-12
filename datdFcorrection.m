@@ -1,8 +1,14 @@
 clear
 % mice = [25,27,30,36,37,39,41,52,53,54,56];
 % sessions = {[4,19],[3,10],[3,21],[1,17],[7],[1,23],[3],[3,21],[3],[3],[3]};
-mice = [25,27,30,36,39,52];
-sessions = {[22],[17],[22],[18],[24],[26]};
+% mice = [25,27,30,36,39,52];
+% sessions = {[22],[17],[22],[18],[24],[26]};
+
+
+mice = [25,27,30,36,37,38,39,41,52,53,54,56];
+
+sessions = {[2:3,5:18], [1:2,4:7], [1:2,4:7,9:20], [2:16], [1:6,8:10,12:24], [1,3:22,24:31], [2:21], [1,2,4:19,21:30], [1,2,5:20], [1,2,5:21], [1,2,5:24], [1,2,6:13]};
+
 rollingWindowForBaseF = 100; % in s
 baseFprctile = 5;
 
@@ -14,8 +20,8 @@ lowerprct = 5; % 5th percentile
 iteration = 10000;
 
 baseDir = 'D:\TPM\JK\suite2p\';
-for mi = 1 : length(mice)
-% for mi = 2
+% for mi = 1 : length(mice)
+for mi = 1:4
     mouse = mice(mi);
     cd([baseDir, sprintf('%03d',mice(mi))])
     for si = 1 : length(sessions{mi})

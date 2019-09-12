@@ -1,10 +1,10 @@
-function varargout = new_main(varargin)
+function varargout = new_main_SVM(varargin)
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
                    'gui_Singleton',  gui_Singleton, ...
-                   'gui_OpeningFcn', @new_main_OpeningFcn, ...
-                   'gui_OutputFcn',  @new_main_OutputFcn, ...
+                   'gui_OpeningFcn', @new_main_SVM_OpeningFcn, ...
+                   'gui_OutputFcn',  @new_main_SVM_OutputFcn, ...
                    'gui_LayoutFcn',  [] , ...
                    'gui_Callback',   []);
 if nargin && ischar(varargin{1})
@@ -19,7 +19,7 @@ end
 % End initialization code - DO NOT EDIT
 
 % --- Executes just before new_main is made visible.
-function new_main_OpeningFcn(hObject, eventdata, h, varargin)
+function new_main_SVM_OpeningFcn(hObject, eventdata, h, varargin)
 % This function has no output args, see OutputFcn.
 % varargin   command line arguments to new_main (see VARARGIN)
 
@@ -43,7 +43,7 @@ guidata(hObject, h);
 % uiwait(h.figure1);
 
 % --- Outputs from this function are returned to the command line.
-function varargout = new_main_OutputFcn(hObject, eventdata, h) 
+function varargout = new_main_SVM_OutputFcn(hObject, eventdata, h) 
 % varargout  cell array for returning output args (see VARARGOUT);
 varargout{1} = h.output;
 
@@ -112,11 +112,8 @@ if flag
 
         % set up classifier
         h.dat.cl.threshold  = 0.5;
-        if contains(filename1, 'SVM')
-        else
-            h                   = identify_classifier(h);    
-            h                   = classROI(h);
-        end
+%         h                   = identify_classifier(h);    
+%         h                   = classROI(h);
 
         % set all quadrants as not visited
         h.quadvalue = zeros(3);
@@ -260,10 +257,7 @@ guidata(hObject,h);
 function pushbutton84_Callback(hObject, eventdata, h)
 % save proc file and rules file
 h.dat.F.trace = [];
-if contains(h.dat.filename, 'SVM')
-else
-    h=classifierFig(h);
-end
+% h=classifierFig(h);
 h=skewFig(h);
 h=meanimgFig(h);
 h=cmpctFig(h);
@@ -956,7 +950,7 @@ set_maskCcolor(h, 7);
 function pushbutton93_Callback(hObject, eventdata, h)
 rootS2p = which('run_pipeline');
 if isempty(rootS2p)
-    error('could not identify Suite2p location! where is new_main.m?')
+    error('could not identify Suite2p location! where is new_main_SVM.m?')
 end
 rootS2p = fileparts(rootS2p);
 rootS2p = fullfile(rootS2p, 'configFiles');
