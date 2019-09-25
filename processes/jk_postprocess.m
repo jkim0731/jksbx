@@ -78,10 +78,11 @@ glm_results_dev_exp_saving_touch
 % results in 
 % 'glmResults_devExp_touch_NC.mat' in suite2p directory
 
-% ?? DE diff saving
-d190716_glm_DE_diff_saving
-% results in
-% 'glm_DE_cellFunction_NC_JK%30dS%02d.mat' files in each suit2p sub-directory
+%
+% % ?? DE diff saving - obsolete?
+% d190716_glm_DE_diff_saving
+% % results in
+% % 'glm_DE_cellFunction_NC_JK%30dS%02d.mat' files in each suit2p sub-directory
 
 %% Angle tuning
 

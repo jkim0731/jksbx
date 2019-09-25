@@ -4,7 +4,7 @@
 % myCluster = parcluster('local');
 % delete(myCluster.Jobs)
 % clear myCluster
-% parpool(20, 'SpmdEnabled', true);
+% parpool(36, 'SpmdEnabled', true);
 
 %%
 
@@ -27,18 +27,19 @@ if ~exist('negShift', 'var')
     negShift = 2;
 end
 
-mouse = 25;
-session = 4;
-repeat = 7;
+mouse = 41;
+session = 3;
+repeat = 5;
 restartingNum = 1;
 glmPar = false;
-savefnResult = sprintf('glmWhisker_JK%03dS%02d_R%02d',mouse, session,repeat); % m(n) meaining method(n)
+savefnResult = sprintf('glmWhisker_lasso_touchCell_NC_JK%03dS%02d_R%02d',mouse, session,repeat); % m(n) meaining method(n)
 
-savefnResultRe = [savefnResult, '_03'];
+savefnResultRe = [savefnResult, '_02'];
 % errorCellSession = [26, 82, 83, 87, 89, 104, 119, 120, 130, 246, 298, 319, 366, 391, 409, 411, 593, 615, 834, 1822]; % JK039 S23
 % errorCellSession = [139,152, 163,259,453,1726]; % JK039 S24
 % errorCellSession = [160]; % JK052 S26
-errorCellSession = [92,103,219,220]; % JK025 S04
+% errorCellSession = [92,103,219,220]; % JK025 S04
+errorCellSession = []; % JK025 S04
 previousDone = done(find(done));
 
 numCell = length(cIDAll);
@@ -331,4 +332,4 @@ save(savefnResultRe, 'fit*', 'allPredictors', 'indPartial', '*Group', 'testTn', 
 % myCluster = parcluster('local');
 % delete(myCluster.Jobs)
 % clear myCluster
-% parpool(20, 'SpmdEnabled', true);
+% parpool(36, 'SpmdEnabled', true);
