@@ -81,22 +81,34 @@
 % phiAtTouch
 % touchCounts
 
-baseDir = 'D:\JK\suite2p\';
+% baseDir = 'D:\JK\suite2p\';
+baseDir = 'Y:\Whiskernas\JK\suite2p\';
 
-mice = [25,27,30,36,37,38,39,41,52,53,54,56,70,74,75,76];
-sessions = {[4,19,22],[3,10,17],[3,21,22],[1,17,18],[7],[2],[1,23,24],[3],[3,21,26],[3],[3],[3],[6],[4],[4],[4]}; 
-% mice = [37,41,75,76];
-% sessions = {[7],[3],[4],[4]}; 
+% mice = [25,27,30,36,37,38,39,41,52,53,54,56,70,74,75,76];
+% sessions = {[4,19,22],[3,10,17],[3,21,22],[1,17,18],[7],[2],[1,23,24],[3],[3,21,26],[3],[3],[3],[6],[4],[4],[4]}; 
+mice = [25,27,30,36,37,38,39,41,52,53,54,56];
+sessions = {[4,19],[3,10],[3,21],[1,17],[7],[2],[1,23],[3],[3,21],[3],[3],[3]}; 
             repetition = 10;
-            startRepetition = 7;
-errorCell = {{[92,103,219,220],[],[]},{[],[],[]},{[],[391],[]},{[],[],[]},{[]},{[316,631]},{[],[12;26;35;73;78;79;83;87;89;93;98;108;109;110;112;113;114;115;116;117;119;123;130;132;133;139;141;142;143;145;148;150;151;152;153;164;170;171;172;176;177;179;181;185;190;201;205;206;211;212;219;223;231;233;246;249;264;292;293;298;299;300;305;310;313;316;319;322;339;346;350;360;361;364;366;368;376;377;381;385;391;393;394;398;399;405;408;409;411;413;417;420;422;430;434;435;436;438;441;442;446;542;593;596;608;609;615;616;619;620;623;627;827;834;845;894;905;957;981;1097;1102;1122;1131;1140;1155;1166;1209;1238;1372;1822;1846;1912],...
-    [117,139,163,437]},{[2017,2103,2121]},{[],[176,763],[160,966]},{[]},{[]},{[]}};
+            startRepetition = 1;
+errorCell = {{[92,103,219,220],[],[]},...
+    {[],[],[]},...
+    {[],[391],[]},...
+    {[],[],[]},...
+    {[]},...
+    {[316,631]},...
+    {[],[12;26;35;73;78;79;83;87;89;93;98;108;109;110;112;113;114;115;116;117;119;123;130;132;133;139;141;142;143;145;148;150;151;152;153;164;170;171;172;176;177;179;181;185;190;201;205;206;211;212;219;223;231;233;246;249;264;292;293;298;299;300;305;310;313;316;319;322;339;346;350;360;361;364;366;368;376;377;381;385;391;393;394;398;399;405;408;409;411;413;417;420;422;430;434;435;436;438;441;442;446;542;593;596;608;609;615;616;619;620;623;627;827;834;845;894;905;957;981;1097;1102;1122;1131;1140;1155;1166;1209;1238;1372;1822;1846;1912],...
+        [117,139,163,437]},...
+    {[2017,2103,2121]},...
+    {[],[176,763],[160,966]},...
+    {[]},...
+    {[]},...
+    {[]}};
 %%
 
-% for mi = 1 : length(mice)
-for mi = 1
-%     for si = 1:length(sessions{mi})
-    for si = 1
+for mi = 1 : length(mice)
+% for mi = 1
+    for si = 1:length(sessions{mi})
+%     for si = 1
         errorCellSession = errorCell{mi}{si};
     
         poolobj = gcp('nocreate');
@@ -123,12 +135,12 @@ for mi = 1
         lambdaCV = 5; % cross-validation fold number
 
         dn = sprintf('%s%03d',baseDir,mouse);
-        ufn = sprintf('UberJK%03dS%02d.mat', mouse, session);
+        ufn = sprintf('UberJK%03dS%02d_NC.mat', mouse, session);
         cd(dn)
         load(ufn, 'u')
         frameRate = u.frameRate;
 
-        savefnResult = sprintf('glmWhisker_JK%03dS%02d',mouse, session); % m(n) meaining method(n)
+        savefnResult = sprintf('glmWhisker_lasso_allCell_NC_JK%03dS%02d',mouse, session); % m(n) meaining method(n)
         
         for ri = startRepetition : repetition % repetition index
                 %% divide into training set and test set (70%, 30%)
@@ -144,10 +156,10 @@ for mi = 1
                 distanceGroup = cell(length(distances),1);
                 timeGroup = cell(3,1); % dividing whole session into 5 different time points
 
-                ptouchGroup{1} = cellfun(@(x) x.trialNum, u.trials(find(cellfun(@(x) length(x.protractionTouchChunks), u.trials))));
+                ptouchGroup{1} = cellfun(@(x) x.trialNum, u.trials(find(cellfun(@(x) length(x.protractionTouchChunksByWhisking), u.trials))));
                 ptouchGroup{2} = setdiff(u.trialNums, ptouchGroup{1});
 
-                rtouchGroup{1} = cellfun(@(x) x.trialNum, u.trials(find(cellfun(@(x) length(x.retractionTouchChunks), u.trials))));
+                rtouchGroup{1} = cellfun(@(x) x.trialNum, u.trials(find(cellfun(@(x) length(x.retractionTouchChunksByWhisking), u.trials))));
                 rtouchGroup{2} = setdiff(u.trialNums, rtouchGroup{1});
 
                 choiceGroup{1} = cellfun(@(x) x.trialNum, u.trials(find(cellfun(@(x) x.response == 1, u.trials))));
@@ -165,6 +177,7 @@ for mi = 1
                 %% Design matrices
                 % standardized using all the trials
                 allPredictors = cell(8,1);
+                allPredictorsRaw = cell(8,1);
                 allPredictorsMean = cell(8,1);
                 allPredictorsStd = cell(8,1);
                 nani = cell(8,1);
@@ -173,7 +186,7 @@ for mi = 1
 
                     tind = tindcell;
                     for plane = 1 : 4    
-                        pTouchCount = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(cellfun(@(y) x.whiskerTime(y(1)), x.protractionTouchChunks), [0, x.tpmTime{plane}]), nan(1,posShift)], u.trials(tind)','uniformoutput',false));
+                        pTouchCount = cell2mat(cellfun(@(x) [nan(1,posShift), histcounts(cellfun(@(y) x.whiskerTime(y(1)), x.protractionTouchChunksByWhisking), [0, x.tpmTime{plane}]), nan(1,posShift)], u.trials(tind)','uniformoutput',false));
                         pTouchFrame = pTouchCount;
                         pTouchFrame(pTouchFrame > 0) = 1;
                         pTouchFrameAngles = cell(length(angles)+1,1);
@@ -240,12 +253,12 @@ for mi = 1
                             whiskingAmplitudeCell{ti} = [nan(1,posShift), tempAmp, nan(1,posShift)];
                             
                             % whisker variables allocation  
-                            tempDkappaH = zeros(1,length(time)-1);
-                            tempDkappaV = zeros(1,length(time)-1);
                             tempDtheta = zeros(1,length(time)-1);
                             tempDphi = zeros(1,length(time)-1);
-                            tempDuration = zeros(1,length(time)-1);
+                            tempDkappaH = zeros(1,length(time)-1);
+                            tempDkappaV = zeros(1,length(time)-1);
                             tempSlideDistance = zeros(1,length(time)-1);
+                            tempDuration = zeros(1,length(time)-1);
                             tempThetaAtTouch = zeros(1,length(time)-1);
                             tempPhiAtTouch = zeros(1,length(time)-1);
                             tempKappaHAtTouch = zeros(1,length(time)-1);
@@ -253,37 +266,34 @@ for mi = 1
                             tempArcLengthAtTouch = zeros(1,length(time)-1);
                             
                             tempTouchFramesForConfirm = zeros(1,length(time)-1);
-                            if ~isempty(currTrial.protractionTouchChunks)
+                            if ~isempty(currTrial.protractionTouchChunksByWhisking)
                                 % assign all whisker touch variables to the
                                 % touch onset timepoints in tpm time
-                                touchOnsetTimes = cellfun(@(x) wtimes(x(1)), currTrial.protractionTouchChunks);
+                                touchOnsetTimes = cellfun(@(x) wtimes(x(1)), currTrial.protractionTouchChunksByWhisking);
                                 touchHistCounts = histcounts(touchOnsetTimes, time);
                                 touchFrames = find(touchHistCounts); % use this to confirm it matches with previous protractionTouchFrames calculation
                                 tempTouchFramesForConfirm(touchFrames) = deal(1);
                                 cumsumTouchFrames = [0, cumsum(touchHistCounts(touchFrames))];
                                 for tfi = 1 : length(touchFrames)
                                     tempInds = cumsumTouchFrames(tfi)+1:cumsumTouchFrames(tfi+1);
-                                    [~, maxInd] = max(abs(currTrial.protractionTouchDKappaH(tempInds)));
-                                    tempDkappaH(touchFrames(tfi)) = currTrial.protractionTouchDKappaH(tempInds(maxInd));
-                                    [~, maxInd] = max(abs(currTrial.protractionTouchDKappaV(tempInds)));
-                                    tempDkappaV(touchFrames(tfi)) = currTrial.protractionTouchDKappaV(tempInds(maxInd));
-                                    [~, maxInd] = max(abs(currTrial.protractionTouchDTheta(tempInds)));
-                                    tempDtheta(touchFrames(tfi)) = currTrial.protractionTouchDTheta(tempInds(maxInd));
-                                    [~, maxInd] = max(abs(currTrial.protractionTouchDPhi(tempInds)));
-                                    tempDphi(touchFrames(tfi)) = currTrial.protractionTouchDPhi(tempInds(maxInd));
-                                    tempSlideDistance(touchFrames(tfi)) = max(currTrial.protractionTouchSlideDistance(tempInds));
-                                    tempDuration(touchFrames(tfi)) = max(currTrial.protractionTouchDuration(tempInds));
-                                    tempThetaAtTouch(touchFrames(tfi)) = nanmean(cellfun(@(x) currTrial.theta(x(1)-1), currTrial.protractionTouchChunks(tempInds)));
-                                    tempPhiAtTouch(touchFrames(tfi)) = nanmean(cellfun(@(x) currTrial.phi(x(1)-1), currTrial.protractionTouchChunks(tempInds)));
-                                    tempKappaHAtTouch(touchFrames(tfi)) = nanmean(cellfun(@(x) currTrial.kappaH(x(1)-1), currTrial.protractionTouchChunks(tempInds)));
-                                    tempKappaVAtTouch(touchFrames(tfi)) = nanmean(cellfun(@(x) currTrial.kappaV(x(1)-1), currTrial.protractionTouchChunks(tempInds)));
-                                    tempArcLengthAtTouch(touchFrames(tfi)) = nanmean(cellfun(@(x) currTrial.arcLength(x(1)-1), currTrial.protractionTouchChunks(tempInds)));
+                                    tempDtheta(touchFrames(tfi)) = nanmean(currTrial.protractionTouchDThetaByWhisking(tempInds));
+                                    tempDphi(touchFrames(tfi)) = nanmean(currTrial.protractionTouchDPhiByWhisking(tempInds));
+                                    tempDkappaH(touchFrames(tfi)) = nanmean(currTrial.protractionTouchDKappaHByWhisking(tempInds));
+                                    tempDkappaV(touchFrames(tfi)) = nanmean(currTrial.protractionTouchDKappaVByWhisking(tempInds));
+                                    tempSlideDistance(touchFrames(tfi)) = nanmean(currTrial.protractionTouchSlideDistanceByWhisking(tempInds));
+                                    tempDuration(touchFrames(tfi)) = nanmean(currTrial.protractionTouchDurationByWhisking(tempInds));
+                                    
+                                    tempThetaAtTouch(touchFrames(tfi)) = nanmean(cellfun(@(x) currTrial.theta(x(1)), currTrial.protractionTouchChunksByWhisking(tempInds)));
+                                    tempPhiAtTouch(touchFrames(tfi)) = nanmean(cellfun(@(x) currTrial.phi(x(1)), currTrial.protractionTouchChunksByWhisking(tempInds)));
+                                    tempKappaHAtTouch(touchFrames(tfi)) = nanmean(cellfun(@(x) currTrial.kappaH(x(1)), currTrial.protractionTouchChunksByWhisking(tempInds)));
+                                    tempKappaVAtTouch(touchFrames(tfi)) = nanmean(cellfun(@(x) currTrial.kappaV(x(1)), currTrial.protractionTouchChunksByWhisking(tempInds)));
+                                    tempArcLengthAtTouch(touchFrames(tfi)) = nanmean(cellfun(@(x) currTrial.arcLength(x(1)), currTrial.protractionTouchChunksByWhisking(tempInds)));
                                 end
                             end
-                            maxDkappaHCell{ti} = [nan(1,posShift), tempDkappaH, nan(1,posShift)];
-                            maxDkappaVCell{ti} = [nan(1,posShift), tempDkappaV, nan(1,posShift)];
                             maxDthetaCell{ti} = [nan(1,posShift), tempDtheta, nan(1,posShift)];
                             maxDphiCell{ti} = [nan(1,posShift), tempDphi, nan(1,posShift)];
+                            maxDkappaHCell{ti} = [nan(1,posShift), tempDkappaH, nan(1,posShift)];
+                            maxDkappaVCell{ti} = [nan(1,posShift), tempDkappaV, nan(1,posShift)];
                             maxSlideDistanceCell{ti} = [nan(1,posShift), tempSlideDistance, nan(1,posShift)];
                             maxDurationCell{ti} = [nan(1,posShift), tempDuration, nan(1,posShift)];
                             thetaAtTouchCell{ti} = [nan(1,posShift), tempThetaAtTouch, nan(1,posShift)];
@@ -298,10 +308,10 @@ for mi = 1
                         whiskingMidpoint = cell2mat(whiskingMidpointCell);
                         whiskingAmplitude = cell2mat(whiskingAmplitudeCell);
                         
-                        maxDkappaH = cell2mat(maxDkappaHCell);
-                        maxDkappaV = cell2mat(maxDkappaVCell);
                         maxDtheta = cell2mat(maxDthetaCell);
                         maxDphi = cell2mat(maxDphiCell);
+                        maxDkappaH = cell2mat(maxDkappaHCell);
+                        maxDkappaV = cell2mat(maxDkappaVCell);
                         maxSlideDistance = cell2mat(maxSlideDistanceCell);
                         maxDuration = cell2mat(maxDurationCell);
                         thetaAtTouch = cell2mat(thetaAtTouchCell);
@@ -353,10 +363,10 @@ for mi = 1
                             rLickMat(:,i) = circshift(rLick, [0 -negShift + i - 1])';
                         end
                         
-                        maxDkappaHMat = zeros(length(pTouchFrame), (posShiftTouch + 1));
-                        maxDkappaVMat = zeros(length(pTouchFrame), (posShiftTouch + 1));
                         maxDthetaMat = zeros(length(pTouchFrame), (posShiftTouch + 1));
                         maxDphiMat = zeros(length(pTouchFrame), (posShiftTouch + 1));
+                        maxDkappaHMat = zeros(length(pTouchFrame), (posShiftTouch + 1));
+                        maxDkappaVMat = zeros(length(pTouchFrame), (posShiftTouch + 1));
                         maxSlideDistanceMat = zeros(length(pTouchFrame), (posShiftTouch + 1));
                         maxDurationMat = zeros(length(pTouchFrame), (posShiftTouch + 1));
                         thetaAtTouchMat = zeros(length(pTouchFrame), (posShiftTouch + 1));
@@ -366,10 +376,10 @@ for mi = 1
                         arcLengthAtTouchMat = zeros(length(pTouchFrame), (posShiftTouch + 1));
                         touchCountMat = zeros(length(pTouchFrame), (posShiftTouch + 1));
                         for i = 1 : posShiftTouch + 1
-                            maxDkappaHMat(:,i) = circshift(maxDkappaH, [0 i-1]);
-                            maxDkappaVMat(:,i) = circshift(maxDkappaV, [0 i-1]);
                             maxDthetaMat(:,i) = circshift(maxDtheta, [0 i-1]);
                             maxDphiMat(:,i) = circshift(maxDphi, [0 i-1]);
+                            maxDkappaHMat(:,i) = circshift(maxDkappaH, [0 i-1]);
+                            maxDkappaVMat(:,i) = circshift(maxDkappaV, [0 i-1]);
                             maxSlideDistanceMat(:,i) = circshift(maxSlideDistance, [0 i-1]);
                             maxDurationMat(:,i) = circshift(maxDuration, [0 i-1]);
                             thetaAtTouchMat(:,i) = circshift(thetaAtTouch, [0 i-1]);
@@ -385,16 +395,16 @@ for mi = 1
                         drinkMat = [drinkLMat, drinkRMat];
                         whiskingMat = [whiskingOnsetMat, whiskingAmplitudeMat, whiskingMidpointMat];
                         lickingMat = [lLickMat, rLickMat];
-                        whiskerTouchMat = [maxDkappaHMat, maxDkappaVMat, maxDthetaMat, maxDphiMat, maxSlideDistanceMat, maxDurationMat, ...    
+                        whiskerTouchMat = [maxDthetaMat, maxDphiMat, maxDkappaHMat, maxDkappaVMat, maxSlideDistanceMat, maxDurationMat, ...    
                             thetaAtTouchMat, phiAtTouchMat, kappaHAtTouchMat, kappaVAtTouchMat, arcLengthAtTouchMat, touchCountMat];
                         %%
                         %%
-                        allPredictors{(cgi-1)*4 + plane} = [whiskerTouchMat, soundMat, drinkMat, whiskingMat, lickingMat];
-                        nani{(cgi-1)*4 + plane} = find(nanstd(allPredictors{(cgi-1)*4 + plane})==0);
-                        allPredictorsMean{(cgi-1)*4 + plane} = nanmean(allPredictors{(cgi-1)*4 + plane});
-                        allPredictorsStd{(cgi-1)*4 + plane} = nanstd(allPredictors{(cgi-1)*4 + plane});
+                        allPredictorsRaw{(cgi-1)*4 + plane} = [whiskerTouchMat, soundMat, drinkMat, whiskingMat, lickingMat];
+                        nani{(cgi-1)*4 + plane} = find(nanstd(allPredictorsRaw{(cgi-1)*4 + plane})==0);
+                        allPredictorsMean{(cgi-1)*4 + plane} = nanmean(allPredictorsRaw{(cgi-1)*4 + plane});
+                        allPredictorsStd{(cgi-1)*4 + plane} = nanstd(allPredictorsRaw{(cgi-1)*4 + plane});
                         % normalization of all predictors
-                        allPredictors{(cgi-1)*4 + plane} = (allPredictors{(cgi-1)*4 + plane} - nanmean(allPredictors{(cgi-1)*4 + plane})) ./ nanstd(allPredictors{(cgi-1)*4 + plane});
+                        allPredictors{(cgi-1)*4 + plane} = (allPredictorsRaw{(cgi-1)*4 + plane} - nanmean(allPredictorsRaw{(cgi-1)*4 + plane})) ./ nanstd(allPredictorsRaw{(cgi-1)*4 + plane});
                         allPredictors{(cgi-1)*4 + plane}(:,nani{(cgi-1)*4 + plane}) = deal(0);
                     end
                 end
@@ -561,7 +571,7 @@ for mi = 1
             
             end % end of parfor cellnum
 %%
-            save(sprintf('%s_R%02d',savefnResult, ri), 'fit*', 'allPredictors', 'indPartial', '*Group', 'testTn', 'trainingTn', 'lambdaCV', '*Opt', 'done', 'pThreshold*', '*Shift', 'cellTime', 'cIDAll', 'ratio*');
+            save(sprintf('%s_R%02d',savefnResult, ri), 'fit*', 'allPredictors*', 'indPartial', '*Group', 'testTn', 'trainingTn', 'lambdaCV', '*Opt', 'done', 'pThreshold*', '*Shift', 'cellTime', 'cIDAll', 'ratio*');
 %             push_myphone(sprintf('Lasso GLM done for JK%03d S%02d Loop #%03d', mouse, session, ri))
         end 
 %         push_myphone(sprintf('Lasso GLM done for JK%03d S%02d', mouse, session))

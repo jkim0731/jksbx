@@ -1,10 +1,10 @@
 % % % save(savefnResultRe, 'fit*', 'allPredictors', '*InputMat', 'indPartial', '*Group', '*Tn', 'lambdaCV', '*Opt', 'done', '*Re', 'remainingCell', 'pThreshold*', '*Shift');
 % % 
 %%
-% myCluster = parcluster('local');
-% delete(myCluster.Jobs)
-% clear myCluster
-% parpool(36, 'SpmdEnabled', true);
+myCluster = parcluster('local');
+delete(myCluster.Jobs)
+clear myCluster
+parpool(36, 'SpmdEnabled', true);
 
 %%
 
