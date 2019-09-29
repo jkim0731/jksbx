@@ -81,6 +81,16 @@
 % phiAtTouch
 % touchCounts
 
+
+
+
+% %%
+% myCluster = parcluster('local');
+% delete(myCluster.Jobs)
+% clear myCluster
+% parpool(36, 'SpmdEnabled', true);
+
+%%
 % baseDir = 'D:\JK\suite2p\';
 baseDir = 'Y:\Whiskernas\JK\suite2p\';
 
@@ -106,9 +116,9 @@ errorCell = {{[92,103,219,220],[],[]},...
 %%
 
 for mi = 1 : length(mice)
-% for mi = 1
+% for mi = 3
     for si = 1:length(sessions{mi})
-%     for si = 1
+%     for si = 2
         errorCellSession = errorCell{mi}{si};
     
         poolobj = gcp('nocreate');
@@ -276,18 +286,18 @@ for mi = 1 : length(mice)
                                 cumsumTouchFrames = [0, cumsum(touchHistCounts(touchFrames))];
                                 for tfi = 1 : length(touchFrames)
                                     tempInds = cumsumTouchFrames(tfi)+1:cumsumTouchFrames(tfi+1);
-                                    tempDtheta(touchFrames(tfi)) = nanmean(currTrial.protractionTouchDThetaByWhisking(tempInds));
-                                    tempDphi(touchFrames(tfi)) = nanmean(currTrial.protractionTouchDPhiByWhisking(tempInds));
-                                    tempDkappaH(touchFrames(tfi)) = nanmean(currTrial.protractionTouchDKappaHByWhisking(tempInds));
-                                    tempDkappaV(touchFrames(tfi)) = nanmean(currTrial.protractionTouchDKappaVByWhisking(tempInds));
-                                    tempSlideDistance(touchFrames(tfi)) = nanmean(currTrial.protractionTouchSlideDistanceByWhisking(tempInds));
-                                    tempDuration(touchFrames(tfi)) = nanmean(currTrial.protractionTouchDurationByWhisking(tempInds));
+                                    tempDtheta(touchFrames(tfi)) = nansum(currTrial.protractionTouchDThetaByWhisking(tempInds));
+                                    tempDphi(touchFrames(tfi)) = nansum(currTrial.protractionTouchDPhiByWhisking(tempInds));
+                                    tempDkappaH(touchFrames(tfi)) = nansum(currTrial.protractionTouchDKappaHByWhisking(tempInds));
+                                    tempDkappaV(touchFrames(tfi)) = nansum(currTrial.protractionTouchDKappaVByWhisking(tempInds));
+                                    tempSlideDistance(touchFrames(tfi)) = nansum(currTrial.protractionTouchSlideDistanceByWhisking(tempInds));
+                                    tempDuration(touchFrames(tfi)) = nansum(currTrial.protractionTouchDurationByWhisking(tempInds));
                                     
-                                    tempThetaAtTouch(touchFrames(tfi)) = nanmean(cellfun(@(x) currTrial.theta(x(1)), currTrial.protractionTouchChunksByWhisking(tempInds)));
-                                    tempPhiAtTouch(touchFrames(tfi)) = nanmean(cellfun(@(x) currTrial.phi(x(1)), currTrial.protractionTouchChunksByWhisking(tempInds)));
-                                    tempKappaHAtTouch(touchFrames(tfi)) = nanmean(cellfun(@(x) currTrial.kappaH(x(1)), currTrial.protractionTouchChunksByWhisking(tempInds)));
-                                    tempKappaVAtTouch(touchFrames(tfi)) = nanmean(cellfun(@(x) currTrial.kappaV(x(1)), currTrial.protractionTouchChunksByWhisking(tempInds)));
-                                    tempArcLengthAtTouch(touchFrames(tfi)) = nanmean(cellfun(@(x) currTrial.arcLength(x(1)), currTrial.protractionTouchChunksByWhisking(tempInds)));
+                                    tempThetaAtTouch(touchFrames(tfi)) = nansum(cellfun(@(x) currTrial.theta(x(1)), currTrial.protractionTouchChunksByWhisking(tempInds)));
+                                    tempPhiAtTouch(touchFrames(tfi)) = nansum(cellfun(@(x) currTrial.phi(x(1)), currTrial.protractionTouchChunksByWhisking(tempInds)));
+                                    tempKappaHAtTouch(touchFrames(tfi)) = nansum(cellfun(@(x) currTrial.kappaH(x(1)), currTrial.protractionTouchChunksByWhisking(tempInds)));
+                                    tempKappaVAtTouch(touchFrames(tfi)) = nansum(cellfun(@(x) currTrial.kappaV(x(1)), currTrial.protractionTouchChunksByWhisking(tempInds)));
+                                    tempArcLengthAtTouch(touchFrames(tfi)) = nansum(cellfun(@(x) currTrial.arcLength(x(1)), currTrial.protractionTouchChunksByWhisking(tempInds)));
                                 end
                             end
                             maxDthetaCell{ti} = [nan(1,posShift), tempDtheta, nan(1,posShift)];
