@@ -96,8 +96,8 @@ mice = [25,27,30,36,37,38,39,41,52,53,54,56];
 sessions = {[4,19],[3,10],[3,21],[1,17],[7],[2],[1,23],[3],[3,21],[3],[3],[3]}; 
 % mice = [37,41,75,76];
 % sessions = {[7],[3],[4],[4]}; 
-            repetition = 10;
-            startRepetition = 1;
+            repetition = 5;
+            startRepetition = 2;
 errorCell = {{[],[],[]},...
     {[],[],[]},...
     {[],[],[]},...
@@ -110,12 +110,14 @@ errorCell = {{[],[],[]},...
     {[]},...
     {[]},...
     {[]}};
+
+% JK030 S02 - S07
 %%
 
-for mi = 1 : length(mice)
-% for mi = 8
-    for si = 1:length(sessions{mi})
-%     for si = 1
+% for mi = 4 : length(mice)
+for mi = 3
+%     for si = 1:length(sessions{mi})
+    for si = 2
         
     
         poolobj = gcp('nocreate');
@@ -143,7 +145,7 @@ for mi = 1 : length(mice)
 
         dn = sprintf('%s%03d',baseDir,mouse);
         ufn = sprintf('UberJK%03dS%02d_NC.mat', mouse, session);
-        spkfn = sprintf('JK%03dS%02dangle_tuning_lasso_predecision_NC',mouse, session);
+        spkfn = sprintf('JK%03dS%02dangle_tuning_lasso_preAnswer_perTouch_spkOnly_NC',mouse, session);
         cd(dn)
         load(ufn, 'u')
         load(spkfn, 'spk')
