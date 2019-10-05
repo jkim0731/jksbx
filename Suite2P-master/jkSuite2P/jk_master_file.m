@@ -173,13 +173,13 @@ for iexp = 1:length(db0)
             elseif db.session > 4000
                 onFrames = laser_on_frames(db.sbxfnlist{ifile});
                 jksbxsplittrial(db.sbxfnlist{ifile}, onFrames);
-            else
+            else % no treatment of laser ON in regular training sessions
                 jksbxsplittrial(db.sbxfnlist{ifile});
             end
             load([db.sbxfnlist{ifile},'.trials'],'-mat')
         end
         if ifile == 1
-            db.frame_to_use = frame_to_use; % frame_to_use is in cell format. 
+            db.frame_to_use = frame_to_use; % frame_to_use is in cell format. calculated from jksbxsplittrial
             db.trials = trials; % trials is a structure, containing trialnum, frames, and lines
             db.max_idx = sbx_maxidx(db.sbxfnlist{ifile}); % max_idx is a 1d array containing maximum index up to each file including previous index. Aim to help file reading with multiple files in one session
         else               

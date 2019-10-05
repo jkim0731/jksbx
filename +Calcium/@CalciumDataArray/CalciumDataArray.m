@@ -138,11 +138,20 @@ classdef CalciumDataArray < handle
                     obj.trials{i}.cellNums = cellNums{2};
                     obj.trials{i}.cellDepths = cellDepths{2};
                 end
-                obj.trials{i}.inds = find(ismember(dat.ops.frame_to_use{basePlane},obj.trials{i}.frames));
+                obj.trials{i}.inds = find(ismember(dat.ops.frame_to_use{basePlane},obj.trials{i}.frames)); % conservative treatment for frame_to_use starts before TTL signal, just in case.
                 obj.trials{i}.frameNum = length(obj.trials{i}.inds);
-                frames = dat.ops.frame_to_use{basePlane}(obj.trials{i}.inds) - obj.trials{i}.frames(1);
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                %%% Very important. Calculating time points %%%
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                frames = dat.ops.frame_to_use{basePlane}(obj.trials{i}.inds) - obj.trials{i}.frames(1); % frames are # of starting from the trial onset. Matching with TTL1 signal, 
+                %   which is from BControl. It's because frame_to_use is calculated per volume, to match # of frames in each planes from the same layer.
+                % This way of calculating "frames" is specific (and correct) for calculation next line. (for the part where (j-1) instead of (j) is used.)
+                % It's bacause "frames" CANNOT be 0, because frame_to_use is calculated to have at least 1 frame after the TTL1 signal has arrived.
                 for j = 1 : 4
-                    obj.trials{i}.time{5-j} = (frames + (j-1)) / dat.ops.imageRate - (obj.trials{i}.startLine - 1) / dat.ops.imageRate / dat.ops.info.sz(1); % adjusting for start line. offset can be as large as 30 ms. 
+                    obj.trials{i}.time{5-j} = (frames + (j-1)) / dat.ops.imageRate - (obj.trials{i}.startLine - 1) / dat.ops.imageRate / dat.ops.info.sz(1); % adjusting for start line. 
+                    % offset can be as large as 30 ms. 
+                    % This is the BEGINNING time point of each frame. For any event to be assigned to the corresponding frame,
+                    %   that frame's time point should be should be LARGER THAN OR EQUAL TO (>=) the event timing.
                 end
                 obj.trials{i}.dF = zeros(length(obj.trials{i}.cellNums),obj.trials{i}.frameNum);
                 obj.trials{i}.spk = zeros(length(obj.trials{i}.cellNums),obj.trials{i}.frameNum);

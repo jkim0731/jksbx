@@ -134,9 +134,9 @@ classdef Uber_2pad < handle
             obj.tpmTime = cell(length(ca.time),1);
             for i = 1 : length(obj.tpmTime)
                 obj.tpmTime{i} = ca.time{i};
+                % this is the BEGINNING time point of each frame, calculated at each trial (i.e., 0 ms at the start of each trial). 
             end
 %             obj.tpmTime = ca.time{1};
-            
         end
 
     end

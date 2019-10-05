@@ -20,7 +20,7 @@ draw_C2('052_6002_004')
 
 %%
 
-% procee_zstack 
+% process_zstack 
 % it includes assign_depth % this gives you _proc_final file
 % 
 % append_isC2(fn)
@@ -88,6 +88,8 @@ glm_results_dev_exp_saving_touch
 
 % run angle tuning analysis
 angle_tuning_predecision
+or
+angle_tuning_preAnswer_perTouch_spkOnly
 % results in 
 % 'JK041S03angle_tuning_lasso_predecision_NC.mat' in each suite2p sub-directory
 

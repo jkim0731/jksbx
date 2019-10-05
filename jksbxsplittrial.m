@@ -41,7 +41,7 @@ function jksbxsplittrial(fn, varargin)
     if nargin > 1
         if isnumeric(varargin{1}) && min(varargin{1}) > 0 
             onFrames = varargin{1};
-            laserOffIncluded = 1;
+            laserOffIncluded = 1; % only for spontaneous and piezo. Not for regular training imaging sessions 
         else
             error('Input argument is either not numeric or includes negative values')
         end
@@ -189,7 +189,7 @@ function jksbxsplittrial(fn, varargin)
                                 end_frame = frames_ending(find(frames_ending < trials(kk).frames(2), 1, 'last'));
                                 if laserOffIncluded
                                     currTrialFrames = intersect(onFrames, begin_frame:end_frame);
-                                else
+                                else % for regular training imaging sessions
                                     currTrialFrames = begin_frame:end_frame;
                                 end
                                 trial_frames{ii} = [trial_frames{ii}, currTrialFrames];
@@ -209,7 +209,8 @@ function jksbxsplittrial(fn, varargin)
 
                 for ind_layer = 1 : num_layer                        
                     for ind_plane = 1 : num_plane
-                        frame_to_use{(ind_layer-1)*num_plane + plane_sorted(ind_plane)} = intersect(ind_plane-1:num_plane:max_idx, trial_frames{ind_layer});                  
+                        frame_to_use{(ind_layer-1)*num_plane + plane_sorted(ind_plane)} = intersect(ind_plane-1:num_plane:max_idx, trial_frames{ind_layer});
+                        % treat volume-wise. All planes from the same layer of imaging have the same # of frames.
                     end
                 end
 
