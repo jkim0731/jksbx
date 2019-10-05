@@ -20,7 +20,7 @@ draw_C2('052_6002_004')
 
 %%
 
-% procee_zstack 
+process_zstack 
 % it includes assign_depth % this gives you _proc_final file
 % 
 % append_isC2(fn)

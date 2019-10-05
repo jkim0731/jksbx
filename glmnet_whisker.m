@@ -91,7 +91,8 @@ clear
 baseDir = 'Y:\Whiskernas\JK\suite2p\';
 % baseDir = 'D:\TPM\JK\suite2p\';
 
-localDir = 'C:\JK\tempDataForGLM\';
+% localDir = 'C:\JK\tempDataForGLM\';
+localDir = 'D:\JK\tempDataForGLM\';
 
 mice = [25,27,30,36,37,38,39,41,52,53,54,56];
 sessions = {[4,19],[3,10],[3,21],[1,17],[7],[2],[1,23],[3],[3,21],[3],[3],[3]}; 
@@ -100,13 +101,15 @@ numCores = feature('numcores');
 
 
 poolobj = gcp('nocreate');
-if isempty(poolobj)
-    parpool(numCores, 'SpmdEnabled', true);
-elseif poolobj.SpmdEnabled == 0
+myCluster = parcluster('local');
+if ~isempty(myCluster.Jobs)
     myCluster = parcluster('local');
     delete(myCluster.Jobs)
     clear myCluster
-    pause(1) % just in case...
+end
+if isempty(poolobj)
+    parpool(numCores, 'SpmdEnabled', true);
+elseif poolobj.SpmdEnabled == 0    
     parpool(numCores, 'SpmdEnabled', true);
 end
 
@@ -144,8 +147,8 @@ negShift = 2;
 testPortion = 0.3; % 30 % test set
 
 
-for mi = 1
-    for si = 1
+for mi = 6:8
+    for si = 1:length(sessions{mi})
         mouse = mice(mi);
         session = sessions{mi}(si);
         
@@ -479,15 +482,15 @@ for mi = 1
             flagRun = 0;
             while flagRun < 10 % run at least 10 times
                 flagRun = flagRun + 1;
-%                     try
-                    parfun_glmnet_whisker_perRep(info, spikeAll, allPredictors, stratificationGroups,  tindcellAll, planeIndAll, cindAll, ri)
-%                     catch
-%                         myCluster = parcluster('local');
-%                         delete(myCluster.Jobs)
-%                         clear myCluster
-%                         pause(1) % just in case...
-%                         parpool(numCores, 'SpmdEnabled', true);
-%                     end
+                    try
+                        parfun_glmnet_whisker_perRep(info, spikeAll, allPredictors, stratificationGroups,  tindcellAll, planeIndAll, cindAll, ri)
+                    catch
+                        myCluster = parcluster('local');
+                        delete(myCluster.Jobs)
+                        clear myCluster
+                        pause(1) % just in case...
+                        parpool(numCores, 'SpmdEnabled', true);
+                    end
                 % IMPORTANT %
                 % This saved file name format should match with that in
                 % parfun_glmnet_whisker_perCell.m

@@ -61,7 +61,7 @@ baseDir = 'Y:\Whiskernas\JK\suite2p\';
 
 mice = [25,27,30,36,37,38,39,41,52,53,54,56,70,74,75,76];
 % sessions = {[4,19,22],[3,10,17],[3,21,22],[1,17,18],[7],[2],[1,23,24],[3],[3,21,26],[3],[3],[3],[6],[4],[4],[4]}; 
-sessions = {[4,19],[3,10],[3,21],[1,17],[7],[2],[1,23],[3],[3,21],[3],[3],[3],[],[],[],[]}; 
+sessions = {[4,19],[3,10],[3,21],[1,17],[7],[2],[1,23],[3],[3,21],[3],[3],[3],[6],[4],[4],[4]}; 
 % mice = [39];
 % sessions = {[23]};
             repetition = 10;
@@ -78,11 +78,12 @@ errorCell = {{[92,103,219,220],[],[]},...
     [117,139,163,437]},...
     {[2017,2103,2121]},...
     {[],[176,763],[160,966]},...
-    {[]},{[]},{[]}};
+    {[]},{[]},{[]}, ...
+    {[]},{[]},{[]},{[]}};
 %%
 
 % for mi = 10 : length(mice)
-for mi = 6
+for mi = 15:16
     for si = 1:length(sessions{mi})
 %     for si = 1
         errorCellSession = errorCell{mi}{si};
@@ -111,7 +112,11 @@ for mi = 6
         lambdaCV = 5; % cross-validation fold number
 
         dn = sprintf('%s%03d',baseDir,mouse);
-        ufn = sprintf('UberJK%03dS%02d_NC.mat', mouse, session);
+        if mi > 12
+            ufn = sprintf('UberJK%03dS%02d.mat', mouse, session);
+        else
+            ufn = sprintf('UberJK%03dS%02d_NC.mat', mouse, session);
+        end
         cd(dn)
             load(ufn)
         frameRate = u.frameRate;

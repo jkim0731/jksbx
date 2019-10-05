@@ -343,7 +343,7 @@ save(savefnResultRe, 'fit*', 'allPredictors', 'indPartial', '*Group', 'testTn', 
 
 
 %%
-% myCluster = parcluster('local');
-% delete(myCluster.Jobs)
-% clear myCluster
-% parpool(20, 'SpmdEnabled', true);
+myCluster = parcluster('local');
+delete(myCluster.Jobs)
+clear myCluster
+parpool(24, 'SpmdEnabled', true);
