@@ -12,7 +12,7 @@ end
 
 maxIdx = round(jkget_maxidx(fn));
 if maxIdx > numThresh
-    numChunks = ceil(maxIdx/numThresh);
+    numChunks = ceil(maxIdx/numThresh); % dividing into chunks just because of memory issue.
 end
 msignal = zeros(maxIdx,1);
 %%
@@ -23,17 +23,11 @@ for i = 1 : numChunks-1
     msignal((i-1)*numThresh+1:i*numThresh) = mean(mean(a));
 end
 
-if info.volscan
-    numPlanes = length(info.otwave);
-else
-    numPlanes = 1;
-end
-
 a = sbxread(fn, (numChunks-1)*numThresh, maxIdx - (numChunks-1) * numThresh);
 a = squeeze(a(1,:,:,:));
 msignal((numChunks-1)*numThresh+1:maxIdx) = mean(mean(a));
 
-laserOffInd = find(msignal < min(msignal) + 50);
+laserOffInd = find(msignal < min(msignal) + 50); % Start by considering total blanked frames. 50 is arbitrary (safe threshold for dark noise).
 if ~isempty(find(diff(laserOffInd)>1, 1))
     laserOffStartInds = [laserOffInd(1); laserOffInd(find(diff(laserOffInd)>1)+1)];
     laserOffEndInds = [laserOffInd(diff(laserOffInd)>1); laserOffInd(end)];
@@ -42,11 +36,20 @@ else
     laserOffEndInds = laserOffInd(end);
 end
 
+if info.volscan
+    numPlanes = length(info.otwave);
+else
+    numPlanes = 1;
+end
+
 for i = 1 : length(laserOffStartInds)
     if laserOffStartInds(i) > 1
-        laserOffStartInds(i) = laserOffStartInds(i)-1;
+        laserOffStartInds(i) = laserOffStartInds(i)-1; % 1 frame reduction, to include half-blanking. 
+        % More conservative than directly calculate partly blanked frame by intensity.
+        % There can be false positive (prob. ~ 1/length(lines), usually 1/512)
     end
-    if numPlanes > 1
+    if numPlanes > 1 % if there are more than one planes (volumetric scanning), 
+        % treat each volume as one. Always start at the beginning of each volume.
         if mod(laserOffStartInds(i)-1, numPlanes)            
             laserOffStartInds(i) = laserOffStartInds(i) - mod(laserOffStartInds(i)-1, numPlanes);          
             if laserOffStartInds(i) < 1
@@ -57,9 +60,10 @@ for i = 1 : length(laserOffStartInds)
 end
 for i = 1 : length(laserOffEndInds)
     if laserOffEndInds(i) < maxIdx
-        laserOffEndInds(i) = laserOffEndInds(i)+1;
+        laserOffEndInds(i) = laserOffEndInds(i)+1; % similar treatment as in laserOffStartInds
     end
-    if numPlanes > 1
+    if numPlanes > 1 % if there are more than one planes (volumetric scanning), 
+        % treat each volume as one. Always end at the end of each volume.
         if mod(laserOffEndInds(i), numPlanes)
             laserOffEndInds(i) = laserOffEndInds(i) + numPlanes - mod(laserOffEndInds(i), numPlanes);
             if laserOffEndInds(i) > maxIdx
