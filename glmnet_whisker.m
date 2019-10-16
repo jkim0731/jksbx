@@ -97,6 +97,7 @@ localDir = 'D:\JK\tempDataForGLM\';
 mice = [25,27,30,36,37,38,39,41,52,53,54,56];
 sessions = {[4,19],[3,10],[3,21],[1,17],[7],[2],[1,23],[3],[3,21],[3],[3],[3]}; 
 repetition = 10;
+riStart = 6;
 numCores = feature('numcores');
 
 
@@ -147,8 +148,10 @@ negShift = 2;
 testPortion = 0.3; % 30 % test set
 
 
-for mi = 6:8
-    for si = 1:length(sessions{mi})
+% for mi = 6:8
+for mi = 4
+%     for si = 1:length(sessions{mi})
+    for si = 2
         mouse = mice(mi);
         session = sessions{mi}(si);
         
@@ -477,7 +480,7 @@ for mi = 6:8
         info.glmnetOpt = glmnetOpt;
         info.lambdaCV = lambdaCV;
         %% run it rep first
-        for ri = 1 : repetition
+        for ri = riStart : repetition
             
             flagRun = 0;
             while flagRun < 10 % run at least 10 times
@@ -532,7 +535,7 @@ for mi = 6:8
                             myCluster = parcluster('local');
                             delete(myCluster.Jobs)
                             clear myCluster
-                            pause(1) % just in case...
+%                             pause(1) % just in case...
                             parpool(numCores, 'SpmdEnabled', true);
                         end
                         savedFnList = dir([sprintf('%sJK%03dS%02dci%04d_save_R', localDir, mouse, session, ci), '*']);
@@ -551,7 +554,7 @@ for mi = 6:8
         %% summarize and save the results
         done = find(errorCell(:,1) == 0);
         %%
-        for ri = 1 : repetition
+        for ri = riStart : repetition
             for dci = 1 : length(done)
                 ci = done(dci);
                 tempFn = sprintf('%sJK%03dS%02dci%04d_save_R%02d',localDir,mouse,session,ci,ri);
