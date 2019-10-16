@@ -20,7 +20,7 @@ draw_C2('052_6002_004')
 
 %%
 
-process_zstack 
+% process_zstack 
 % it includes assign_depth % this gives you _proc_final file
 % 
 % append_isC2(fn)
@@ -38,7 +38,10 @@ mlspike_on_suite2p
 
 %% aligning FOVs
 
+fovmatching_across_sessions
 
+% then summarize the results
+formatching_summary_saving
 
 
 
@@ -88,6 +91,8 @@ glm_results_dev_exp_saving_touch
 
 % run angle tuning analysis
 angle_tuning_predecision
+or
+angle_tuning_preAnswer_perTouch_spkOnly
 % results in 
 % 'JK041S03angle_tuning_lasso_predecision_NC.mat' in each suite2p sub-directory
 
@@ -119,10 +124,20 @@ glm_results_WKV_exclusion_saving
 %% angle tuning model from wkv GLM
 
 wkv_angle_tuning_each
+%or
+wkv_angle_tuning_each_preAnswer_perTouch
+wkv_angle_tuning_each_preAnswer_perTouch_2ndRound
 % requires
 % 'cellFunctionLasso_NC.mat'
 % results in
 % 'angle_tuning_model_lasso_NC_JK%03dS%02d' in each suite2p sub-directory
 
 
+model_angle_tuning_saving
+% requires
+% 'angle_tuning_model_touchCell_NC_preAnswer_perTouch_JK%03dS%02d'
+% 'angle_tuning_model_touchCell_NC_preAnswer_perTouch_JK%03dS%02d_2ndRound'
+% results in
+% 'modelAngleTuning_NC'
+% 'modelAngleTuning_NC_combinations'
 

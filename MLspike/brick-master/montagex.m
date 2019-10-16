@@ -1,4 +1,4 @@
-classdef montage < interface
+classdef montagex < interface
     % function M = montage([fname]
     % function M = montage(images[,names or struct])
     % GUI program for manual alignment of a large set of images
@@ -25,7 +25,7 @@ classdef montage < interface
     
     % Init
     methods
-        function M = montage(varargin)
+        function M = montagex(varargin)
             hf = figure('name','montage','integerhandle','off');
             M = M@interface(hf,'Montage');
             set(hf,'resize','on')
