@@ -208,3 +208,30 @@ sbconfig.bishift = [8 -9 13 17 20 0 3 7 14 21 30 40 58 ];
 
 % Bishift calibration saved
 sbconfig.bishift = [8 -9 13 16 20 0 3 7 14 21 30 40 58 ];
+
+% Bishift calibration saved
+sbconfig.bishift = [8 -9 18 16 20 0 3 7 14 21 30 40 58 ];
+
+% Bishift calibration saved
+sbconfig.bishift = [17 -9 18 16 20 0 3 7 14 21 30 40 58 ];
+
+% Bishift calibration saved
+sbconfig.bishift = [17 -9 18 22 20 0 3 7 14 21 30 40 58 ];
+
+% Bishift calibration saved
+sbconfig.bishift = [17 -9 20 22 20 0 3 7 14 21 30 40 58 ];
+
+% Bishift calibration saved
+sbconfig.bishift = [17 -9 20 22 20 0 3 7 14 21 30 40 58 ];
+
+% Bishift calibration saved
+sbconfig.bishift = [17 -9 18 22 20 0 3 7 14 21 30 40 58 ];
+
+% Bishift calibration saved
+sbconfig.bishift = [17 -9 18 22 20 0 3 7 14 21 30 40 58 ];
+
+% Bishift calibration saved
+sbconfig.bishift = [17 -9 20 22 20 0 3 7 14 21 30 40 58 ];
+
+% Deadband settings saved
+sbconfig.deadband = [128 128 ];

@@ -10905,7 +10905,7 @@ function open_ref_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 global datadir ref_file ref_dir animal 
-[ref_file, ref_dir] = uigetfile([datadir, filesep, animal, filesep, '*.align']);
+[ref_file, ref_dir] = uigetfile([datadir, filesep, animal, filesep, 'regops_*.mat']);
 if ~isempty(ref_dir) && ~isempty(ref_file)
     handles.ref_filename.String = [ref_dir, ref_file];
     if strcmp(ref_dir(end),filesep)
@@ -10935,8 +10935,21 @@ switch get(hObject,'String')
     case 'Find Ref Matching Depth'
         set(hObject,'String','Abort');
         cd(ref_dir)
-        load(ref_file,'-mat')
-        
+%         load(ref_file,'-mat')
+        %%
+        %%
+        %%
+        %%
+        %%
+        load(ref_file)
+        m1 = ops1{1}.mimg1;
+%         if refCh == 2
+        m2 = ops1{1}.redMeanImg;
+        %%
+        %%
+        %%
+        %%
+        %%
         if refCh == 1
             if iscell(m1)
                 if length(m1) == 1 || handles.volumePosition.Value == 1
@@ -10962,8 +10975,8 @@ switch get(hObject,'String')
                 refIm = m2;
             end
         end
-        refIm = refIm(:,70:end-70);
-        imshow(refIm, 'Parent', roi_traces_h)
+%         refIm = refIm(:,70:end-70);
+        imshow(mat2gray(refIm), 'Parent', roi_traces_h)
         
         if handles.FOVmatchStep.Value ~= 1 % 2-step automatic search. Takes ~ 10 min           
             firstStep = str2double(handles.FOVmatchStep.String{handles.FOVmatchStep.Value});
@@ -11002,7 +11015,7 @@ switch get(hObject,'String')
             grabb_Callback(handles.grabb,[],handles)
             %     wait(5) % Is it delayed? Yes -> don't have to wait
             tri_send('KBY',0,0,firstStep); pause(1)            
-            imshowpair(img0_h.CData(:,70:end-70,3-refCh), refIm, 'Parent', roi_traces_h)
+            imshowpair(img0_h.CData(ops1{1}.useY,ops1{1}.useX,3-refCh), refIm, 'Parent', roi_traces_h)
         end
 
         if i < stacknum
@@ -11037,7 +11050,7 @@ switch get(hObject,'String')
             elseif refCh == 2
                 currIm = m2{end};
             end
-            currIm = currIm(:,70:end-70);
+            currIm = currIm(ops1{1}.useY,ops1{1}.useX);
             [u, v] = jkfftalign(currIm, refIm);
             currIm = circshift(currIm, [u,v]);
             if u >= 0
