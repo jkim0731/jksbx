@@ -22,9 +22,9 @@ global info_loaded info
 
 % check if already loaded...
 
-% if(isempty(info_loaded) || ~strcmp(fname,info_loaded)) % because of
+if(isempty(info_loaded) || ~strcmp(fname,info_loaded)) % because of
 % frequent error in info variable 2017/07/14 JK
-%     
+    
 %     if(~isempty(info_loaded))   % try closing previous...
 %         try
 %             fclose(info.fid);
@@ -78,11 +78,11 @@ global info_loaded info
     else
         info.max_idx =  d.bytes/info.bytesPerBuffer*factor - 1;
     end
-% end
+end
 
 if(isfield(info,'fid') && info.fid ~= -1)
     
-    % nsamples = info.postTriggerSamples * info.recordsPerBuffer;
+%     nsamples = info.postTriggerSamples * info.recordsPerBuffer;
         
     try        
         fseek(info.fid,k*info.nsamples,'bof');
