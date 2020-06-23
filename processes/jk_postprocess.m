@@ -4,6 +4,7 @@
 
 %% then, process z-stack and C2
 % process_zstack % This can be ignored (as in L4 mice)
+% zstack_registration % If necessary, e.g., FOV matching confirmation
 % draw_C2(fn)
 
 % draw_C2('027_9998_109')

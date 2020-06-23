@@ -123,7 +123,7 @@ parfor ci = 1 : numCell
             saturatedLogLikelihood = sum(log(poisspdf(spkTest,spkTest)));
             devianceFullNull = 2*(fullLogLikelihood - nullLogLikelihood);
             fitDeviance = devianceFullNull;
-            [fitCorrelation, fitCorrPval] = corr(spkTest', model);            
+            [fitCorrelation, fitCorrPval] = corr(spkTest', model);
             fitDevExplained = 1 - (saturatedLogLikelihood - fullLogLikelihood)/(saturatedLogLikelihood - nullLogLikelihood);
             fitCvDev = cv.glmnet_fit.dev(iLambda);
 
