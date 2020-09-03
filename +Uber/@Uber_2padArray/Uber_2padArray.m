@@ -20,7 +20,7 @@ classdef Uber_2padArray < handle
         fovyrange = {};
         fovxrange = {};
         fovdepth = {}; 
-        pixResolution = [];
+        pixResolution = []; % um per pixel in xy
         
     end
     
