@@ -88,11 +88,11 @@
 %% basic settings
 clear
 
-baseDir = 'Y:\Whiskernas\JK\suite2p\';
-% baseDir = 'D:\TPM\JK\suite2p\';
+% baseDir = 'Y:\Whiskernas\JK\suite2p\';
+baseDir = 'D:\TPM\JK\suite2p\';
 
-localDir = 'C:\JK\tempDataForGLM\';
-% localDir = 'D:\JK\tempDataForGLM\';
+% localDir = 'C:\JK\tempDataForGLM\';
+localDir = 'D:\TPM\JK\tempDataForGLM\';
 
 mice = [25,27,30,36,37,38,39,41,52,53,54,56];
 sessions = {[4,19],[3,10],[3,21],[1,17],[7],[2],[1,23],[3],[3,21],[3],[3],[3]}; 
@@ -149,7 +149,7 @@ testPortion = 0.3; % 30 % test set
 
 
 % for mi = 6:8
-for mi = 7
+for mi = 9
 %     for si = 1:length(sessions{mi})
     for si = 2
         mouse = mice(mi);

@@ -56,7 +56,7 @@ try
     if isfield(h, 'dat') && isfield(h.dat, 'filename')
         root = fileparts(h.dat.filename);
     else
-        root = 'D:\TPM\JK\suite2p\';
+        root = 'Y:\Whiskernas\JK\suite2p\';
     end
     [filename1,filepath1]=uigetfile(fullfile(root, 'F*.mat'), 'Select Data File');
     set(h.figure1, 'Name', filename1);

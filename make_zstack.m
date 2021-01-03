@@ -1,4 +1,4 @@
-function [zstack, zstack_maxproj] = make_zstack(fn_base, varargin)
+function [zstack, zstack_maxproj] = make_zstack(fn_base)
 
 % output zstack (image height, image width, z-stack slices, number of
 % channels)
@@ -9,24 +9,16 @@ savefn = ['zstack_', fn_base];
 fnlist = dir([fn_base, '*.sbx']);
 load([fnlist(1).name(1:end-4), '.mat']) % loading an example info to check the number of channels (and which channel it was)
 
-if nargin > 1
-    channels = varargin{1}; % either 1, 2, or [1,2]
-    if channels == 1 || channels == 2 || channels == [1,2]
-    else
-        error('Wrong input of channels: should be 1, 2, or [1,2]')
-    end
-else
-    switch info.channels
-        case 1
-            channels = [1,2];
-        case 2
-            channels = 1;
-        case 3
-            channels = 2;
-        otherwise
-            error('error in info.channels')
-    end    
-end
+switch info.channels
+    case 1
+        channels = [1,2];
+    case 2
+        channels = 1;
+    case 3
+        channels = 2;
+    otherwise
+        error('error in info.channels')
+end    
 
 if length(channels) < 2
     if channels == 1 && info.channels == 3
