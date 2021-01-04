@@ -1,4 +1,5 @@
-function onFrames = laser_on_frames (fn, varargin)
+function onFrames = laser_on_frames(fn, varargin)
+% Frames are following 0-based indexing % 2021/01/02 JK
 if nargin > 1
     if isinteger(varargin{1}) && varargin{1} > 1
         numThresh = varargin{1};
@@ -10,7 +11,7 @@ else
     numThresh = 1000;
 end
 
-maxIdx = round(jkget_maxidx(fn));
+maxIdx = round(sbx_maxidx(fn));
 if maxIdx > numThresh
     numChunks = ceil(maxIdx/numThresh); % dividing into chunks just because of memory issue.
 end
@@ -27,7 +28,8 @@ a = sbxread(fn, (numChunks-1)*numThresh, maxIdx - (numChunks-1) * numThresh);
 a = squeeze(a(1,:,:,:));
 msignal((numChunks-1)*numThresh+1:maxIdx) = mean(mean(a));
 
-laserOffInd = find(msignal < min(msignal) + 50); % Start by considering total blanked frames. 50 is arbitrary (safe threshold for dark noise).
+laserOffInd = find(msignal < min(msignal) + 50) - 1; % Start by considering total blanked frames. 50 is arbitrary (safe threshold for dark noise).
+%-1 for 0-base indexing % 2021/01/02 JK
 if ~isempty(find(diff(laserOffInd)>1, 1))
     laserOffStartInds = [laserOffInd(1); laserOffInd(find(diff(laserOffInd)>1)+1)];
     laserOffEndInds = [laserOffInd(diff(laserOffInd)>1); laserOffInd(end)];
@@ -50,11 +52,8 @@ for i = 1 : length(laserOffStartInds)
     end
     if numPlanes > 1 % if there are more than one planes (volumetric scanning), 
         % treat each volume as one. Always start at the beginning of each volume.
-        if mod(laserOffStartInds(i)-1, numPlanes)            
-            laserOffStartInds(i) = laserOffStartInds(i) - mod(laserOffStartInds(i)-1, numPlanes);          
-            if laserOffStartInds(i) < 1
-                laserOffStartInds(i) = 1;
-            end
+        if mod(laserOffStartInds(i), numPlanes)            
+            laserOffStartInds(i) = laserOffStartInds(i) - mod(laserOffStartInds(i), numPlanes);          
         end
     end
 end
@@ -64,8 +63,8 @@ for i = 1 : length(laserOffEndInds)
     end
     if numPlanes > 1 % if there are more than one planes (volumetric scanning), 
         % treat each volume as one. Always end at the end of each volume.
-        if mod(laserOffEndInds(i), numPlanes)
-            laserOffEndInds(i) = laserOffEndInds(i) + numPlanes - mod(laserOffEndInds(i), numPlanes);
+        if mod(laserOffEndInds(i)+1, numPlanes)
+            laserOffEndInds(i) = laserOffEndInds(i) + numPlanes - mod(laserOffEndInds(i)+1, numPlanes);
             if laserOffEndInds(i) > maxIdx
                 laserOffEndInds(i) = maxIdx;
             end
@@ -73,7 +72,15 @@ for i = 1 : length(laserOffEndInds)
     end
 end
 
-onFrames = 1:maxIdx;
+if numPlanes > 1
+    if mod(maxIdx+1,numPlanes)
+        onFrames = 0:maxIdx - mod(maxIdx+1,numPlanes);
+    else
+        onFrames = 0:maxIdx;
+    end
+else
+    onFrames = 0:maxIdx;
+end
 for i = 1 : length(laserOffStartInds)
     onFrames = setdiff(onFrames,laserOffStartInds(i):laserOffEndInds(i));
 end

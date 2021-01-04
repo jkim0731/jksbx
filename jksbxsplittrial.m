@@ -30,7 +30,10 @@ function jksbxsplittrial(fn, varargin)
 % including onFrames. For spontaneous and piezo imaging ~ 2018/06.
 % splittrial includes laser off frames, so onFrames can be included as an
 % input, and trials only within this onFrames are counted.
+% (using laser_on_frames.m)
 
+% 2020/12/10
+% Fix for piezo deflections, where there was no bitcode recorded
     %% check if already splitted or not
 %     if exist([fn,'.trials'],'file')
 %         fprintf('%s has already been split\n',fn)
@@ -38,15 +41,30 @@ function jksbxsplittrial(fn, varargin)
 %     else    
 
     %% input arguments
+    laserOffIncluded = 0;
+    piezo = 0;
     if nargin > 1
         if isnumeric(varargin{1}) && min(varargin{1}) > 0 
             onFrames = varargin{1};
             laserOffIncluded = 1; % only for spontaneous and piezo. Not for regular training imaging sessions 
-        else
-            error('Input argument is either not numeric or includes negative values')
+        elseif isempty(varargin{1})
+            if nargin > 2
+                if strcmp(varargin{2},'piezo')
+                    piezo = 1; % only for piezo. No bitcodes
+                else
+                    error('3rd input argument should be ''piezo''')
+                end
+            else
+                error('2nd input argument is either not numeric or includes negative values')
+            end
         end
-    else
-        laserOffIncluded = 0;
+        if nargin > 2
+            if strcmp(varargin{2},'piezo')
+                piezo = 1; % only for piezo. No bitcodes
+            else
+                error('3rd input argument should be ''piezo''')
+            end
+        end
     end
     %% index sorting    
         load([fn,'.mat']);
@@ -54,7 +72,7 @@ function jksbxsplittrial(fn, varargin)
         a = squeeze(jksbxread(fn,0,1));
         global info    
         
-        if isfield(info,'event_id') && ~isempty(info.event_id)
+        if isfield(info,'event_id') && size(info.event_id,1) > 10 && ~piezo % at least for 10 event_id. Sometimes spontaneous imaging sessions can have 1-2 events.
             % info.frame has limit at 2^16. Correct this
             % Don't save this for now. 2017/06/20 JK
             if info.max_idx > 2^16-1            
@@ -96,6 +114,7 @@ function jksbxsplittrial(fn, varargin)
             start_event = find(info.event_id == 3); % pole up is linked to both ttl0 & ttl1 up, making the event as 3. Refer to make_and_upload_state_matrix.m in the behavior protocol.
             end_event = find(info.event_id == 2); % pole down is linked to ttl1 down only. 
 
+            
             while start_event(1) > end_event(1) % exception error for when the event started with pole_down
                 end_event = end_event(2:end);
             end 
@@ -136,7 +155,7 @@ function jksbxsplittrial(fn, varargin)
             else
                 num_plane = 1;
                 plane_sorted = 1;
-            end        
+            end
             max_idx = info.max_idx;
             blockimaging = 0;            
             num_layer = 1;
@@ -184,7 +203,7 @@ function jksbxsplittrial(fn, varargin)
                     trial_frames{ii} = []; 
                     for jj = 1 : length(layer_trials{ii})
                         for kk = 1 : length(trials)
-                            if trials(kk).trialnum == layer_trials{ii}(jj)                                
+                            if trials(kk).trialnum == layer_trials{ii}(jj)
                                 begin_frame = frames_beginning(find(frames_beginning > trials(kk).frames(1), 1, 'first'));
                                 end_frame = frames_ending(find(frames_ending < trials(kk).frames(2), 1, 'last'));
                                 if laserOffIncluded
@@ -199,7 +218,7 @@ function jksbxsplittrial(fn, varargin)
                             end
                         end
                     end
-                end                
+                end
 
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 % Very important variable
@@ -233,7 +252,94 @@ function jksbxsplittrial(fn, varargin)
                     frame_to_use{plane_sorted(ind_plane)} = intersect(ind_plane-1:num_plane:max_idx,trial_frames);             
                 end        
             end
-        else
+        elseif piezo % piezo deflection (or passive pole presentation) % 2020/12/10 JK
+            % depends on info.messages
+            num_event = length(info.messages);
+            layer_trials = [];
+            trials = []; 
+            blockimaging = 0; num_layer = 1;
+            if isfield(info, 'blankstart') % blankstart is set manually. Sometimes during file transfer using windows, the files get breached and turns into white blank frames. 2018/03/03 JK
+                info.max_idx = info.blankstart-1;
+            end
+            
+            if length(find(info.event_id == 3)) ~= num_event
+                error('Frame start mismatch')
+            elseif length(find(info.event_id == 2)) ~= num_event
+                error('Frame end mismatch')
+            end
+            % in these cases, try manual ocrrection of info file
+            
+%             error correction (just in case)
+%             if info.event_id(1)~=3
+%                 info.event_id = [3; info.event_id];
+%                 info.frame = [1; info.frame];
+%                 info.line = [1; info.line];
+%             end
+%             if info.event_id(end) ~= 2
+%                 info.event_id = [info.event_id; 2];
+%                 info.frame = [info.frame; info.max_idx];
+%                 info.line = [info.line; info.sz(1)];
+%             end
+            start_event = find(info.event_id==3);
+            end_event = find(info.event_id==2);
+            %% trials for piezo deflection
+            trials = struct('trialnum',[],'frames',[], 'lines', []);
+            for i = 1:num_event
+                trials(i).trialnum = str2double(info.messages{i});
+                trials(i).frames = [info.frame(start_event(i)),info.frame(end_event(i))];
+                trials(i).lines = [info.line(start_event(i)),info.line(end_event(i))];
+            end
+                
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            % Assume objective is already sorted descending. (objective 1 higher, i.e., shallower, than objective 2)
+            % Overall goal is to have all planes (including layers) sorted in descending order
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%    
+            if info.volscan
+                [~,plane_sorted] = sort(info.otwave,'descend'); % sorting from the top. 
+                num_plane = length(info.otwave_um);
+                
+                frames_beginning = 0:num_plane:info.max_idx;
+                frames_ending = num_plane-1:num_plane:info.max_idx;
+                
+                trial_frames = []; 
+                
+                for kk = 1 : length(trials)
+                    begin_frame = frames_beginning(find(frames_beginning > trials(kk).frames(1), 1, 'first'));
+                    end_frame = frames_ending(find(frames_ending < trials(kk).frames(2), 1, 'last'));
+                    if laserOffIncluded
+                        currTrialFrames = intersect(onFrames, begin_frame:end_frame);
+                    else % for regular training imaging sessions
+                        currTrialFrames = begin_frame:end_frame;
+                    end
+                    trial_frames = [trial_frames, currTrialFrames];
+%                                 trial_frames{ii} = [trial_frames{ii}, trials(kk).frames(1) : trials(kk).frames(2)];
+%                                 Changed to include only the frames with full-FOV recording, and matching number of frames in each plane at the same layer in each trials. 2018/03/07 JK.
+                end
+
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                % Very important variable
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                frame_to_use = cell(1,num_plane); % this is going to be used for the rest of the analysis.        
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+                for ind_plane = 1 : num_plane
+                    frame_to_use{plane_sorted(ind_plane)} = intersect(ind_plane-1:num_plane:info.max_idx, trial_frames);
+                    % treat volume-wise. All planes from the same layer of imaging have the same # of frames.
+                end
+
+            else
+                num_plane = 1;                
+                frame_to_use = cell(num_plane,1);
+                trial_frames = [];
+                for kk = 1 : length(trials)
+                    trial_frames = [trial_frames, trials(kk).frames(1)+1:trials(kk).frames(2)-1];
+                end
+                if laserOffIncluded
+                    trial_frames = intersect(trial_frames, onFrames);
+                end
+                frame_to_use{1} = trial_frames;
+            end 
+        else % spontaneous
             layer_trials = [];
             trials = []; 
             blockimaging = 0; num_layer = 1;

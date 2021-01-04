@@ -31,13 +31,15 @@
 imMargin = 50; % variable setting
 
 baseDir = 'D:\TPM\JK\suite2p\';
-mice = [25,27,30,36,39,52];
+% mice = [25,27,30,36,39,52];
+mice = [37,38,41,53,54,56];
 numMice = length(mice);
-zstackFilenum = [1000, 1000, 2000, 997, 998, 995];
+% zstackFilenum = [1000, 1000, 2000, 997, 998, 995];
+zstackFilenum = [998, 998, 998, 990, 995, 994];
 
 
 %% load data for each mouse
-mi = 3;
+mi = 6;
 mouse = mice(mi);
 
 % load z-stack
@@ -54,9 +56,9 @@ end
 
 %% Running frame-by-frame registration
 % Only getting tform first
-if mi == 6 % onl for JK052
-    zstack = zstack(:,101:725,:);
-end
+% if mi == 6 % onl for JK052
+%     zstack = zstack(:,101:725,:);
+% end
 zstack = mat2gray(zstack);
 tformSerial = cell(size(zstack,3),1);
 tformSerial{end} = affine2d(eye(3));
@@ -83,7 +85,7 @@ figure,
 plot(diffT)
 
 %%
-ti = 82;
+ti = 126;
 figure
 subplot(121), imshowpair(adapthisteq(zstack(:,:,ti+1)), adapthisteq(zstack(:,:,ti)))
 title('raw zstack')
